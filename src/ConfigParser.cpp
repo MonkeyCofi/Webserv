@@ -28,10 +28,12 @@ bool ConfigParser::validFilename(const str &fn)
 		&& fn[n - 1] == 'f');
 }
 
-void ConfigParser::parse(const str &fn)
+Engine ConfigParser::parse(const str &fn)
 {
 	if (!validFilename(fn))
 		throw FilenameError("Invalid file name!");
+	Engine eng;
+	return (eng);
 }
 
 ConfigParser::~ConfigParser()

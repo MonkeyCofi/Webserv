@@ -10,8 +10,8 @@ int main(int ac, char **av)
 	}
 	try
 	{
-		ConfigParser conf(av[1]);
-
+		ConfigParser conf;
+		Engine eng = conf.parse(av[1]);
 	}
 	catch (const std::exception &e)
 	{

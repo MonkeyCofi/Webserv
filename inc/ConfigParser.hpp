@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <exception>
+#include "Engine.hpp"
 
 typedef std::string str;
 
@@ -18,7 +19,7 @@ class ConfigParser
 		~ConfigParser();
 		const ConfigParser &operator =(const ConfigParser &copy);
 
-		void	parse(const str &fn);
+		Engine	parse(const str &fn);
 
 		class FilenameError: public std::exception
 		{
