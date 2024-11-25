@@ -28,11 +28,31 @@ bool ConfigParser::validFilename(const str &fn)
 		&& fn[n - 1] == 'f');
 }
 
+bool	ConfigParser::parseLine(str line)
+{
+
+	return (true);
+}
+
 Engine ConfigParser::parse(const str &fn)
 {
 	if (!validFilename(fn))
 		throw FilenameError("Invalid file name!");
-	Engine eng;
+
+	Engine			eng;
+	str				line;
+	int				i = 0;
+	std::ifstream 	file(fn);
+
+	if (!file)
+		throw InvalidFileError("Could not open file!");
+
+	while (getline(file, line))
+	{
+		i++;
+		if (!parseLine(line))
+			throw InvalidFileError("Syntax error in the file!\nLine" + to_string(i) + ": " + line);
+	}
 	return (eng);
 }
 

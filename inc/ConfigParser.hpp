@@ -1,6 +1,7 @@
 #ifndef CONFIGPARSER_HPP
 #define CONFIGPARSER_HPP
 
+#include <fstream>
 #include <iostream>
 #include <exception>
 #include "Engine.hpp"
@@ -11,6 +12,7 @@ class ConfigParser
 {
 	private:
 		bool	validFilename(const str &fn);
+		bool	parseLine(str line);
 
 	public:
 		ConfigParser();
