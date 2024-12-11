@@ -10,7 +10,6 @@ typedef std::string str;
 class Server
 {
 	private:
-	
 		std::vector<str>	names, ips;
 		std::vector<int>	ports;
 		str					root_location;
