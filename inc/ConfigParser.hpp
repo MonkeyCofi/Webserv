@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <exception>
+#include <string>
 #include "Engine.hpp"
 
 typedef std::string str;
@@ -11,17 +12,31 @@ typedef std::string str;
 class ConfigParser
 {
 	private:
-		bool	validFilename(const str &fn);
-		bool	parseLine(str line);
+		enum e_next {
+			WORD,
+			WORD_SEMI,
+			WORD_SEMI_NO_BRAC,
+			SEMICOLON,
+			OPEN_BRAC
+		};
+
+		int		inBlock;
+		e_next	expected;
+
+		bool	isWhitespace(char c);
+		bool	isControl(char c);
+		bool	isValidNext(str &next);
+		void	skipWhitespace(str &line);
+		bool	validFilename(str &fn);
+		bool	handleNext(str &word);
+		bool	parseLine(str &line);
+		str		parseNext(str &line);
 
 	public:
 		ConfigParser();
-		ConfigParser(const str &fn);
-		ConfigParser(const ConfigParser &copy);
 		~ConfigParser();
-		const ConfigParser &operator =(const ConfigParser &copy);
 
-		Engine	parse(const str &fn);
+		Engine	parse(str &fn);		
 
 		class FilenameError: public std::exception
 		{

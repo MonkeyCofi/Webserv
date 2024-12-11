@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ConfigParser.hpp"
 
-int main(int ac, char **av, char **env)
+int main(int ac, char **av)
 {
 	if (ac != 2)
 	{
@@ -11,7 +11,9 @@ int main(int ac, char **av, char **env)
 	try
 	{
 		ConfigParser conf;
-		Engine eng = conf.parse(av[1]);
+		str		tmp = av[1];
+		Engine	eng = conf.parse(tmp);
+		std::cout << "Parsing done!\n";
 	}
 	catch (const std::exception &e)
 	{

@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <exception>
-#include <algorithm>
+#include <vector>
 #include "Server.hpp"
 
 typedef std::string str;

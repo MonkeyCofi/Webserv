@@ -1,22 +1,11 @@
 #include "ConfigParser.hpp"
 
-ConfigParser::ConfigParser()
+ConfigParser::ConfigParser(): inBlock(0), expected(WORD_SEMI_NO_BRAC)
 {
 
 }
 
-ConfigParser::ConfigParser(const str &fn)
-{
-	if (!validFilename(fn))
-		throw FilenameError("Invalid file name!");
-}
-
-ConfigParser::ConfigParser(const ConfigParser &copy)
-{
-	(void)copy;
-}
-
-bool ConfigParser::validFilename(const str &fn)
+bool ConfigParser::validFilename(str &fn)
 {
 	std::size_t	n;
 
@@ -28,43 +17,118 @@ bool ConfigParser::validFilename(const str &fn)
 		&& fn[n - 1] == 'f');
 }
 
-bool	ConfigParser::parseLine(str line)
+bool ConfigParser::isWhitespace(char c)
 {
-
-	return (true);
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
-Engine ConfigParser::parse(const str &fn)
+bool ConfigParser::isControl(char c)
+{
+	return c == ';' || c == '{' || c == '}';
+}
+
+bool ConfigParser::isValidNext(str &next)
+{
+	if (next == "")
+		return true;
+	if ((expected == SEMICOLON && next[0] != ';')
+		|| (expected == OPEN_BRAC && next[0] != '{')
+		|| (expected == WORD && isControl(next[0]))
+		|| (expected == WORD_SEMI && next[0] == '{')
+		|| (expected == WORD_SEMI_NO_BRAC && (next[0] == '{' || next[0] == '}'))
+		|| (!inBlock && next[0] == '}'))
+		return false;
+	return true;
+}
+
+void ConfigParser::skipWhitespace(str &line)
+{
+	unsigned int	i;
+
+	for (i = 0; i < line.length() && isWhitespace(line[i]); i++);
+	line = line.substr(i);
+}
+
+str ConfigParser::parseNext(str &line)
+{
+	unsigned int	i;
+	str				next;
+
+	if (line[0] == ';')
+		next = ";";
+	if (line[0] == '{')
+		next = "{";
+	if (line[0] == '}')
+		next = "}";
+	if (isControl(line[0]))
+	{
+		line = line.substr(1, line.length() - 1);
+		return next;
+	}
+	for (i = 0; i < line.length() && !isWhitespace(line[i]) && !isControl(line[i]); i++);
+	next = line.substr(0, i);
+	line = line.substr(i);
+	return next;
+}
+
+bool ConfigParser::handleNext(str &word)
+{
+	inBlock += (word == "{") - (word == "}");
+	if (isControl(word[0]))
+		expected = WORD_SEMI;
+	else if (word == "http" || word == "server")
+		expected = OPEN_BRAC;
+	else if (word == "user")
+		expected = WORD;
+	else
+		expected = WORD_SEMI_NO_BRAC;
+	return true;
+}
+
+bool ConfigParser::parseLine(str &line)
+{
+	str	word;
+
+	skipWhitespace(line);
+	while (line != "")
+	{
+		word = parseNext(line);
+		if (!isValidNext(word) || !handleNext(word))
+			return false;
+		skipWhitespace(line);
+	}
+	return true;
+}
+
+Engine ConfigParser::parse(str &fn)
 {
 	if (!validFilename(fn))
 		throw FilenameError("Invalid file name!");
 
 	Engine			eng;
-	str				line;
+	str				line, cpy;
 	int				i = 0;
-	std::ifstream 	file(fn);
+	std::ifstream 	file;
 
+	file.open(fn.c_str());
 	if (!file)
 		throw InvalidFileError("Could not open file!");
 
 	while (getline(file, line))
 	{
+		cpy = line;
 		i++;
-		if (!parseLine(line))
-			throw InvalidFileError("Syntax error in the file!\nLine" + to_string(i) + ": " + line);
+		if (!parseLine(cpy))
+			throw InvalidFileError("Syntax error in the file!\nLine: " + line);
 	}
+	if (inBlock)
+		throw InvalidFileError("Incomplete file!\nReached EOF before end of block.");
 	return (eng);
 }
 
 ConfigParser::~ConfigParser()
 {
 
-}
-
-const ConfigParser &ConfigParser::operator =(const ConfigParser &copy)
-{
-	(void)copy;
-	return *this;
 }
 
 ConfigParser::FilenameError::FilenameError(const char* message): errmsg(message) {}

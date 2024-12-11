@@ -10,21 +10,7 @@ typedef std::string str;
 class Engine
 {
 	private:
-		enum e_loglevel {
-			Debug,
-			Info,
-			Notice,
-			Warn,
-			Error,
-			Crit
-		};
-
-		str			username, groupname;
-		int			workers;
 		Http		protocol;
-		str			logfile;
-		e_loglevel	loglvl;
-		t_pid		pid;
 
 	public:
 		Engine();
