@@ -16,12 +16,12 @@ min_delete_depth			number;			|	HSL
 pid			file;							|	M
 alias		path;							|	L
 autoindex	on/off;							|	HSL
+return		code [text];					|	SL
 
 
 
 try_files	file ... uri;					|	SL
 try_files	file ... =code;					|	SL
-return		code [text];					|	SL
 
 
 
