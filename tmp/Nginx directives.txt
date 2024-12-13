@@ -1,9 +1,14 @@
+BLOCKS:
+
 http				{ ... }		|	M
 server				{ ... }		|	H
 location	uri		{ ... }		|	SL
 location	@name	{ ... }		|	SL
 
 
+DIRECTIVES:
+
+MANDATORY:
 
 root		path;							|	HSL
 listen		address[:port] [default_server];|	S
@@ -18,12 +23,12 @@ alias		path;							|	L
 autoindex	on/off;							|	HSL
 return		code [text];					|	SL
 
-
+MAYBE:
 
 try_files	file ... uri;					|	SL
 try_files	file ... =code;					|	SL
 
-
+PROBABLY NOT:
 
 client_body_buffer_size		size;			|	HSL
 client_body_timeout			time;			|	HSL
