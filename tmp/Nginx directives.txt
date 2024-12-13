@@ -15,6 +15,7 @@ client_max_body_size		size;			|	HSL
 min_delete_depth			number;			|	HSL
 pid			file;							|	M
 alias		path;							|	L
+autoindex	on/off;							|	HSL
 
 
 
