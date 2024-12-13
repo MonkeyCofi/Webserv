@@ -1,0 +1,28 @@
+http				{ ... }		|	M
+server				{ ... }		|	H
+location	uri		{ ... }		|	SL
+location	@name	{ ... }		|	SL
+
+
+
+root		path;							|	HSL
+listen		address[:port] [default_server];|	S
+listen		port [default_server];			|	S
+index		file ...;						|	HSL
+server_name	(name | "" | _) ...;			|	S								|	S
+error_page	code ... [=[response]] uri;		|	HSL
+client_max_body_size		size;			|	HSL
+min_delete_depth			number;			|	HSL
+pid			file;							|	M
+alias		path;							|	L
+
+
+
+try_files	file ... uri;					|	SL
+try_files	file ... =code;					|	SL
+return		code [text];					|	SL
+
+
+
+client_body_buffer_size		size;			|	HSL
+client_body_timeout			time;			|	HSL
