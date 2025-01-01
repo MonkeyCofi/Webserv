@@ -5,6 +5,7 @@
 #include <iostream>
 #include <exception>
 #include <string>
+#include <cctype>
 #include "Engine.hpp"
 
 typedef std::string str;
@@ -13,10 +14,8 @@ class ConfigParser
 {
 	private:
 		enum e_next {
-			WORD,
+			DEFAULT,
 			WORD_SEMI,
-			WORD_SEMI_NO_BRAC,
-			SEMICOLON,
 			OPEN_BRAC
 		};
 

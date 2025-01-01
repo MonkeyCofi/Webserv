@@ -1,6 +1,6 @@
 #include "ConfigParser.hpp"
 
-ConfigParser::ConfigParser(): inBlock(0), expected(WORD_SEMI_NO_BRAC)
+ConfigParser::ConfigParser(): inBlock(0), expected(DEFAULT)
 {
 
 }
@@ -12,9 +12,10 @@ bool ConfigParser::validFilename(str &fn)
 	n = fn.length();
 	if (n < 4 || fn.find(".conf") == str::npos)
 		return false;
-	return (fn[n - 5] == '.' && fn[n - 4] == 'c'
-		&& fn[n - 3] == 'o' && fn[n - 2] == 'n'
-		&& fn[n - 1] == 'f');
+	return true;
+	// return (fn[n - 5] == '.' && fn[n - 4] == 'c'
+	// 	&& fn[n - 3] == 'o' && fn[n - 2] == 'n'
+	// 	&& fn[n - 1] == 'f');
 }
 
 bool ConfigParser::isWhitespace(char c)
@@ -31,11 +32,9 @@ bool ConfigParser::isValidNext(str &next)
 {
 	if (next == "")
 		return true;
-	if ((expected == SEMICOLON && next[0] != ';')
-		|| (expected == OPEN_BRAC && next[0] != '{')
-		|| (expected == WORD && isControl(next[0]))
-		|| (expected == WORD_SEMI && next[0] == '{')
-		|| (expected == WORD_SEMI_NO_BRAC && (next[0] == '{' || next[0] == '}'))
+	if ((expected == DEFAULT && next[0] == '{')
+		|| (expected == OPEN_BRAC && (next[0] == ';' || next[0] == '}'))
+		|| (expected == WORD_SEMI && (next[0] == '{' || next[0] == '}'))
 		|| (!inBlock && next[0] == '}'))
 		return false;
 	return true;
@@ -54,15 +53,10 @@ str ConfigParser::parseNext(str &line)
 	unsigned int	i;
 	str				next;
 
-	if (line[0] == ';')
-		next = ";";
-	if (line[0] == '{')
-		next = "{";
-	if (line[0] == '}')
-		next = "}";
 	if (isControl(line[0]))
 	{
-		line = line.substr(1, line.length() - 1);
+		next = line[0];
+		line = line.substr(1);
 		return next;
 	}
 	for (i = 0; i < line.length() && !isWhitespace(line[i]) && !isControl(line[i]); i++);
@@ -75,13 +69,13 @@ bool ConfigParser::handleNext(str &word)
 {
 	inBlock += (word == "{") - (word == "}");
 	if (isControl(word[0]))
+		expected = DEFAULT;
+	else if (expected == DEFAULT)
+	{
 		expected = WORD_SEMI;
-	else if (word == "http" || word == "server")
-		expected = OPEN_BRAC;
-	else if (word == "user")
-		expected = WORD;
-	else
-		expected = WORD_SEMI_NO_BRAC;
+		if (word == "http" || word == "server" || word == "location")
+			expected = OPEN_BRAC;
+	}
 	return true;
 }
 
@@ -123,6 +117,8 @@ Engine ConfigParser::parse(str &fn)
 	}
 	if (inBlock)
 		throw InvalidFileError("Incomplete file!\nReached EOF before end of block.");
+	if (expected != DEFAULT)
+		throw InvalidFileError("Incomplete file!\nReached EOF before end of directive.");
 	return (eng);
 }
 
