@@ -1,6 +1,8 @@
 #include "ConfigParser.hpp"
 
-ConfigParser::ConfigParser(): inBlock(0), expected(DEFAULT)
+const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "pid", "alias", "autoindex", "return", "try_files", "" };
+
+ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
 
 }
@@ -12,10 +14,7 @@ bool ConfigParser::validFilename(str &fn)
 	n = fn.length();
 	if (n < 4 || fn.find(".conf") == str::npos)
 		return false;
-	return true;
-	// return (fn[n - 5] == '.' && fn[n - 4] == 'c'
-	// 	&& fn[n - 3] == 'o' && fn[n - 2] == 'n'
-	// 	&& fn[n - 1] == 'f');
+	return fn.find(".conf") == fn.length() - 5;
 }
 
 bool ConfigParser::isWhitespace(char c)
@@ -36,8 +35,27 @@ bool ConfigParser::isValidNext(str &next)
 		|| (expected == OPEN_BRAC && (next[0] == ';' || next[0] == '}'))
 		|| (expected == WORD_SEMI && (next[0] == '{' || next[0] == '}'))
 		|| (!inBlock && next[0] == '}'))
+	{
+		err_msg = "Syntax error: Unexpected token `" + next.substr(0, 1) + "`\n";
 		return false;
+	}
 	return true;
+}
+
+bool ConfigParser::isValidDirective(str &word)
+{
+	for (int i = 0; directives[i] != ""; i++)
+		if (directives[i] == word)
+			return true;
+	err_msg = "Invalid Configuration: Unrecognized directive `" + word + "`\n";
+	return false;
+}
+
+str		ConfigParser::toString(int x)
+{
+	std::stringstream s;
+	s << x;
+	return s.str();
 }
 
 void ConfigParser::skipWhitespace(str &line)
@@ -75,6 +93,8 @@ bool ConfigParser::handleNext(str &word)
 		expected = WORD_SEMI;
 		if (word == "http" || word == "server" || word == "location")
 			expected = OPEN_BRAC;
+		else if (!isValidDirective(word))
+			return false;
 	}
 	return true;
 }
@@ -113,12 +133,12 @@ Engine ConfigParser::parse(str &fn)
 		cpy = line;
 		i++;
 		if (!parseLine(cpy))
-			throw InvalidFileError("Syntax error in the file!\nLine: " + line);
+			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 	}
 	if (inBlock)
-		throw InvalidFileError("Incomplete file!\nReached EOF before end of block.");
+		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
-		throw InvalidFileError("Incomplete file!\nReached EOF before end of directive.");
+		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
 	return (eng);
 }
 

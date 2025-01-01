@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <exception>
 #include <string>
 #include <cctype>
@@ -19,12 +20,16 @@ class ConfigParser
 			OPEN_BRAC
 		};
 
+		const static str	directives[];
+		str		err_msg;
 		int		inBlock;
 		e_next	expected;
 
+		str		toString(int x);
 		bool	isWhitespace(char c);
 		bool	isControl(char c);
 		bool	isValidNext(str &next);
+		bool	isValidDirective(str &word);
 		void	skipWhitespace(str &line);
 		bool	validFilename(str &fn);
 		bool	handleNext(str &word);
