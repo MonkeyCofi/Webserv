@@ -33,12 +33,12 @@ class ConfigParser
 		str		toString(int x)				const;
 		bool	isWhitespace(char c)		const;
 		bool	isControl(char c)			const;
-		bool	isValidNext(str &next)		const;
-		bool	isValidDirective(str &word)	const;
+		bool	isValidNext(str &next);
+		bool	isValidDirective(str &word);
 		void	skipWhitespace(str &line)	const;
 		bool	validFilename(str &fn)		const;
-		bool	parseLine(str &line)		const;
 		str		parseNext(str &line)		const;
+		bool	parseLine(str &line);
 		bool	handleNext(str &word);
 
 	public:

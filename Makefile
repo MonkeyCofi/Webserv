@@ -1,7 +1,7 @@
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./inc/
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -I./inc/
 SRCDIR = ./src/
-SRCFIL = main.cpp ConfigParser.cpp Engine.cpp Location.cpp Http.cpp Server.cpp
+SRCFIL = main.cpp BlockOBJ.cpp ConfigParser.cpp Engine.cpp Location.cpp Http.cpp Server.cpp
 SRCS = $(addprefix $(SRCDIR),$(SRCFIL))
 OBJS = $(SRCS:.cpp=.o)
 NAME = webserv

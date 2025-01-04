@@ -13,15 +13,15 @@ typedef std::string str;
 class Http: public BlockOBJ
 {
 	private:
-		std::vector<Server> servers;
+		std::vector<Server *> servers;
 
 	public:
 		Http();
 		Http(const Http &copy);
 		~Http();
 
-		bool	handleDirective(std::queue<str> opts);
-		bool	handleBlock(std::queue<str> opts);
+		bool		handleDirective(std::queue<str> opts);
+		BlockOBJ	*handleBlock(std::queue<str> opts);
 
 		const Http &operator =(const Http &copy);
 };

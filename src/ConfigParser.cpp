@@ -27,7 +27,7 @@ bool ConfigParser::isControl(char c) const
 	return c == ';' || c == '{' || c == '}';
 }
 
-bool ConfigParser::isValidNext(str &next) const
+bool ConfigParser::isValidNext(str &next)
 {
 	if (next == "")
 		return true;
@@ -36,18 +36,22 @@ bool ConfigParser::isValidNext(str &next) const
 		|| (expected == WORD_SEMI && (next[0] == '{' || next[0] == '}'))
 		|| (!inBlock && next[0] == '}'))
 	{
-		err_msg = "Syntax error: Unexpected token `" + next.substr(0, 1) + "`\n";
+		err_msg = "Syntax error: Unexpected token `";
+		err_msg.append(next.substr(0, 1));
+		err_msg.append("`\n");
 		return false;
 	}
 	return true;
 }
 
-bool ConfigParser::isValidDirective(str &word) const
+bool ConfigParser::isValidDirective(str &word)
 {
 	for (int i = 0; directives[i] != ""; i++)
 		if (directives[i] == word)
 			return true;
-	err_msg = "Invalid Configuration: Unrecognized directive `" + word + "`\n";
+	err_msg = "Invalid Configuration: Unrecognized directive `";
+	err_msg.append(word);
+	err_msg.append("`\n");
 	return false;
 }
 
@@ -95,7 +99,7 @@ bool ConfigParser::handleNext(str &word)
 		expected = DEFAULT;
 		if (word[0] != ';')
 		{
-			ptr = blocks.top().handleBlock(parsed_opts);
+			ptr = blocks.top()->handleBlock(parsed_opts);
 			if (!ptr)
 			{
 				err_msg = "Incorrect arguments for block directive!";
@@ -104,7 +108,7 @@ bool ConfigParser::handleNext(str &word)
 			blocks.push(ptr);
 		}
 		else
-			blocks.top().handleDirective(parsed_opts);
+			blocks.top()->handleDirective(parsed_opts);
 	}
 	else if (expected == DEFAULT)
 	{
@@ -117,7 +121,7 @@ bool ConfigParser::handleNext(str &word)
 	return true;
 }
 
-bool ConfigParser::parseLine(str &line) const
+bool ConfigParser::parseLine(str &line)
 {
 	str	word;
 
@@ -166,16 +170,22 @@ ConfigParser::~ConfigParser()
 }
 
 ConfigParser::FilenameError::FilenameError(const char* message): errmsg(message) {}
+
 ConfigParser::FilenameError::FilenameError(const std::string& message): errmsg(message) {}
+
 const char* ConfigParser::FilenameError::what() const throw()
 {
 	return errmsg.c_str();
 }
 ConfigParser::FilenameError::~FilenameError() throw() {}
+
 ConfigParser::InvalidFileError::InvalidFileError(const char* message): errmsg(message) {}
+
 ConfigParser::InvalidFileError::InvalidFileError(const std::string& message): errmsg(message) {}
+
 const char* ConfigParser::InvalidFileError::what() const throw()
 {
 	return errmsg.c_str();
 }
+
 ConfigParser::InvalidFileError::~InvalidFileError() throw() {}

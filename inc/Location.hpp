@@ -17,8 +17,8 @@ class Location: public BlockOBJ
 		Location(const Location &copy);
 		~Location();
 
-		bool	handleDirective(std::queue<str> opts);
-		bool	handleBlock(std::queue<str> opts);
+		bool		handleDirective(std::queue<str> opts);
+		BlockOBJ	*handleBlock(std::queue<str> opts);
 
 		const Location &operator =(const Location &copy);
 };

@@ -22,8 +22,11 @@ class Server: public BlockOBJ
 		Server(const Server &copy);
 		~Server();
 
-		bool	handleDirective(std::queue<str> opts);
-		bool	handleBlock(std::queue<str> opts);
+		bool		handleDirective(std::queue<str> opts);
+		/// @brief 
+		/// @param opts 
+		/// @return 
+		BlockOBJ	*handleBlock(std::queue<str> opts);
 
 		const Server &operator =(const Server &copy);
 };

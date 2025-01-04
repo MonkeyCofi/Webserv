@@ -17,7 +17,7 @@ class Engine
 		Engine(const Engine &copy);
 		~Engine();
 
-		Http	&getProtocol() const;
+		Http	&getProtocol();
 
 		const Engine &operator =(const Engine &copy);
 };

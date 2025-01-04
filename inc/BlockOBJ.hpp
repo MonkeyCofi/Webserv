@@ -17,8 +17,8 @@ class BlockOBJ
 		BlockOBJ(const BlockOBJ &copy);
 		virtual ~BlockOBJ();
 
-		virtual bool	handleDirective(std::queue<str> opts)	= 0;
-		virtual bool	handleBlock(std::queue<str> opts)		= 0;
+		virtual bool		handleDirective(std::queue<str> opts)	= 0;
+		virtual BlockOBJ	*handleBlock(std::queue<str> opts)		= 0;
 
 		const BlockOBJ &operator =(const BlockOBJ &copy);
 };
