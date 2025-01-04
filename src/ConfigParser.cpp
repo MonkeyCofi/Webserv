@@ -4,7 +4,7 @@ const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name
 
 ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
-	blocks.push(&webserv.http);
+	blocks.push(&webserv.getProtocol());
 }
 
 bool ConfigParser::validFilename(str &fn) const
@@ -83,7 +83,7 @@ str ConfigParser::parseNext(str &line) const
 	return next;
 }
 
-bool ConfigParser::handleNext(str &word) const
+bool ConfigParser::handleNext(str &word)
 {
 	BlockOBJ	*ptr;
 

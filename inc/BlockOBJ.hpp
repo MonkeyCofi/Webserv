@@ -11,6 +11,7 @@ class BlockOBJ
 {
 	private:
 		const static str	directives[];
+
 	public:
 		BlockOBJ();
 		BlockOBJ(const BlockOBJ &copy);

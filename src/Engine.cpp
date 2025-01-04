@@ -10,6 +10,11 @@ Engine::Engine(const Engine &copy)
 	(void)copy;
 }
 
+Http	&Http::getProtocol() const
+{
+	return protocol;
+}
+
 Engine::~Engine()
 {
 

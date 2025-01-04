@@ -10,7 +10,7 @@ Http::Http(const Http &copy)
 	(void)copy;
 }
 
-bool	Http::handleDirective(std::vector<str> opts)
+bool	Http::handleDirective(std::queue<str> opts)
 {
 	
 }

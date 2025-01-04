@@ -39,13 +39,13 @@ class ConfigParser
 		bool	validFilename(str &fn)		const;
 		bool	parseLine(str &line)		const;
 		str		parseNext(str &line)		const;
-		bool	handleNext(str &word)		const;
+		bool	handleNext(str &word);
 
 	public:
 		ConfigParser();
 		~ConfigParser();
 
-		Engine	&parse(str &fn);		
+		Engine	parse(str &fn);		
 
 		class FilenameError: public std::exception
 		{

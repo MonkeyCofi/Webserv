@@ -4,6 +4,7 @@
 #include <iostream>
 #include <exception>
 #include <vector>
+#include <queue>
 #include "BlockOBJ.hpp"
 #include "Server.hpp"
 
@@ -19,7 +20,7 @@ class Http: public BlockOBJ
 		Http(const Http &copy);
 		~Http();
 
-		bool	handleDirective(std::vector<str> opts);
+		bool	handleDirective(std::queue<str> opts);
 		bool	handleBlock(std::queue<str> opts);
 
 		const Http &operator =(const Http &copy);

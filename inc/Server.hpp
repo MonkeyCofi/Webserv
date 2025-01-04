@@ -4,6 +4,7 @@
 #include <iostream>
 #include <exception>
 #include <vector>
+#include <queue>
 #include "BlockOBJ.hpp"
 #include "Location.hpp"
 
@@ -21,7 +22,7 @@ class Server: public BlockOBJ
 		Server(const Server &copy);
 		~Server();
 
-		bool	handleDirective(std::vector<str> opts);
+		bool	handleDirective(std::queue<str> opts);
 		bool	handleBlock(std::queue<str> opts);
 
 		const Server &operator =(const Server &copy);
