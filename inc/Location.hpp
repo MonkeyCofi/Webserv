@@ -3,10 +3,11 @@
 
 #include <iostream>
 #include <exception>
+#include "BlockOBJ.hpp"
 
 typedef std::string str;
 
-class Location
+class Location: public BlockOBJ
 {
 	private:
 
@@ -14,6 +15,10 @@ class Location
 		Location();
 		Location(const Location &copy);
 		~Location();
+
+		bool	handleDirective(std::vector<str> opts);
+		bool	handleBlock(std::queue<str> opts);
+
 		const Location &operator =(const Location &copy);
 };
 

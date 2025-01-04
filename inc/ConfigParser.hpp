@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <exception>
+#include <stack>
+#include <queue>
 #include <string>
 #include <cctype>
 #include "Engine.hpp"
@@ -20,27 +22,30 @@ class ConfigParser
 			OPEN_BRAC
 		};
 
-		const static str	directives[];
-		str		err_msg;
-		int		inBlock;
-		e_next	expected;
+		const static str		directives[];
+		Engine					webserv;
+		str						err_msg;
+		int						inBlock;
+		e_next					expected;
+		std::queue<str>			parsed_opts;
+		std::stack<BlockOBJ *>	blocks;
 
-		str		toString(int x);
-		bool	isWhitespace(char c);
-		bool	isControl(char c);
-		bool	isValidNext(str &next);
-		bool	isValidDirective(str &word);
-		void	skipWhitespace(str &line);
-		bool	validFilename(str &fn);
-		bool	handleNext(str &word);
-		bool	parseLine(str &line);
-		str		parseNext(str &line);
+		str		toString(int x)				const;
+		bool	isWhitespace(char c)		const;
+		bool	isControl(char c)			const;
+		bool	isValidNext(str &next)		const;
+		bool	isValidDirective(str &word)	const;
+		void	skipWhitespace(str &line)	const;
+		bool	validFilename(str &fn)		const;
+		bool	parseLine(str &line)		const;
+		str		parseNext(str &line)		const;
+		bool	handleNext(str &word)		const;
 
 	public:
 		ConfigParser();
 		~ConfigParser();
 
-		Engine	parse(str &fn);		
+		Engine	&parse(str &fn);		
 
 		class FilenameError: public std::exception
 		{

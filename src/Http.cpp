@@ -10,6 +10,18 @@ Http::Http(const Http &copy)
 	(void)copy;
 }
 
+bool	Http::handleDirective(std::vector<str> opts)
+{
+	
+}
+bool	Http::handleBlock(std::queue<str> opts)
+{
+	if (opts.front() != "server")
+		return NULL;
+	servers.push(new Server());
+	return servers.back();
+}
+
 Http::~Http()
 {
 

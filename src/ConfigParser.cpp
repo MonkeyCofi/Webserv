@@ -4,10 +4,10 @@ const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name
 
 ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
-
+	blocks.push(&webserv.http);
 }
 
-bool ConfigParser::validFilename(str &fn)
+bool ConfigParser::validFilename(str &fn) const
 {
 	std::size_t	n;
 
@@ -17,17 +17,17 @@ bool ConfigParser::validFilename(str &fn)
 	return fn.find(".conf") == fn.length() - 5;
 }
 
-bool ConfigParser::isWhitespace(char c)
+bool ConfigParser::isWhitespace(char c) const
 {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
-bool ConfigParser::isControl(char c)
+bool ConfigParser::isControl(char c) const
 {
 	return c == ';' || c == '{' || c == '}';
 }
 
-bool ConfigParser::isValidNext(str &next)
+bool ConfigParser::isValidNext(str &next) const
 {
 	if (next == "")
 		return true;
@@ -42,7 +42,7 @@ bool ConfigParser::isValidNext(str &next)
 	return true;
 }
 
-bool ConfigParser::isValidDirective(str &word)
+bool ConfigParser::isValidDirective(str &word) const
 {
 	for (int i = 0; directives[i] != ""; i++)
 		if (directives[i] == word)
@@ -51,14 +51,14 @@ bool ConfigParser::isValidDirective(str &word)
 	return false;
 }
 
-str		ConfigParser::toString(int x)
+str		ConfigParser::toString(int x) const
 {
 	std::stringstream s;
 	s << x;
 	return s.str();
 }
 
-void ConfigParser::skipWhitespace(str &line)
+void ConfigParser::skipWhitespace(str &line) const
 {
 	unsigned int	i;
 
@@ -66,7 +66,7 @@ void ConfigParser::skipWhitespace(str &line)
 	line = line.substr(i);
 }
 
-str ConfigParser::parseNext(str &line)
+str ConfigParser::parseNext(str &line) const
 {
 	unsigned int	i;
 	str				next;
@@ -83,11 +83,29 @@ str ConfigParser::parseNext(str &line)
 	return next;
 }
 
-bool ConfigParser::handleNext(str &word)
+bool ConfigParser::handleNext(str &word) const
 {
+	BlockOBJ	*ptr;
+
 	inBlock += (word == "{") - (word == "}");
+	if (!isControl(word[0]))
+		parsed_opts.push(word);
 	if (isControl(word[0]))
+	{
 		expected = DEFAULT;
+		if (word[0] != ';')
+		{
+			ptr = blocks.top().handleBlock(parsed_opts);
+			if (!ptr)
+			{
+				err_msg = "Incorrect arguments for block directive!";
+				return false;
+			}
+			blocks.push(ptr);
+		}
+		else
+			blocks.top().handleDirective(parsed_opts);
+	}
 	else if (expected == DEFAULT)
 	{
 		expected = WORD_SEMI;
@@ -99,7 +117,7 @@ bool ConfigParser::handleNext(str &word)
 	return true;
 }
 
-bool ConfigParser::parseLine(str &line)
+bool ConfigParser::parseLine(str &line) const
 {
 	str	word;
 
