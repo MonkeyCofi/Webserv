@@ -4,7 +4,7 @@ const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name
 
 ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
-	blocks.push(&webserv.getProtocol());
+	// blocks.push(webserv.getProtocol());
 }
 
 bool ConfigParser::validFilename(str &fn) const
@@ -93,30 +93,56 @@ bool ConfigParser::handleNext(str &word)
 
 	inBlock += (word == "{") - (word == "}");
 	if (!isControl(word[0]))
+	{
 		parsed_opts.push(word);
-	if (isControl(word[0]))
+		if (expected == DEFAULT)
+		{
+			expected = WORD_SEMI;
+			if (word == "http" || word == "server" || word == "location")
+				expected = OPEN_BRAC;
+			else if (!isValidDirective(word))
+				return false;
+		}
+	}
+	else
 	{
 		expected = DEFAULT;
-		if (word[0] != ';')
+		if (parsed_opts.size() > 0)
 		{
-			ptr = blocks.top()->handleBlock(parsed_opts);
-			if (!ptr)
+			if (parsed_opts.front() == "http")
 			{
-				err_msg = "Incorrect arguments for block directive!";
-				return false;
+				if (parsed_opts.size() > 1)
+				{
+					err_msg = "Incorrect arguments for block directive!\n";
+					return false;
+				}
+				blocks.push(webserv.getProtocol());
 			}
-			blocks.push(ptr);
+			else
+			{
+				if (word[0] == '{')
+				{
+					if (blocks.size() == 0)
+					{
+						err_msg = "Block in the wrong scope!\n";
+						return false;
+					}
+					ptr = blocks.top()->handleBlock(parsed_opts);
+					if (!ptr)
+					{
+						err_msg = "Incorrect arguments for block directive!\n";
+						return false;
+					}
+					blocks.push(ptr);
+				}
+				else if (word[0] == ';')
+					blocks.top()->handleDirective(parsed_opts);
+			}
+			while (parsed_opts.size() > 0)
+				parsed_opts.pop();
 		}
-		else
-			blocks.top()->handleDirective(parsed_opts);
-	}
-	else if (expected == DEFAULT)
-	{
-		expected = WORD_SEMI;
-		if (word == "http" || word == "server" || word == "location")
-			expected = OPEN_BRAC;
-		else if (!isValidDirective(word))
-			return false;
+		if (word == "}")
+			blocks.pop();
 	}
 	return true;
 }
@@ -166,7 +192,22 @@ Engine ConfigParser::parse(str &fn)
 
 ConfigParser::~ConfigParser()
 {
-
+	std::cout << "-----------------------\n";
+	while (blocks.size() > 0)
+	{
+		if (dynamic_cast<Http *>(blocks.top()) != NULL)
+			std::cout << "Http\n";
+		else if (dynamic_cast<Server *>(blocks.top()) != NULL)
+			std::cout << "Server\n";
+		else if (dynamic_cast<Location *>(blocks.top()) != NULL)
+			std::cout << "Location\n";
+		else if (blocks.top() != NULL)
+			std::cout << "HUH?\n";
+		else
+			std::cout << "NUULL!!\n";
+		blocks.pop();
+	}
+	std::cout << "-----------------------\n";
 }
 
 ConfigParser::FilenameError::FilenameError(const char* message): errmsg(message) {}

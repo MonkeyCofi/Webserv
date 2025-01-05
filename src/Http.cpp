@@ -25,7 +25,8 @@ BlockOBJ *Http::handleBlock(std::queue<str> opts)
 
 Http::~Http()
 {
-
+	for(std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+    	delete *it;
 }
 
 const Http &Http::operator =(const Http &copy)

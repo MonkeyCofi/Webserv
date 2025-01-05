@@ -10,14 +10,14 @@ typedef std::string str;
 class Engine
 {
 	private:
-		Http		protocol;
+		Http		*protocol;
 
 	public:
 		Engine();
 		Engine(const Engine &copy);
 		~Engine();
 
-		Http	&getProtocol();
+		Http	*getProtocol();
 
 		const Engine &operator =(const Engine &copy);
 };

@@ -12,7 +12,8 @@ Location::Location(const Location &copy)
 
 Location::~Location()
 {
-
+	for(std::vector<Location *>::iterator it = locations.begin(); it != locations.end(); it++)
+    	delete *it;
 }
 
 bool Location::handleDirective(std::queue<str> opts)
@@ -23,8 +24,10 @@ bool Location::handleDirective(std::queue<str> opts)
 
 BlockOBJ *Location::handleBlock(std::queue<str> opts)
 {
-	(void) opts;
-	return nullptr;
+	if (opts.front() != "location")
+		return NULL;
+	locations.push_back(new Location());
+	return locations.back();
 }
 
 const Location &Location::operator =(const Location &copy)

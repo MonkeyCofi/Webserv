@@ -15,7 +15,7 @@ class Server: public BlockOBJ
 	private:
 		std::vector<str>		names, ips;
 		std::vector<int>		ports;
-		std::vector<Location>	locations;
+		std::vector<Location *>	locations;
 	
 	public:
 		Server();
@@ -23,9 +23,6 @@ class Server: public BlockOBJ
 		~Server();
 
 		bool		handleDirective(std::queue<str> opts);
-		/// @brief 
-		/// @param opts 
-		/// @return 
 		BlockOBJ	*handleBlock(std::queue<str> opts);
 
 		const Server &operator =(const Server &copy);

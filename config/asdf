@@ -10,7 +10,9 @@ http
 
 
 
-{;;server{location{location{}} }} 
+{;;server{location{location{}} } server{try_files asdf; }
+
+server{}}
 http
 
 
