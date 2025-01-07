@@ -10,18 +10,18 @@ DIRECTIVES:
 
 MANDATORY:
 
-root		path;							|	HSL
+pid			file;							|	M
 listen		address[:port] [default_server];|	S
 listen		port [default_server];			|	S
-index		file ...;						|	HSL
 server_name	(name | "" | _) ...;			|	S								|	S
+alias		path;							|	L
+return		code [text];					|	SL
+root		path;							|	HSL
+index		file ...;						|	HSL
 error_page	code ... [=[response]] uri;		|	HSL
 client_max_body_size		size;			|	HSL
 min_delete_depth			number;			|	HSL
-pid			file;							|	M
-alias		path;							|	L
 autoindex	on/off;							|	HSL
-return		code [text];					|	SL
 
 MAYBE:
 

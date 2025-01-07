@@ -15,9 +15,9 @@ class Server: public BlockOBJ
 	private:
 		std::vector<str>		names, ips;
 		std::vector<int>		ports;
-		std::vector<Location *>	locations;
 	
 	public:
+		std::vector<Location *>	locations;
 		Server();
 		Server(const Server &copy);
 		~Server();

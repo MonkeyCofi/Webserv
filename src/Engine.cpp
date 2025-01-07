@@ -17,6 +17,7 @@ Http *Engine::getProtocol()
 
 Engine::~Engine()
 {
+	printengine(protocol, 0);
 	delete protocol;
 }
 

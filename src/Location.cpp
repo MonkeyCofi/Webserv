@@ -1,11 +1,11 @@
 #include "Location.hpp"
 
-Location::Location()
+Location::Location(): BlockOBJ()
 {
 
 }
 
-Location::Location(const Location &copy)
+Location::Location(const Location &copy): BlockOBJ(copy)
 {
 	(void)copy;
 }
@@ -24,7 +24,7 @@ bool Location::handleDirective(std::queue<str> opts)
 
 BlockOBJ *Location::handleBlock(std::queue<str> opts)
 {
-	if (opts.front() != "location")
+	if (opts.size() < 2 || opts.front() != "location")
 		return NULL;
 	locations.push_back(new Location());
 	return locations.back();

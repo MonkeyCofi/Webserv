@@ -120,13 +120,13 @@ bool ConfigParser::handleNext(str &word)
 			}
 			else
 			{
+				if (blocks.size() == 0 && word[0] == '{')
+				{
+					err_msg = "Block in the wrong scope!\n";
+					return false;
+				}
 				if (word[0] == '{')
 				{
-					if (blocks.size() == 0)
-					{
-						err_msg = "Block in the wrong scope!\n";
-						return false;
-					}
 					ptr = blocks.top()->handleBlock(parsed_opts);
 					if (!ptr)
 					{
@@ -135,7 +135,7 @@ bool ConfigParser::handleNext(str &word)
 					}
 					blocks.push(ptr);
 				}
-				else if (word[0] == ';')
+				else if (word[0] == ';' && blocks.size() > 0)
 					blocks.top()->handleDirective(parsed_opts);
 			}
 			while (parsed_opts.size() > 0)
@@ -192,22 +192,7 @@ Engine ConfigParser::parse(str &fn)
 
 ConfigParser::~ConfigParser()
 {
-	std::cout << "-----------------------\n";
-	while (blocks.size() > 0)
-	{
-		if (dynamic_cast<Http *>(blocks.top()) != NULL)
-			std::cout << "Http\n";
-		else if (dynamic_cast<Server *>(blocks.top()) != NULL)
-			std::cout << "Server\n";
-		else if (dynamic_cast<Location *>(blocks.top()) != NULL)
-			std::cout << "Location\n";
-		else if (blocks.top() != NULL)
-			std::cout << "HUH?\n";
-		else
-			std::cout << "NUULL!!\n";
-		blocks.pop();
-	}
-	std::cout << "-----------------------\n";
+	
 }
 
 ConfigParser::FilenameError::FilenameError(const char* message): errmsg(message) {}

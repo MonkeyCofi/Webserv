@@ -4,6 +4,7 @@
 #include <iostream>
 #include <exception>
 #include "Http.hpp"
+#include "tmpdel.hpp"
 
 typedef std::string str;
 

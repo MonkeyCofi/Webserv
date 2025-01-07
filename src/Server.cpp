@@ -1,11 +1,11 @@
 #include "Server.hpp"
 
-Server::Server()
+Server::Server(): BlockOBJ()
 {
 
 }
 
-Server::Server(const Server &copy)
+Server::Server(const Server &copy): BlockOBJ(copy)
 {
 	(void)copy;
 }
@@ -24,7 +24,7 @@ bool Server::handleDirective(std::queue<str> opts)
 
 BlockOBJ *Server::handleBlock(std::queue<str> opts)
 {
-	if (opts.front() != "location")
+	if (opts.size() < 2 || opts.front() != "location")
 		return NULL;
 	locations.push_back(new Location());
 	return locations.back();

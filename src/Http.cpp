@@ -1,11 +1,11 @@
 #include "Http.hpp"
 
-Http::Http()
+Http::Http(): BlockOBJ()
 {
 
 }
 
-Http::Http(const Http &copy)
+Http::Http(const Http &copy): BlockOBJ(copy)
 {
 	(void)copy;
 }
@@ -17,7 +17,7 @@ bool Http::handleDirective(std::queue<str> opts)
 }
 BlockOBJ *Http::handleBlock(std::queue<str> opts)
 {
-	if (opts.front() != "server")
+	if (opts.size() != 1 || opts.front() != "server")
 		return NULL;
 	servers.push_back(new Server());
 	return servers.back();
