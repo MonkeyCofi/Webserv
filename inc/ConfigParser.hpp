@@ -3,8 +3,12 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <exception>
+#include <stack>
+#include <queue>
 #include <string>
+#include <cctype>
 #include "Engine.hpp"
 
 typedef std::string str;
@@ -12,25 +16,31 @@ typedef std::string str;
 class ConfigParser
 {
 	private:
-		enum e_next {
-			WORD,
+		enum e_next
+		{
+			DEFAULT,
 			WORD_SEMI,
-			WORD_SEMI_NO_BRAC,
-			SEMICOLON,
 			OPEN_BRAC
 		};
 
-		int		inBlock;
-		e_next	expected;
+		const static str		directives[];
+		Engine					webserv;
+		str						err_msg;
+		int						inBlock;
+		e_next					expected;
+		std::queue<str>			parsed_opts;
+		std::stack<BlockOBJ *>	blocks;
 
-		bool	isWhitespace(char c);
-		bool	isControl(char c);
+		str		toString(int x)				const;
+		bool	isWhitespace(char c)		const;
+		bool	isControl(char c)			const;
 		bool	isValidNext(str &next);
-		void	skipWhitespace(str &line);
-		bool	validFilename(str &fn);
-		bool	handleNext(str &word);
+		bool	isValidDirective(str &word);
+		void	skipWhitespace(str &line)	const;
+		bool	validFilename(str &fn)		const;
+		str		parseNext(str &line)		const;
 		bool	parseLine(str &line);
-		str		parseNext(str &line);
+		bool	handleNext(str &word);
 
 	public:
 		ConfigParser();
