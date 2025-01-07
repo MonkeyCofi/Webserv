@@ -13,7 +13,7 @@ MANDATORY:
 pid			file;							|	M
 listen		address[:port] [default_server];|	S
 listen		port [default_server];			|	S
-server_name	(name | "" | _) ...;			|	S								|	S
+server_name	(name | "" | _) ...;			|	S
 alias		path;							|	L
 return		code [text];					|	SL
 root		path;							|	HSL

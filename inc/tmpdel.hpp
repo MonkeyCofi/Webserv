@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #ifndef TMPDEL_H
-#define TMPDEL_h
+#define TMPDEL_H
 
 void	printengine(BlockOBJ *obj, int lvl);
 

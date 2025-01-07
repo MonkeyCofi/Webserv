@@ -11,7 +11,7 @@ typedef std::string str;
 class Location: public BlockOBJ
 {
 	private:
-	
+		
 	public:
 		std::vector<Location *>	locations;
 		Location();

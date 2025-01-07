@@ -16,7 +16,8 @@ typedef std::string str;
 class ConfigParser
 {
 	private:
-		enum e_next {
+		enum e_next
+		{
 			DEFAULT,
 			WORD_SEMI,
 			OPEN_BRAC
