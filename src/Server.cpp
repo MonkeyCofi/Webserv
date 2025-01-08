@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+const str	Server::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "autoindex", "return", "try_files", "" };
+
 Server::Server(): BlockOBJ()
 {
 
@@ -18,7 +20,7 @@ Server::~Server()
 
 bool Server::handleDirective(std::queue<str> opts)
 {
-	(void) opts;
+	
 	return false;
 }
 

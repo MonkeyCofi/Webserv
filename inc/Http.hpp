@@ -13,6 +13,7 @@ typedef std::string str;
 class Http: public BlockOBJ
 {
 	private:
+		const static str	directives[];
 
 	public:
 		std::vector<Server *> servers;

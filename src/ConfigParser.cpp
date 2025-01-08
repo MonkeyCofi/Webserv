@@ -1,6 +1,6 @@
 #include "ConfigParser.hpp"
 
-const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "pid", "alias", "autoindex", "return", "try_files", "" };
+const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "try_files", "" };
 
 ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {

@@ -1,5 +1,7 @@
 #include "Http.hpp"
 
+const str	Http::directives[] = { "root", "index", "error_page", "client_max_body_size", "min_delete_depth", "autoindex", "" };
+
 Http::Http(): BlockOBJ()
 {
 

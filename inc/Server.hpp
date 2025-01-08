@@ -13,9 +13,10 @@ typedef std::string str;
 class Server: public BlockOBJ
 {
 	private:
+		const static str	directives[];
 		std::vector<str>		names, ips;
 		std::vector<int>		ports;
-	
+
 	public:
 		std::vector<Location *>	locations;
 		Server();
