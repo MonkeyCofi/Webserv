@@ -15,7 +15,7 @@ Http::Http(const Http &copy): BlockOBJ(copy)
 bool Http::handleDirective(std::queue<str> opts)
 {
 	(void) opts;
-	return true;	
+	return false;	
 }
 BlockOBJ *Http::handleBlock(std::queue<str> opts)
 {

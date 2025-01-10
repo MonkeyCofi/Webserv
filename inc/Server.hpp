@@ -14,8 +14,11 @@ class Server: public BlockOBJ
 {
 	private:
 		const static str	directives[];
-		std::vector<str>		names, ips;
-		std::vector<int>		ports;
+		std::vector<str>	names, ips, ports;
+		str					ret_str;
+		int					ret_code;
+
+		bool	handleAddress(str address);
 
 	public:
 		std::vector<Location *>	locations;

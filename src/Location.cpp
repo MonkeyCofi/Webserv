@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-const str	Location::directives[] = { "root", "index", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "try_files", "" };
+const str	Location::directives[] = { "root", "index", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
 
 Location::Location(): BlockOBJ(), alias()
 {
@@ -20,18 +20,26 @@ Location::~Location()
 
 bool Location::handleDirective(std::queue<str> opts)
 {
+	bool			parent_ret;
+
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
-	if (opts.front() == "alias")
+	parent_ret = BlockOBJ::handleDirective(opts);
+	if (opts.front() == "alias" && opts.size() == 2)
 	{
 		opts.pop();
 		alias = opts.front();
 	}
-	else if (opts.front() == "alias")
+	else if (opts.front() == "return" && opts.size() >= 2 && opts.size() <= 3)
 	{
 		opts.pop();
-		alias = opts.front();
+		ret_code = std::stoi(opts.front());
+		opts.pop();
+		if (opts.size() > 0)
+			ret_str = opts.front();
 	}
+	else
+		return parent_ret;
 	return true;
 }
 

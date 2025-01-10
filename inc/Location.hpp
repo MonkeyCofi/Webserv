@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <exception>
+#include <string>
 #include <queue>
 #include "BlockOBJ.hpp"
 
@@ -11,7 +12,8 @@ typedef std::string str;
 class Location: public BlockOBJ
 {
 	private:
-		str	alias;
+		int	ret_code;
+		str	alias, ret_str;
 		const static str	directives[];
 
 	public:
