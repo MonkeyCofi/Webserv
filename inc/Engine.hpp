@@ -4,18 +4,22 @@
 #include <iostream>
 #include <exception>
 #include "Http.hpp"
+#include "tmpdel.hpp"
 
 typedef std::string str;
 
 class Engine
 {
 	private:
-		Http		protocol;
+		Http		*protocol;
 
 	public:
 		Engine();
 		Engine(const Engine &copy);
 		~Engine();
+
+		Http	*getProtocol();
+
 		const Engine &operator =(const Engine &copy);
 };
 

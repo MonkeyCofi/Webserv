@@ -10,7 +10,9 @@ http
 
 
 
-{;;server{location /{location @uri{}} location jskdf{} } server{}} 
+{;;server{location{location{}} } server{try_files asdf; }
+
+server{}}
 http
 
 
@@ -27,4 +29,3 @@ http
 	
 
 	server_name jkldsf;
-alias; http{server{}}

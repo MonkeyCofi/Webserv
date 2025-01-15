@@ -1,0 +1,34 @@
+BLOCKS:
+
+http				{ ... }		|	M
+server				{ ... }		|	H
+location	uri		{ ... }		|	SL
+location	@name	{ ... }		|	SL
+
+
+DIRECTIVES:
+
+MANDATORY:
+
+pid			file;							|	M
+listen		address[:port] [default_server];|	S
+listen		port [default_server];			|	S
+server_name	(name | "" | _) ...;			|	S
+alias		path;							|	L
+return		code [text];					|	SL
+root		path;							|	HSL
+index		file ...;						|	HSL
+error_page	code ... [=[response]] uri;		|	HSL
+client_max_body_size		size;			|	HSL
+min_delete_depth			number;			|	HSL
+autoindex	on/off;							|	HSL
+
+MAYBE:
+
+try_files	file ... uri;					|	SL
+try_files	file ... =code;					|	SL
+
+PROBABLY NOT:
+
+client_body_buffer_size		size;			|	HSL
+client_body_timeout			time;			|	HSL
