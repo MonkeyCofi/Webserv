@@ -1,5 +1,5 @@
 #include "Http.hpp"
-
+ 
 const str	Http::directives[] = { "root", "index", "error_page", "client_max_body_size", "min_delete_depth", "autoindex", "" };
 
 Http::Http(): BlockOBJ()
@@ -21,7 +21,8 @@ BlockOBJ *Http::handleBlock(std::queue<str> opts)
 {
 	if (opts.size() != 1 || opts.front() != "server")
 		return NULL;
-	servers.push_back(new Server());
+	this->servers.push_back(new Server());
+	//std::cout << "Size: " << this->servers.size() << "\n";
 	return servers.back();
 }
 

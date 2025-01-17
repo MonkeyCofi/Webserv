@@ -1,14 +1,16 @@
 #ifndef SERVER_HPP
-#define SERVER_HPP
+# define SERVER_HPP
 
-#include <iostream>
-#include <exception>
-#include <vector>
-#include <queue>
-#include "BlockOBJ.hpp"
-#include "Location.hpp"
+# include <iostream>
+# include <exception>
+# include <vector>
+# include <queue>
+# include "BlockOBJ.hpp"
+# include "Location.hpp"
 
 typedef std::string str;
+
+class	Socket;
 
 class Server: public BlockOBJ
 {
@@ -17,6 +19,8 @@ class Server: public BlockOBJ
 		std::vector<str>	names, ips, ports;
 		str					ret_str;
 		int					ret_code;
+		//Socket				serv;
+		
 
 		bool	handleAddress(str address);
 
@@ -30,6 +34,10 @@ class Server: public BlockOBJ
 		BlockOBJ	*handleBlock(std::queue<str> opts);
 
 		const Server &operator =(const Server &copy);
+		str	returnPort(int index);
+
+		void	printPortsIpsNames();
+		str		getType();
 };
 
 #endif

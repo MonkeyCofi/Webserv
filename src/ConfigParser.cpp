@@ -133,6 +133,10 @@ bool ConfigParser::handleNext(str &word)
 						err_msg = "Incorrect arguments for block directive!\n";
 						return false;
 					}
+					if (ptr->getType() == "Server")
+					{
+						std::cout << "Server found\n";
+					}
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
@@ -187,6 +191,8 @@ Engine ConfigParser::parse(str &fn)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
+	//std::cout << "eng serv len: " << eng.getProtocol()->servers.size() << "\n";
+	this->webserv = eng;
 	return (eng);
 }
 

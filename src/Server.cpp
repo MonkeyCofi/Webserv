@@ -99,3 +99,23 @@ const Server &Server::operator =(const Server &copy)
 	(void)copy;
 	return *this;
 }
+
+void	Server::printPortsIpsNames()
+{
+	//for (std::vector<str>::iterator it = this->names.begin(); it != this->names.end(); it++)
+	//	std::cout << "name: " << *it << "\n";
+	//for (std::vector<str>::iterator it = this->ips.begin(); it != this->ips.end(); it++)
+	//	std::cout << "ips: " << *it << "\n";
+	//for (std::vector<str>::iterator it = this->ports.begin(); it != this->ports.end(); it++)
+	//	std::cout << "ports: " << *it << "\n";
+}
+
+str	Server::returnPort(int index)
+{
+	return (ports.at(index));
+}
+
+str	Server::getType()
+{
+	return ("Server");
+}

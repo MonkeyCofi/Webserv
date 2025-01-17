@@ -102,3 +102,8 @@ const BlockOBJ &BlockOBJ::operator=(const BlockOBJ &copy)
 	(void)copy;
 	return *this;
 }
+
+str	BlockOBJ::getType()
+{
+	return ("Block");
+}

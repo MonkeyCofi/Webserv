@@ -30,6 +30,7 @@ class BlockOBJ
 		bool	inDirectives(const str &dir, const str *dirs)	const;
 
 		const BlockOBJ &operator =(const BlockOBJ &copy);
+		virtual str	getType();
 };
 
 #endif
