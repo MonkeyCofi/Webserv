@@ -39,8 +39,8 @@ class ConfigParser
 		void	skipWhitespace(str &line)	const;
 		bool	validFilename(str &fn)		const;
 		str		parseNext(str &line)		const;
-		bool	parseLine(str &line);
-		bool	handleNext(str &word);
+		bool	parseLine(str &line, Engine &engine);
+		bool	handleNext(str &word, Engine &engine);
 
 	public:
 		ConfigParser();

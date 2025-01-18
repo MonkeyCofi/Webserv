@@ -112,6 +112,8 @@ void	Server::printPortsIpsNames()
 
 str	Server::returnPort(int index)
 {
+	if (ports.empty())
+		return ("empty");
 	return (ports.at(index));
 }
 

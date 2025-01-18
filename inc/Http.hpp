@@ -26,6 +26,8 @@ class Http: public BlockOBJ
 		std::vector<Server *>	getServers();
 
 		const Http &operator =(const Http &copy);
+
+		str	getType();
 };
 
 #endif

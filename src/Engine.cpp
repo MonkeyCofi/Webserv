@@ -8,6 +8,7 @@ Engine::Engine(): protocol(NULL)
 Engine::Engine(const Engine &copy)
 {
 	(void)copy;
+	this->protocol = copy.protocol;
 }
 
 Http *Engine::getProtocol()
@@ -17,12 +18,13 @@ Http *Engine::getProtocol()
 
 Engine::~Engine()
 {
-	printengine(protocol, 0);
-	delete protocol;
+	//printengine(protocol, 0);
+	//delete protocol;
 }
 
 const Engine &Engine::operator =(const Engine &copy)
 {
 	(void)copy;
+	this->protocol = copy.protocol;
 	return *this;
 }

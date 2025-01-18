@@ -87,9 +87,9 @@ str ConfigParser::parseNext(str &line) const
 	return next;
 }
 
-bool ConfigParser::handleNext(str &word)
+bool ConfigParser::handleNext(str &word, Engine &engine)
 {
-	BlockOBJ	*ptr;
+	BlockOBJ	*ptr = NULL;
 
 	inBlock += (word == "{") - (word == "}");
 	if (!isControl(word[0]))
@@ -134,9 +134,7 @@ bool ConfigParser::handleNext(str &word)
 						return false;
 					}
 					if (ptr->getType() == "Server")
-					{
-						std::cout << "Server found\n";
-					}
+						engine.getProtocol()->servers.push_back(dynamic_cast<Server *>(ptr));
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
@@ -148,10 +146,11 @@ bool ConfigParser::handleNext(str &word)
 		if (word == "}")
 			blocks.pop();
 	}
+	(void)engine;
 	return true;
 }
 
-bool ConfigParser::parseLine(str &line)
+bool ConfigParser::parseLine(str &line, Engine &engine)
 {
 	str	word;
 
@@ -159,7 +158,7 @@ bool ConfigParser::parseLine(str &line)
 	while (line != "")
 	{
 		word = parseNext(line);
-		if (!isValidNext(word) || !handleNext(word))
+		if (!isValidNext(word) || !handleNext(word, engine))
 			return false;
 		skipWhitespace(line);
 	}
@@ -184,15 +183,14 @@ Engine ConfigParser::parse(str &fn)
 	{
 		cpy = line;
 		i++;
-		if (!parseLine(cpy))
+		if (!parseLine(cpy, eng))
 			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 	}
 	if (inBlock)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	//std::cout << "eng serv len: " << eng.getProtocol()->servers.size() << "\n";
-	this->webserv = eng;
+	//std::cout << "Number of servers: " << eng.getProtocol()->servers.size() << "\n";
 	return (eng);
 }
 

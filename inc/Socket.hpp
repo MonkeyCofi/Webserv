@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 16:48:00 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/17 16:01:23 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/18 19:58:19 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ class Socket
 {
 	private:
 		struct sockaddr_in	server;
+		struct sockaddr_in	client;
 		int					serv_sock;
 		//std::vector<int>	serv_sock;
 	public:
@@ -36,6 +37,8 @@ class Socket
 		Socket	&operator=(const Socket &obj);
 		
 		Socket(Server &obj);
+		int	returnSocket(int index);
+		struct sockaddr_in	returnClient();
 };
 
 #endif

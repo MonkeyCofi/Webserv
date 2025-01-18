@@ -66,3 +66,8 @@ const Location &Location::operator =(const Location &copy)
 	(void)copy;
 	return *this;
 }
+
+str	Location::getType()
+{
+	return ("Location");
+}

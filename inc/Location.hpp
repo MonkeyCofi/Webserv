@@ -29,6 +29,7 @@ class Location: public BlockOBJ
 		str		getAlias() const;
 
 		const Location &operator =(const Location &copy);
+		str	getType();
 };
 
 #endif

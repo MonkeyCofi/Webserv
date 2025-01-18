@@ -16,7 +16,6 @@ int main(int ac, char **av)
 		str		tmp = av[1];
 		eng = conf.parse(tmp);
 		std::cout << "Parsing done!\n";
-
 	}
 	catch (const std::exception &e)
 	{
@@ -24,18 +23,16 @@ int main(int ac, char **av)
 	}
 
 	Http	*p = eng.getProtocol();
-	Socket	*ptr;
-	std::cout << "no. of servers: " << p->servers.size() << "\n";
 	p->servers.at(0)->printPortsIpsNames();
-	try
-	{
-		Socket socket(*p->servers.at(0));
-		ptr = &socket;
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << "Bind failed\n";
-	}
-	
+	Socket socket(*p->servers.at(0));
+	if (listen(socket.returnSocket(0), 5) == -1)
+		perror("Listen");
+	else
+		std::cout << "Currently listening\n";
+	// now that the socket is listening, create an accept socket
+	struct sockaddr_in	cl = socket.returnClient();
+	socklen_t	len = sizeof(socket.returnClient());
+	int acc_socket = accept(socket.returnSocket(0), (struct sockaddr *)&cl, &len);
+	(void)acc_socket;
 	return 0;
 }

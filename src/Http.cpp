@@ -37,3 +37,8 @@ const Http &Http::operator =(const Http &copy)
 	(void)copy;
 	return *this;
 }
+
+str	Http::getType()
+{
+	return ("Http");
+}
