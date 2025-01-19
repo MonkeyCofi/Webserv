@@ -32,7 +32,15 @@ int main(int ac, char **av)
 	// now that the socket is listening, create an accept socket
 	struct sockaddr_in	cl = socket.returnClient();
 	socklen_t	len = sizeof(socket.returnClient());
+	
+	char	address[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &cl.sin_addr, address, len) == NULL)
+		std::cout << "Couldn't get presentation of IP\n";
+	std::cout << "Listening on address: " << address << "\n";
 	int acc_socket = accept(socket.returnSocket(0), (struct sockaddr *)&cl, &len);
-	(void)acc_socket;
+	char buf[1024];
+	recv(acc_socket, buf, sizeof(buf), 0);
+	std::cout << buf << "\n";
+	unlink("0.0.0.0");
 	return 0;
 }

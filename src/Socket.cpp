@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/18 19:58:37 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/19 18:42:15 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ Socket::Socket(Server &obj)
 {
 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	server.sin_family = AF_INET;
+	// get the port and address from the server object
 	//std::cout << "Port: " << obj.returnPort(0) << "\n";
 	server.sin_port = htons(atoi(obj.returnPort(0).c_str()));
 	//server.sin_addr.s_addr = inet_addr("0.0.0.0");
