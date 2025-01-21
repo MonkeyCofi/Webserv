@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/21 17:38:24 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/21 20:06:04 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,8 @@ Socket::Socket()
 	this->server.sin_port = htons(80);
 	this->server.sin_family = AF_INET;
 	this->server.sin_addr.s_addr = inet_addr("0.0.0.0");
-	bzero(&this->server.sin_zero, sizeof(this->server.sin_zero));
+	// bzero(&this->server.sin_zero, sizeof(this->server.sin_zero));
+	memset(&this->server.sin_zero, 0, sizeof(this->server.sin_zero));
 	if (bind(serv_sock, (sockaddr *)&this->server, sizeof(this->server)) < 0)
 	{
 		perror(NULL);
@@ -57,8 +58,8 @@ Socket::Socket(Server &obj, int serv_index)
 		server.sin_addr.s_addr = INADDR_ANY;
 	if (bind(serv_sock, (sockaddr *)&this->server, sizeof(this->server)) < 0)
 	{
-		perror("Bind");
-		throw (std::exception());
+		perror("Bind in parameterized constructor");
+		throw (BindException());
 	}
 }
 
@@ -71,4 +72,9 @@ int	Socket::returnSocket(int index)
 struct sockaddr_in	Socket::returnClient()
 {
 	return (this->client);
+}
+
+const char*	Socket::BindException::what()
+{
+	return ("Bind failed");
 }

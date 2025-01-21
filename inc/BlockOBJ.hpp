@@ -7,6 +7,7 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <cstdlib>
 
 typedef std::string str;
 

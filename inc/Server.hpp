@@ -15,10 +15,10 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
-		const static str	directives[];
-		std::vector<str>	names, ips, ports;
-		str					ret_str;
-		int					ret_code;
+		const static str		directives[];
+		std::vector<str>		names, ips, ports;
+		str						ret_str;
+		int						ret_code;
 		//Socket				serv;
 		
 
@@ -42,6 +42,7 @@ class Server: public BlockOBJ
 		std::vector<str>	returnIPs();
 		std::vector<str>	returnPorts();
 		str		getType();
+		Socket*	init_listeners();
 };
 
 #endif

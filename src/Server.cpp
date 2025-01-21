@@ -82,7 +82,8 @@ bool Server::handleDirective(std::queue<str> opts)
 	else if (opts.front() == "return" && opts.size() >= 2 && opts.size() <= 3)
 	{
 		opts.pop();
-		ret_code = std::stoi(opts.front());
+		// ret_code = std::stoi(opts.front());
+		ret_code = atoi(opts.front().c_str());
 		opts.pop();
 		if (opts.size() > 0)
 			ret_str = opts.front();
