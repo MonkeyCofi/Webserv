@@ -7,6 +7,7 @@
 #include <queue>
 #include "BlockOBJ.hpp"
 #include "Server.hpp"
+#include "Socket.hpp"
 
 typedef std::string str;
 
@@ -14,7 +15,7 @@ class Http: public BlockOBJ
 {
 	private:
 		const static str	directives[];
-
+		std::vector<Socket *>	listeners;
 	public:
 		std::vector<Server *> servers;
 		Http();
@@ -28,6 +29,8 @@ class Http: public BlockOBJ
 		const Http &operator =(const Http &copy);
 
 		str	getType();
+		void		printPortsIpsNames();
+		void		init_listeners();
 };
 
 #endif

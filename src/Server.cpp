@@ -37,9 +37,15 @@ bool Server::handleAddress(str address)
 		}
 	}
 	if (colon_cnt == 0)
+	{
 		ports.push_back(address);
+		ips.push_back("none");
+	}
 	else if (colon_cnt == 3)
+	{
 		ips.push_back(address);
+		ports.push_back("80");
+	}
 	else if (colon_cnt == 3)
 	{
 		ips.push_back(address.substr(0, last_colon));
@@ -97,17 +103,8 @@ BlockOBJ *Server::handleBlock(std::queue<str> opts)
 const Server &Server::operator =(const Server &copy)
 {
 	(void)copy;
+	//this->
 	return *this;
-}
-
-void	Server::printPortsIpsNames()
-{
-	//for (std::vector<str>::iterator it = this->names.begin(); it != this->names.end(); it++)
-	//	std::cout << "name: " << *it << "\n";
-	//for (std::vector<str>::iterator it = this->ips.begin(); it != this->ips.end(); it++)
-	//	std::cout << "ips: " << *it << "\n";
-	//for (std::vector<str>::iterator it = this->ports.begin(); it != this->ports.end(); it++)
-	//	std::cout << "ports: " << *it << "\n";
 }
 
 str	Server::returnPort(int index)
@@ -117,7 +114,29 @@ str	Server::returnPort(int index)
 	return (ports.at(index));
 }
 
+str	Server::returnIP(int index)
+{
+	if (ips.empty())
+		return ("empty");
+	return (ips.at(index));
+}
+
 str	Server::getType()
 {
 	return ("Server");
+}
+
+std::vector<str>	Server::returnNames()
+{
+	return (this->names);
+}
+
+std::vector<str>	Server::returnIPs()
+{
+	return (this->ips);
+}
+
+std::vector<str>	Server::returnPorts()
+{
+	return (this->ports);
 }

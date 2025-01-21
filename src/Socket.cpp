@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/19 18:42:15 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/21 17:38:24 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,15 +44,17 @@ Socket	&Socket::operator=(const Socket &obj)
 	return (*this);
 }
 
-Socket::Socket(Server &obj)
+Socket::Socket(Server &obj, int serv_index)
 {
 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	server.sin_family = AF_INET;
 	// get the port and address from the server object
-	//std::cout << "Port: " << obj.returnPort(0) << "\n";
-	server.sin_port = htons(atoi(obj.returnPort(0).c_str()));
-	//server.sin_addr.s_addr = inet_addr("0.0.0.0");
-	server.sin_addr.s_addr = INADDR_ANY;
+	std::cout << "Port: " << obj.returnPort(serv_index) << "\n";
+	server.sin_port = htons(atoi(obj.returnPort(serv_index).c_str()));
+	if (obj.returnIP(serv_index) != "none")
+		server.sin_addr.s_addr = inet_addr(obj.returnIP(serv_index).c_str());
+	else
+		server.sin_addr.s_addr = INADDR_ANY;
 	if (bind(serv_sock, (sockaddr *)&this->server, sizeof(this->server)) < 0)
 	{
 		perror("Bind");

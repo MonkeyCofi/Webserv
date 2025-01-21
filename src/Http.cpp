@@ -42,3 +42,38 @@ str	Http::getType()
 {
 	return ("Http");
 }
+
+void	Http::init_listeners()
+{
+	std::cout << "There are " << servers.size() << " servers\n";
+	try
+	{
+		for (unsigned int i = 0; i < servers.size(); i++)
+		{
+			Socket *temp = new Socket(*this->servers.at(i), i);
+			this->listeners.push_back(temp);
+			std::cout << "in here\n";
+		}
+	}
+	catch (std::exception())
+	{
+		std::cout << "uwu\n";
+	}
+}
+
+void	Http::printPortsIpsNames()
+{
+	for (unsigned int i = 0; i < servers.size(); i++)
+	{
+		//for (std::vector<str>::iterator it = this->names.begin(); it != this->names.end(); it++)
+		std::vector<str>	names = this->servers.at(i)->returnNames();
+		for (std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
+			std::cout << "name: " << *it << "\n";
+		//	std::cout << "name: " << *it << "\n";
+		//for (std::vector<str>::iterator it = this->ips.begin(); it != this->ips.end(); it++)
+		//	std::cout << "ips: " << *it << "\n";
+		//for (std::vector<str>::iterator it = this->ports.begin(); it != this->ports.end(); it++)
+		//	std::cout << "ports: " << *it << "\n";
+		std::cout << "\n";
+	}
+}
