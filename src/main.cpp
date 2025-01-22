@@ -23,7 +23,7 @@ int main(int ac, char **av)
 	}
 
 	Http	*p = eng.getProtocol();
-	//p->init_listeners();
+	p->init_listeners();
 	p->printPortsIpsNames();
 	(void)p;
 	//Socket socket(*p->servers.at(0));

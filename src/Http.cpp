@@ -67,13 +67,14 @@ void	Http::printPortsIpsNames()
 	{
 		//for (std::vector<str>::iterator it = this->names.begin(); it != this->names.end(); it++)
 		std::vector<str>	names = this->servers.at(i)->returnNames();
+		std::vector<str>	ips = this->servers.at(i)->returnIPs();
+		std::vector<str>	ports = this->servers.at(i)->returnPorts();
 		for (std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
 			std::cout << "name: " << *it << "\n";
-		//	std::cout << "name: " << *it << "\n";
-		//for (std::vector<str>::iterator it = this->ips.begin(); it != this->ips.end(); it++)
-		//	std::cout << "ips: " << *it << "\n";
-		//for (std::vector<str>::iterator it = this->ports.begin(); it != this->ports.end(); it++)
-		//	std::cout << "ports: " << *it << "\n";
+		for (std::vector<str>::iterator it = ips.begin(); it != ips.end(); it++)
+			std::cout << "ip addr: " << *it << "\n";
+		for (std::vector<str>::iterator it = ports.begin(); it != ports.end(); it++)
+			std::cout << "port: " << *it << "\n";
 		std::cout << "\n";
 	}
 }

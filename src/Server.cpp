@@ -18,12 +18,34 @@ Server::~Server()
     	delete *it;
 }
 
+static bool	countSeparators(str address, const str separator, unsigned int amount)
+{
+	unsigned int	count;
+
+	count = 0;
+	if (address.find(separator) == std::string::npos)
+		return (false);
+	while (address.find(separator) != std::string::npos)
+	{
+		address = address.substr(address.find(separator) + 1);
+		count++;
+	}
+	std::cout << "Count is " << count << "\n";
+	return (count == amount);
+	// splice the string each time
+}
+
 bool Server::handleAddress(str address)
 {
 	int	colon_cnt;
 	int	last_colon;
 
 	colon_cnt = 0;
+	if (address.find_first_of('.') != std::string::npos)	// ip address is present
+	{
+		if (countSeparators(address, ".", 3) == false)
+			return (false);	// throw an invalid address exception
+	}
 	for (unsigned int i = 0; i < address.length(); i++)
 	{
 		if (address[i] != ':' && address[i] < '0' && address[i] > '9')
@@ -38,21 +60,35 @@ bool Server::handleAddress(str address)
 	}
 	if (colon_cnt == 0)
 	{
-		ports.push_back(address);
-		ips.push_back("none");
+		// if the address has a dot, then its am ip
+		if (address.find_first_of('.') == std::string::npos)
+		{
+			ports.push_back(address);
+			ips.push_back("none");
+		}
+		else
+		{
+			ports.push_back("80");
+			ips.push_back(address);
+		} // else its a port
 	}
-	else if (colon_cnt == 3)
-	{
-		ips.push_back(address);
-		ports.push_back("80");
-	}
-	else if (colon_cnt == 3)
+	else
 	{
 		ips.push_back(address.substr(0, last_colon));
 		ports.push_back(address.substr(last_colon + 1));
 	}
-	else
-		return false;
+	// else if (colon_cnt == 3)
+	// {
+	// 	ips.push_back(address);
+	// 	ports.push_back("80");
+	// }
+	// else if (colon_cnt == 3)
+	// {
+	// 	ips.push_back(address.substr(0, last_colon));
+	// 	ports.push_back(address.substr(last_colon + 1));
+	// }
+	// else
+	// 	return false;
 	return true;
 }
 
