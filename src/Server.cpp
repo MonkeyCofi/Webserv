@@ -30,9 +30,7 @@ static bool	countSeparators(str address, const str separator, unsigned int amoun
 		address = address.substr(address.find(separator) + 1);
 		count++;
 	}
-	std::cout << "Count is " << count << "\n";
 	return (count == amount);
-	// splice the string each time
 }
 
 bool Server::handleAddress(str address)
@@ -146,6 +144,8 @@ const Server &Server::operator =(const Server &copy)
 
 str	Server::returnPort(int index)
 {
+	if ((unsigned int) index > ports.size())
+		return ("out of range");
 	if (ports.empty())
 		return ("empty");
 	return (ports.at(index));
@@ -153,6 +153,8 @@ str	Server::returnPort(int index)
 
 str	Server::returnIP(int index)
 {
+	if ((unsigned int) index > ips.size())
+		return ("out of range");
 	if (ips.empty())
 		return ("empty");
 	return (ips.at(index));

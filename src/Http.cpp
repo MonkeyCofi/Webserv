@@ -22,7 +22,6 @@ BlockOBJ *Http::handleBlock(std::queue<str> opts)
 	if (opts.size() != 1 || opts.front() != "server")
 		return NULL;
 	this->servers.push_back(new Server());
-	//std::cout << "Size: " << this->servers.size() << "\n";
 	return servers.back();
 }
 
@@ -50,14 +49,22 @@ void	Http::init_listeners()
 	{
 		for (unsigned int i = 0; i < servers.size(); i++)
 		{
-			Socket *temp = new Socket(*this->servers.at(i), i);
-			this->listeners.push_back(temp);
-			std::cout << "in here\n";
+			// create a listener for each listen directive
+			std::vector<str>	ports = servers.at(i)->returnPorts();
+			for (unsigned int j = 0; j < ports.size(); j++)
+			{
+				Socket *temp = new Socket(*this->servers.at(i), j);
+				this->listeners.push_back(temp);
+			}
 		}
 	}
 	catch (std::exception())
 	{
 		std::cout << "uwu\n";
+	}
+	catch (std::out_of_range())
+	{
+		std::cout << "Index is out of range\n";
 	}
 }
 

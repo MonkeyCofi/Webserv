@@ -22,10 +22,20 @@ int main(int ac, char **av)
 		std::cerr << e.what() << "\n";
 	}
 
-	Http	*p = eng.getProtocol();
-	p->init_listeners();
-	p->printPortsIpsNames();
-	(void)p;
+	try
+	{
+		Http	*p = eng.getProtocol();
+		p->init_listeners();	// initialize every listener for every certificate block
+		p->printPortsIpsNames();
+	}
+	catch (Socket::BindException())
+	{
+		;
+	}
+	catch(std::out_of_range())
+	{
+		;
+	}
 	//Socket socket(*p->servers.at(0));
 	//if (listen(socket.returnSocket(0), 5) == -1)
 	//	perror("Listen");

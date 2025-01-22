@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
+/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 16:48:00 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/21 22:29:11 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/01/22 16:09:38 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class Socket
 		Socket(const Socket &obj);
 		Socket	&operator=(const Socket &obj);
 		
-		Socket(Server &obj, int serv_index);
+		Socket(Server &obj, int listener_index);
 		int	returnSocket(int index);
 		struct sockaddr_in	returnClient();
 		
