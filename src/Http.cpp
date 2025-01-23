@@ -51,11 +51,13 @@ void	Http::init_listeners()
 		{
 			// create a listener for each listen directive
 			std::vector<str>	ports = servers.at(i)->returnPorts();
-			for (unsigned int j = 0; j < ports.size(); j++)
+			unsigned int j = 0;
+			for (; j < ports.size(); j++)
 			{
 				Socket *temp = new Socket(*this->servers.at(i), j);
 				this->listeners.push_back(temp);
 			}
+			std::cout << "There are " << j + 1 << " listeners for server " << i + 1 << "\n";
 		}
 	}
 	catch (std::exception())
@@ -84,4 +86,9 @@ void	Http::printPortsIpsNames()
 			std::cout << "port: " << *it << "\n";
 		std::cout << "\n";
 	}
+}
+
+std::vector<Socket *>	Http::returnSockets()
+{
+	return (this->listeners);
 }

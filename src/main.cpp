@@ -22,9 +22,9 @@ int main(int ac, char **av)
 		std::cerr << e.what() << "\n";
 	}
 
+	Http	*p = eng.getProtocol();
 	try
 	{
-		Http	*p = eng.getProtocol();
 		p->init_listeners();	// initialize every listener for every certificate block
 		p->printPortsIpsNames();
 	}
@@ -36,23 +36,13 @@ int main(int ac, char **av)
 	{
 		;
 	}
-	//Socket socket(*p->servers.at(0));
-	//if (listen(socket.returnSocket(0), 5) == -1)
-	//	perror("Listen");
-	//else
-	//	std::cout << "Currently listening\n";
-	//// now that the socket is listening, create an accept socket
-	//struct sockaddr_in	cl = socket.returnClient();
-	//socklen_t	len = sizeof(socket.returnClient());
-	
-	//char	address[INET_ADDRSTRLEN];
-	//if (inet_ntop(AF_INET, &cl.sin_addr, address, len) == NULL)
-	//	std::cout << "Couldn't get presentation of IP\n";
-	//std::cout << "Listening on address: " << address << "\n";
-	//int acc_socket = accept(socket.returnSocket(0), (struct sockaddr *)&cl, &len);
-	//char buf[1024];
-	//recv(acc_socket, buf, sizeof(buf), 0);
-	//std::cout << buf << "\n";
-	//unlink("0.0.0.0");
-	//return 0;
+	std::vector<Socket *>	listeners = p->returnSockets();
+	for (unsigned int i = 0; i < listeners.size(); i++)
+	{
+		std::cout << "Fd: " << listeners.at(i)->returnSocket(i) << "\n";
+	}
+	//for (std::vector<Socket *>::iterator it = listeners.begin(); it != listeners.end(); it++)
+	//{
+	//	std::cout << "Fd: " << it->returnSocket()
+	//}
 }

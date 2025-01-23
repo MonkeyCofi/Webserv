@@ -31,6 +31,7 @@ class Http: public BlockOBJ
 		str	getType();
 		void		printPortsIpsNames();
 		void		init_listeners();
+		std::vector<Socket *>	returnSockets();
 };
 
 #endif

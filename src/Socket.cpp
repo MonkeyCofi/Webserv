@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/22 16:10:02 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/23 14:37:44 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,10 +49,11 @@ Socket::Socket(Server &obj, int listener_index)
 {
 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	server.sin_family = AF_INET;
-	// get the port and address from the server object
-	std::cout << "Port: " << obj.returnPort(listener_index) << "\n";
+
+	//std::cout << "Port: " << obj.returnPort(listener_index) << "\n";
+	
 	server.sin_port = htons(atoi(obj.returnPort(listener_index).c_str()));
-	if (obj.returnIP(0) != "none")
+	if (obj.returnIP(listener_index) != "none")
 	{
 		std::cout << "Address to bind: " << obj.returnIP(listener_index) << "\n";
 		server.sin_addr.s_addr = inet_addr(obj.returnIP(listener_index).c_str());
