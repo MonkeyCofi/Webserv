@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 16:48:00 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/23 16:28:55 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/27 13:06:11 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,11 @@ class Socket
 		struct sockaddr_in	returnClient();
 		
 		class	BindException
+		{
+			const char*	what();
+		};
+		
+		class	AddrinfoException
 		{
 			const char*	what();
 		};

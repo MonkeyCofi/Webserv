@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/23 14:37:44 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/27 17:15:13 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,24 +47,40 @@ Socket	&Socket::operator=(const Socket &obj)
 
 Socket::Socket(Server &obj, int listener_index)
 {
+	struct addrinfo	*info;
+	struct sockaddr_in	*temp;
+	const char	*addr;
+	const char	*port;
+	
+	addr = (obj.returnIP(listener_index) == "none" ? NULL : obj.returnIP(listener_index).c_str());
+	port = (obj.returnPort(listener_index) == "none" ? NULL : obj.returnPort(listener_index).c_str());
+	int addr_ret = getaddrinfo(addr, port, NULL, &info);
+	if (addr_ret != 0)
+	{
+		std::cout << gai_strerror(addr_ret) << "\n";
+		throw (AddrinfoException());
+	}
+	temp = (sockaddr_in *)info->ai_addr;
+	server = *temp;
 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	server.sin_family = AF_INET;
-
-	//std::cout << "Port: " << obj.returnPort(listener_index) << "\n";
-	
-	server.sin_port = htons(atoi(obj.returnPort(listener_index).c_str()));
-	if (obj.returnIP(listener_index) != "none")
-	{
-		std::cout << "Address to bind: " << obj.returnIP(listener_index) << "\n";
-		server.sin_addr.s_addr = inet_addr(obj.returnIP(listener_index).c_str());
-	}
-	else
-		server.sin_addr.s_addr = INADDR_ANY;
+	char	buf[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &server.sin_addr, buf, INET_ADDRSTRLEN);
+	std::cout << "Address is: " << buf << "\n";
+	//server.sin_port = htons(atoi(obj.returnPort(listener_index).c_str()));
+	//if (obj.returnIP(listener_index) != "none")
+	//{
+	//	std::cout << "Address to bind: " << obj.returnIP(listener_index) << "\n";
+	//	//server.sin_addr.s_addr = inet_addr(obj.returnIP(listener_index).c_str());
+	//}
+	//else
+	//	server.sin_addr.s_addr = INADDR_ANY;
 	if (bind(serv_sock, (sockaddr *)&this->server, sizeof(this->server)) < 0)
 	{
 		perror("Bind in parameterized constructor");
 		throw (BindException());
 	}
+	
 }
 
 int	Socket::returnSocket(int index)
@@ -81,4 +97,9 @@ struct sockaddr_in	Socket::returnClient()
 const char*	Socket::BindException::what()
 {
 	return ("Bind failed");
+}
+
+const char*	Socket::AddrinfoException::what()
+{
+	return ("Failed to get address info");
 }

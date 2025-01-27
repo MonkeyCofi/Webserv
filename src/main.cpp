@@ -41,8 +41,18 @@ int main(int ac, char **av)
 	{
 		std::cout << "Fd: " << listeners.at(i)->returnSocket(i) << "\n";
 	}
-	//for (std::vector<Socket *>::iterator it = listeners.begin(); it != listeners.end(); it++)
-	//{
-	//	std::cout << "Fd: " << it->returnSocket()
-	//}
+	int test = listen(listeners.at(0)->returnSocket(0), 10);
+	if (test == -1)
+	{
+		perror("Listen");
+		return (1);
+	}
+	struct sockaddr_in	client;
+	socklen_t	len = sizeof(client);
+	int accept_sock = accept(listeners.at(0)->returnSocket(0), (struct sockaddr *)&client, &len);
+	if (accept_sock == -1)
+	{
+		perror("Accept");
+		return (1);
+	}
 }
