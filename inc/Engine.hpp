@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <exception>
+#include <fstream>
 #include "Http.hpp"
 #include "tmpdel.hpp"
 
