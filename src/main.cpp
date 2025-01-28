@@ -38,25 +38,20 @@ int main(int ac, char **av)
 		;
 	}
 	std::vector<Socket *>	listeners = p->returnSockets();
-	//for (unsigned int i = 0; i < listeners.size(); i++)
-	//{
-	//	std::cout << "Fd: " << listeners.at(i)->returnSocket(i) << "\n";
-	//}
-	int test = listen(listeners.at(0)->returnSocket(0), 10);
-	if (test == -1)
-	{
-		perror("Listen");
-		return (1);
-	}
-	struct pollfd	sock_fds[2];
-	bzero(&sock_fds, sizeof(struct pollfd) * 2);
-	sock_fds[0].fd = listeners.at(0)->returnSocket(0);
-	sock_fds[0].events = 0;
-	sock_fds[0].revents = 0;
 
-	sock_fds[1].fd = listeners.at(1)->returnSocket(1);
-	sock_fds[1].events = 0;
-	sock_fds[1].revents = 0;
-	int res = poll(sock_fds, 2, 10);
-	
+	std::vector<struct pollfd>	sock_fds;
+	for (unsigned int i = 0; i < listeners.size(); i++)
+	{
+		struct pollfd	temp;
+		temp.fd = listeners.at(i)->returnSocket(i);
+		temp.events = 0;
+		temp.revents = 0;
+		sock_fds.push_back(temp);
+	}
+
+	// while (1)
+	// {
+	// 	int res = poll(&sock_fds[0], sock_fds.size(), 100);
+	// 	if ()
+	// }
 }
