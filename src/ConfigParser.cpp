@@ -1,6 +1,6 @@
 #include "ConfigParser.hpp"
 
-const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "pid", "alias", "autoindex", "return", "try_files", "" };
+const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
 
 ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
@@ -87,9 +87,9 @@ str ConfigParser::parseNext(str &line) const
 	return next;
 }
 
-bool ConfigParser::handleNext(str &word)
+bool ConfigParser::handleNext(str &word, Engine &engine)
 {
-	BlockOBJ	*ptr;
+	BlockOBJ	*ptr = NULL;
 
 	inBlock += (word == "{") - (word == "}");
 	if (!isControl(word[0]))
@@ -133,6 +133,8 @@ bool ConfigParser::handleNext(str &word)
 						err_msg = "Incorrect arguments for block directive!\n";
 						return false;
 					}
+					if (ptr->getType() == "Server")
+						engine.getProtocol()->servers.push_back(dynamic_cast<Server *>(ptr));
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
@@ -144,10 +146,11 @@ bool ConfigParser::handleNext(str &word)
 		if (word == "}")
 			blocks.pop();
 	}
+	(void)engine;
 	return true;
 }
 
-bool ConfigParser::parseLine(str &line)
+bool ConfigParser::parseLine(str &line, Engine &engine)
 {
 	str	word;
 
@@ -155,7 +158,7 @@ bool ConfigParser::parseLine(str &line)
 	while (line != "")
 	{
 		word = parseNext(line);
-		if (!isValidNext(word) || !handleNext(word))
+		if (!isValidNext(word) || !handleNext(word, engine))
 			return false;
 		skipWhitespace(line);
 	}
@@ -180,13 +183,14 @@ Engine ConfigParser::parse(str &fn)
 	{
 		cpy = line;
 		i++;
-		if (!parseLine(cpy))
+		if (!parseLine(cpy, eng))
 			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 	}
 	if (inBlock)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
+	//std::cout << "Number of servers: " << eng.getProtocol()->servers.size() << "\n";
 	return (eng);
 }
 

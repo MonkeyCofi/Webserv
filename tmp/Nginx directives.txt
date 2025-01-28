@@ -10,12 +10,13 @@ DIRECTIVES:
 
 MANDATORY:
 
-pid			file;							|	M
-listen		address[:port] [default_server];|	S
-listen		port [default_server];			|	S
+listen		port;							|	S
+listen		address[:port];					|	S
 server_name	(name | "" | _) ...;			|	S
-alias		path;							|	L
+alias		path;							|	L		./
 return		code [text];					|	SL
+
+
 root		path;							|	HSL
 index		file ...;						|	HSL
 error_page	code ... [=[response]] uri;		|	HSL
