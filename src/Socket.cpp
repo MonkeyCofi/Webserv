@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/27 17:15:13 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/28 11:51:18 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,8 @@ Socket::Socket(Server &obj, int listener_index)
 		perror("Bind in parameterized constructor");
 		throw (BindException());
 	}
-	
+	if (listen(this->serv_sock, 128) == -1)
+		throw (ListenException());
 }
 
 int	Socket::returnSocket(int index)
@@ -102,4 +103,9 @@ const char*	Socket::BindException::what()
 const char*	Socket::AddrinfoException::what()
 {
 	return ("Failed to get address info");
+}
+
+const char*	Socket::ListenException::what()
+{
+	return ("Failed to create connection");
 }

@@ -1,6 +1,7 @@
 #include <iostream>
 #include "ConfigParser.hpp"
 #include "Socket.hpp"
+#include <poll.h>
 
 int main(int ac, char **av)
 {
@@ -37,22 +38,25 @@ int main(int ac, char **av)
 		;
 	}
 	std::vector<Socket *>	listeners = p->returnSockets();
-	for (unsigned int i = 0; i < listeners.size(); i++)
-	{
-		std::cout << "Fd: " << listeners.at(i)->returnSocket(i) << "\n";
-	}
+	//for (unsigned int i = 0; i < listeners.size(); i++)
+	//{
+	//	std::cout << "Fd: " << listeners.at(i)->returnSocket(i) << "\n";
+	//}
 	int test = listen(listeners.at(0)->returnSocket(0), 10);
 	if (test == -1)
 	{
 		perror("Listen");
 		return (1);
 	}
-	struct sockaddr_in	client;
-	socklen_t	len = sizeof(client);
-	int accept_sock = accept(listeners.at(0)->returnSocket(0), (struct sockaddr *)&client, &len);
-	if (accept_sock == -1)
-	{
-		perror("Accept");
-		return (1);
-	}
+	struct pollfd	sock_fds[2];
+	bzero(&sock_fds, sizeof(struct pollfd) * 2);
+	sock_fds[0].fd = listeners.at(0)->returnSocket(0);
+	sock_fds[0].events = 0;
+	sock_fds[0].revents = 0;
+
+	sock_fds[1].fd = listeners.at(1)->returnSocket(1);
+	sock_fds[1].events = 0;
+	sock_fds[1].revents = 0;
+	int res = poll(sock_fds, 2, 10);
+	
 }
