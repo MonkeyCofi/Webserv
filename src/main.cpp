@@ -5,10 +5,9 @@
 
 void	parse_request(str& request)
 {
-	// parse the status line of the request
-	//str	status = request.substr(find_last_of("\r\n");
-	str	status = request.substr(0, request.find_last_of("\r\n"));
-	std::cout << "Test: " << status << "\n\n";
+	str	status_line = request.substr(0, request.find_first_of("\r\n"));
+	str	method = status_line.substr(0, status_line.find_first_of(' '));
+	std::cout << "Request method: " << method << "\n";
 }
 
 int main(int ac, char **av)
