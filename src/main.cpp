@@ -3,6 +3,14 @@
 #include "Socket.hpp"
 #include <poll.h>
 
+void	parse_request(str& request)
+{
+	// parse the status line of the request
+	//str	status = request.substr(find_last_of("\r\n");
+	str	status = request.substr(0, request.find_last_of("\r\n"));
+	std::cout << "Test: " << status << "\n\n";
+}
+
 int main(int ac, char **av)
 {
 	unlink("0.0.0.0");
@@ -63,13 +71,19 @@ int main(int ac, char **av)
 			std::cout << sock_fds.at(i).revents << "\n";
 			if (sock_fds.at(i).revents & POLLIN)
 			{
+				// Request read_request();
 				struct sockaddr_in	client;
 				socklen_t	len = sizeof(client);
 				int acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len);
 				char buf[1024];
 				recv(acc_sock, buf, sizeof(buf), 0);
-				std::cout << buf << "\n";
+
+				std::string	req(buf);
+				parse_request(req);
 				close(acc_sock);
+
+				// after accepting, parse the request and serve according to request
+				// parse_request(Request &req);
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 				std::cout << "Fd " << sock_fds.at(i).fd << " is ready for output\n";
