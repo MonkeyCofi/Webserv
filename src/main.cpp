@@ -7,8 +7,14 @@ void	parse_request(str& request)
 {
 	str	status_line = request.substr(0, request.find_first_of("\r\n"));
 	str	method = status_line.substr(0, status_line.find_first_of(' '));
-	std::cout << "Request method: " << method << "\n";
+
+
+	// parse headers and their content
 }
+
+// once request is parsed
+// send a response according to the request
+// for now, serve a webpage 
 
 int main(int ac, char **av)
 {
@@ -51,6 +57,7 @@ int main(int ac, char **av)
 	for (unsigned int i = 0; i < listeners.size(); i++)
 	{
 		struct pollfd	temp;
+		// fcntl(temp.fd, )
 		temp.fd = listeners.at(i)->returnSocket(i);
 		temp.events = POLLIN;
 		temp.revents = 0;
@@ -67,7 +74,7 @@ int main(int ac, char **av)
 		}
 		for (unsigned int i = 0; i < listeners.size(); i++)
 		{
-			std::cout << sock_fds.at(i).revents << "\n";
+			// std::cout << sock_fds.at(i).revents << "\n";
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				// Request read_request();
@@ -78,8 +85,9 @@ int main(int ac, char **av)
 				recv(acc_sock, buf, sizeof(buf), 0);
 
 				std::string	req(buf);
+				std::cout << req;
 				parse_request(req);
-				close(acc_sock);
+				// close(acc_sock);
 
 				// after accepting, parse the request and serve according to request
 				// parse_request(Request &req);
