@@ -2,14 +2,39 @@
 #include "ConfigParser.hpp"
 #include "Socket.hpp"
 #include <poll.h>
+#include <fstream>
+#include <fcntl.h>
 
-void	parse_request(str& request)
+void	parse_request(str& request, int client)
 {
 	str	status_line = request.substr(0, request.find_first_of("\r\n"));
 	str	method = status_line.substr(0, status_line.find_first_of(' '));
+	str	http_header = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nConnection:close\r\n";
+	char	buffer[4096];
 
+	send(client, "\r\n", 2, 0);
 
-	// parse headers and their content
+	int	index;
+	index = open("index.html", O_RDONLY);
+	if (index == -1)
+	{
+		std::cout << "Couldn't open index.html\n";
+		send(client, "HTTP/1.1 404 Not Found\r\n\r\n", sizeof("HTTP/1.1 404 Not Found\r\n\r\n"), 0);
+		exit(EXIT_FAILURE);
+	}
+	else
+		std::cout << "Successfully opened index.html\n";
+	send(client, http_header.c_str(), http_header.length(), 0);
+	ssize_t	bytes = 1;
+	while ((bytes = read(index, buffer, 1)) > 0)
+	{
+		std::cout << buffer << "\n";
+		if (buffer[0] != '\n')
+			send(client, buffer, 1, 0);
+		else
+			send(client, "\r\n", 2, 0);
+	}
+	close(client);
 }
 
 // once request is parsed
@@ -18,7 +43,7 @@ void	parse_request(str& request)
 
 int main(int ac, char **av)
 {
-	unlink("0.0.0.0");
+	unlink("localhost");
 	if (ac != 2)
 	{
 		std::cerr << "Error\nInvalid number of arguments!\nUsage: ./webserv <configuration_file.conf>\n";
@@ -86,7 +111,7 @@ int main(int ac, char **av)
 
 				std::string	req(buf);
 				std::cout << req;
-				parse_request(req);
+				parse_request(req, acc_sock);
 				// close(acc_sock);
 
 				// after accepting, parse the request and serve according to request
