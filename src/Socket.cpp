@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/28 11:51:18 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/01/30 21:23:32 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,8 +61,8 @@ Socket::Socket(Server &obj, int listener_index)
 		throw (AddrinfoException());
 	}
 	temp = (sockaddr_in *)info->ai_addr;
-	server = *temp;
-	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
+	this->server = *temp;
+	this->serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	server.sin_family = AF_INET;
 	char	buf[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &server.sin_addr, buf, INET_ADDRSTRLEN);

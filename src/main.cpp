@@ -12,8 +12,6 @@ void	parse_request(str& request, int client)
 	str	http_header = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nConnection:close\r\n";
 	char	buffer[4096];
 
-	send(client, "\r\n", 2, 0);
-
 	int	index;
 	index = open("index.html", O_RDONLY);
 	if (index == -1)
@@ -25,6 +23,7 @@ void	parse_request(str& request, int client)
 	else
 		std::cout << "Successfully opened index.html\n";
 	send(client, http_header.c_str(), http_header.length(), 0);
+	send(client, "\r\n", 2, 0);
 	ssize_t	bytes = 1;
 	while ((bytes = read(index, buffer, 1)) > 0)
 	{
@@ -36,6 +35,13 @@ void	parse_request(str& request, int client)
 	}
 	close(client);
 }
+
+//void	parse_request(str& request, int client)
+//{
+//	str	status_line = request.substr(0, request.find_first_of("\r\n"));
+//	str	method = status_line.substr(0, status_line.find_first_of(' '));
+	
+//}
 
 // once request is parsed
 // send a response according to the request
