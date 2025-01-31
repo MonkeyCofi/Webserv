@@ -105,6 +105,7 @@ int main(int ac, char **av)
 		struct pollfd	temp;
 		// fcntl(temp.fd, )
 		temp.fd = listeners.at(i)->returnSocket(i);
+		fcntl(temp.fd, F_SETFL, fcntl(temp.fd, F_GETFL) | O_NONBLOCK);
 		temp.events = POLLIN;
 		temp.revents = 0;
 		sock_fds.push_back(temp);
@@ -125,10 +126,13 @@ int main(int ac, char **av)
 				// for the listener to add the client to the poll
 				if (i < listeners.size())
 				{
+					struct pollfd		cli;
 					struct sockaddr_in	client;
-					socklen_t	len = sizeof(client);
-					int acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len); // creates a socket for the client
-					struct pollfd	cli;
+					socklen_t			len;
+					int					acc_sock;
+
+					acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len); // creates a socket for the client
+					len = sizeof(client);
 					cli.fd = acc_sock;
 					cli.events = POLLIN | POLLOUT;
 					cli.revents = 0;
