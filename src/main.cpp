@@ -4,30 +4,45 @@
 #include <poll.h>
 #include <fstream>
 #include <fcntl.h>
+#include "Request.hpp"
 
 void	parse_request(str& request, int client)
 {
+	char	buffer[4096];
+
 	str	status_line = request.substr(0, request.find_first_of("\r\n"));
 	str	method = status_line.substr(0, status_line.find_first_of(' '));
 	str	http_header = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nConnection:close\r\n";
-	char	buffer[4096];
-
+	str	get_file = "none";
+	if (method == "GET")
+	{
+		get_file = status_line.substr(status_line.find_first_of(' ') + 1);\
+		get_file = get_file.substr(0, get_file.find_first_of(' '));
+		if (get_file.at(0) == '/' && get_file.length() == 1)
+			get_file = "none";
+		else
+		{
+			std::string::iterator	it = get_file.begin();
+			get_file.erase(it);
+		}
+		std::cout << "The file to get is " << get_file << "\n";
+	}
 	int	index;
-	index = open("index.html", O_RDONLY);
+	index = open(get_file == "none" ? "index.html" : get_file.c_str(), O_RDONLY);
 	if (index == -1)
 	{
-		std::cout << "Couldn't open index.html\n";
+		std::cout << "Couldn't open " << (get_file == "none" ? "index.html" : get_file) << "\n";
 		send(client, "HTTP/1.1 404 Not Found\r\n\r\n", sizeof("HTTP/1.1 404 Not Found\r\n\r\n"), 0);
 		exit(EXIT_FAILURE);
 	}
 	else
-		std::cout << "Successfully opened index.html\n";
+		std::cout << "Successfully opened " << (get_file == "none" ? "index.html" : get_file) << "\n";
 	send(client, http_header.c_str(), http_header.length(), 0);
 	send(client, "\r\n", 2, 0);
 	ssize_t	bytes = 1;
 	while ((bytes = read(index, buffer, 1)) > 0)
 	{
-		std::cout << buffer << "\n";
+		//std::cout << buffer << "\n";
 		if (buffer[0] != '\n')
 			send(client, buffer, 1, 0);
 		else
@@ -97,34 +112,56 @@ int main(int ac, char **av)
 
 	 while (1)
 	 {
-	 	int res = poll(&sock_fds[0], sock_fds.size(), 100);
+	 	int res = poll(&sock_fds[0], sock_fds.size(), 1000);
 		if (res == -1)
 		{
 			perror("poll");
 			exit(EXIT_FAILURE);
 		}
-		for (unsigned int i = 0; i < listeners.size(); i++)
+		for (unsigned int i = 0; i < sock_fds.size(); i++)
 		{
-			// std::cout << sock_fds.at(i).revents << "\n";
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				// Request read_request();
-				struct sockaddr_in	client;
-				socklen_t	len = sizeof(client);
-				int acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len);
-				char buf[1024];
-				recv(acc_sock, buf, sizeof(buf), 0);
+				// for the listener to add the client to the poll
+				if (i < listeners.size())
+				{
+					struct sockaddr_in	client;
+					socklen_t	len = sizeof(client);
+					int acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len); // creates a socket for the client
+					struct pollfd	cli;
+					cli.fd = acc_sock;
+					cli.events = POLLIN | POLLOUT;
+					cli.revents = 0;
+					sock_fds.push_back(cli);
+				}
+				//else	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+				//{
+				//	char buf[1024];
+				//	recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 
-				std::string	req(buf);
-				std::cout << req;
-				parse_request(req, acc_sock);
-				// close(acc_sock);
-
-				// after accepting, parse the request and serve according to request
-				// parse_request(Request &req);
+				//	std::string	req(buf);
+				//	std::cout << req;
+				//	parse_request(req, sock_fds.at(i).fd);
+				//	close(sock_fds.at(i).fd);
+				//	sock_fds.pop_back();
+				//}
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
+			{
 				std::cout << "Fd " << sock_fds.at(i).fd << " is ready for output\n";
+				char buf[1024];
+				recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+
+				std::string	req(buf);
+				//std::cout << req;
+				//parse_request(req, sock_fds.at(i).fd);
+				Request	request;
+				request = request.parseRequest(req);
+				close(sock_fds.at(i).fd);
+				sock_fds.pop_back();
+			}
+			//else
+			//	std::cout << "Polling\n";
 		}
 	 }
 }
