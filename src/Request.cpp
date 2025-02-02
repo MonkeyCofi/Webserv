@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/31 20:16:54 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/02/01 16:21:30 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,11 @@
 
 Request::Request()
 {
+	this->method = "none";
+	this->serveFile = "none";
+	this->host = "none";
+	this->contentLength = 0;
+	this->keepAlive = false;
 	//throw(NoHostException());
 }
 
@@ -24,11 +29,7 @@ Request::Request()
 
 Request::~Request()
 {
-	this->method = "none";
-	this->serveFile = "none";
-	this->host = "none";
-	this->contentLength = 0;
-	this->keepAlive = false;
+	
 }
 
 Request::Request(const Request& obj)
@@ -71,5 +72,14 @@ Request	Request::parseRequest(str& request)
 	}
 	std::cout << "The file to get is " << file_name << "\n";
 	req.serveFile = file_name;
+	req.fileFD = open(req.serveFile.c_str(), O_RDWR);
+	
+	
+	
 	return (req);
+}
+
+int	Request::getFileFD()
+{
+	return (this->fileFD);
 }

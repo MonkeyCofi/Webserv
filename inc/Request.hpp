@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/31 20:07:43 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/02/01 16:13:41 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define REQUEST_HPP
 
 # include <iostream>
+# include <fcntl.h>
 
 typedef std::string str;
 
@@ -22,6 +23,8 @@ class Request
 	private:
 		str		method;
 		str		serveFile;
+		str		contentType;
+		int		fileFD;
 		str		host;
 		size_t	contentLength;
 		bool	keepAlive;	// either keep-alive, or close
@@ -33,6 +36,7 @@ class Request
 		Request		&operator=(const Request& obj);
 
 		Request	parseRequest(str& request);
+		int		getFileFD();
 
 		class	NoHostException
 		{
