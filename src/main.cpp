@@ -140,7 +140,7 @@ int main(int ac, char **av)
 
 	 while (g_quit != true)
 	 {
-	 	int res = poll(&sock_fds[0], sock_fds.size(), 1000);
+	 	int res = poll(&sock_fds[0], sock_fds.size(), 50);
 		if (res == -1)
 		{
 			perror("poll");
@@ -167,7 +167,11 @@ int main(int ac, char **av)
 					cli.revents = 0;
 					sock_fds.push_back(cli);
 				}
-				else	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+				else if (sock_fds.at(i).revents & POLLHUP)
+					throw (std::exception());
+				else if (sock_fds.at(i).revents & POLLERR)
+					std::cout << "Error\n";
+				else if (sock_fds.at(i).revents & POLLOUT)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
 				{
 					char buf[4096];
 					recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
@@ -183,5 +187,13 @@ int main(int ac, char **av)
 			}
 		}
 	 }
+	if (g_quit == true)
+	{
+		// close all sockets
+		for (unsigned int i = 0; i < sock_fds.size(); i++)
+		{
+			close(sock_fds.at(i).fd);
+		}
+	}
 	std::cout << (g_quit == true ? "True" : "False") << "\n";
 }

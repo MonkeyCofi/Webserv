@@ -6,7 +6,7 @@
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/30 21:23:32 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/02/03 17:55:13 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,8 @@ Socket::Socket(Server &obj, int listener_index)
 	//}
 	//else
 	//	server.sin_addr.s_addr = INADDR_ANY;
+	int	opt = 1;
+	setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	if (bind(serv_sock, (sockaddr *)&this->server, sizeof(this->server)) < 0)
 	{
 		perror("Bind in parameterized constructor");
