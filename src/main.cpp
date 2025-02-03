@@ -5,6 +5,15 @@
 #include <fstream>
 #include <fcntl.h>
 #include "Request.hpp"
+#include <signal.h>
+
+bool	g_quit = false;
+
+void	sigint_handle(int signal)
+{
+	if (signal == SIGINT)
+		g_quit = true;
+}
 
 void	parse_request(str& request, int client)
 {
@@ -129,7 +138,7 @@ int main(int ac, char **av)
 		sock_fds.push_back(temp);
 	}
 
-	 while (1)
+	 while (g_quit != true)
 	 {
 	 	int res = poll(&sock_fds[0], sock_fds.size(), 1000);
 		if (res == -1)
@@ -139,6 +148,7 @@ int main(int ac, char **av)
 		}
 		for (unsigned int i = 0; i < sock_fds.size(); i++)
 		{
+			signal(SIGINT, sigint_handle);
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				// for the listener to add the client to the poll
@@ -173,4 +183,5 @@ int main(int ac, char **av)
 			}
 		}
 	 }
+	std::cout << (g_quit == true ? "True" : "False") << "\n";
 }
