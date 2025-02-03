@@ -15,6 +15,7 @@ void	parse_request(str& request, int client)
 	str	http_header;
 	if (request.find("text/html") == str::npos)
 	{
+		//if (request.find("text"))
 		if (request.find("text/css") == str::npos)
 			http_header = "HTTP/1.1 200 OK\r\nContent-Type:image/jpeg\r\nConnection:close\r\n";
 		else
@@ -41,7 +42,7 @@ void	parse_request(str& request, int client)
 	if (index == -1)
 	{
 		std::cout << "Couldn't open " << (get_file == "none" ? "index.html" : get_file) << "\n";
-		send(client, "HTTP/1.1 404 Not Found\r\n\r\n", sizeof("HTTP/1.1 404 Not Found\r\n\r\n"), 0);
+		send(client, "HTTP/1.1 403 Not Found\r\n\r\n", sizeof("HTTP/1.1 404 Not Found\r\n\r\n"), 0);
 		exit(EXIT_FAILURE);
 	}
 	else
@@ -149,6 +150,7 @@ int main(int ac, char **av)
 					int					acc_sock;
 
 					acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len); // creates a socket for the client
+					std::cout << "received a request from a client\n";
 					len = sizeof(client);
 					cli.fd = acc_sock;
 					cli.events = POLLIN | POLLOUT;
@@ -157,33 +159,18 @@ int main(int ac, char **av)
 				}
 				else	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
 				{
-					char buf[1024];
+					char buf[4096];
 					recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 
 					std::string	req(buf);
 					std::cout << req;
 					parse_request(req, sock_fds.at(i).fd);
 					close(sock_fds.at(i).fd);
+					std::cout << "Size before popping: " << sock_fds.size() << "\n";
 					sock_fds.pop_back();
+					std::cout << "Size after popping: " << sock_fds.size() << "\n";
 				}
 			}
-			// else if (sock_fds.at(i).revents & POLLOUT)
-			// {
-			// 	std::cout << "Fd " << sock_fds.at(i).fd << " is ready for output\n";
-			// 	char buf[1024];
-			// 	recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
-
-			// 	std::string	req(buf);
-			// 	//std::cout << req;
-			// 	//parse_request(req, sock_fds.at(i).fd);
-			// 	Request	request;
-			// 	request = request.parseRequest(req);
-			// 	parse_request(request);
-			// 	close(sock_fds.at(i).fd);
-			// 	sock_fds.pop_back();
-			// }
-			//else
-			//	std::cout << "Polling\n";
 		}
 	 }
 }
