@@ -123,7 +123,6 @@ int main(int ac, char **av)
 	{
 		;
 	}
-	// print blocks
 
 
 	std::vector<Socket *>	listeners = p->returnSockets();
@@ -135,25 +134,26 @@ int main(int ac, char **av)
 		// fcntl(temp.fd, )
 		temp.fd = listeners.at(i)->returnSocket(i);
 		fcntl(temp.fd, F_SETFL, fcntl(temp.fd, F_GETFL) | O_NONBLOCK);
+		fcntl(temp.fd, F_SETFD, fcntl(temp.fd, F_GETFD) | FD_CLOEXEC);
 		temp.events = POLLIN;
 		temp.revents = 0;
 		sock_fds.push_back(temp);
 	}
-
-	 while (g_quit != true)
-	 {
-	 	int res = poll(&sock_fds[0], sock_fds.size(), 1000);
+	std::string	req;
+	while (g_quit != true)
+	{
+	 	int res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == -1)
 		{
 			perror("poll");
 			exit(EXIT_FAILURE);
 		}
+		std::cout << "number of sockets in poll(): " << sock_fds.size() << "\n";
 		for (unsigned int i = 0; i < sock_fds.size(); i++)
 		{
 			signal(SIGINT, sigint_handle);
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				// for the listener to add the client to the poll
 				if (i < listeners.size())
 				{
 					struct pollfd		cli;
@@ -161,56 +161,75 @@ int main(int ac, char **av)
 					socklen_t			len;
 					int					acc_sock;
 
-					acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len); // creates a socket for the client
-					std::cout << "received a request from a client\n";
 					len = sizeof(client);
+					acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len);
+					if (errno == EWOULDBLOCK)
+					{
+						std::cout << "Nothing to accept\n";
+						continue ;
+					}
+					std::cout << "received a request from a client\n";
 					cli.fd = acc_sock;
+					fcntl(cli.fd, F_SETFL, fcntl(cli.fd, F_GETFL) | O_NONBLOCK);
+					fcntl(cli.fd, F_SETFD, fcntl(cli.fd, F_GETFD) | FD_CLOEXEC);
 					cli.events = POLLIN | POLLOUT;
 					cli.revents = 0;
 					sock_fds.push_back(cli);
 				}
-
 			}
 			else if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "Hangup\n";
-				close(sock_fds.at(i).fd);
-				sock_fds.pop_back();
-				// throw (std::exception());
+				if (i < listeners.size())
+				{
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					i--;
+				}
+				continue ;
 			}
 			else if (sock_fds.at(i).revents & POLLERR)
 			{
 				std::cout << "Error\n";
-				close(sock_fds.at(i).fd);
-				sock_fds.pop_back();
-				// throw (std::exception());
+				if (i < listeners.size())
+				{
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					i--;
+				}
+				continue ;
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
 			{
-				char buf[4096];
-				memset(buf, 0, sizeof(buf));
+				char buf[2048];
+				//memset(buf, 0, sizeof(buf));
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 				if (bytes > 0)
-					std::cout << "read " << bytes << " bytes\n";
+				{
+					std::cout << "reading\n";
+					req.append(buf, bytes);
+					if (req.find("\r\n\r\n") != std::string::npos)
+					{
+						std::cout << req << "\n";
+						parse_request(req, sock_fds.at(i).fd);
+					}
+				}
 				else if (bytes == 0)
+				{
 					std::cout << "read till the end of the request\n";
-				// else if (bytes < 0)
-				else if (errno == EAGAIN || errno == EWOULDBLOCK)
-					std::cout << "cannot receive data at the moment\n";
-				std::fstream	request_file;
-
-				request_file.open("request_file.txt");
-				std::string	req(buf);
-				request_file << req;
-				request_file.close();
-				parse_request(req, sock_fds.at(i).fd);
-				close(sock_fds.at(i).fd);
-				// std::cout << "Size before popping: " << sock_fds.size() << "\n";
-				sock_fds.pop_back();
-				// std::cout << "Size after popping: " << sock_fds.size() << "\n";
+					parse_request(req, sock_fds.at(i).fd);
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					i--;
+				}
+				else if (errno == EAGAIN)
+				{
+					std::cout << "EAGAIN. wtf is that\n";
+					continue ;
+				}
 			}
 		}
-	 }
+	}
 	if (g_quit == true)
 	{
 		// close all sockets
