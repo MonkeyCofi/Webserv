@@ -22,6 +22,7 @@ void	parse_request(str& request, int client)
 	str	status_line = request.substr(0, request.find_first_of("\r\n"));
 	str	method = status_line.substr(0, status_line.find_first_of(' '));
 	str	http_header;
+
 	if (request.find("text/html") == str::npos)
 	{
 		//if (request.find("text"))
@@ -44,14 +45,14 @@ void	parse_request(str& request, int client)
 			std::string::iterator	it = get_file.begin();
 			get_file.erase(it);
 		}
-		std::cout << "The file to get is " << get_file << "\n";
+		std::cout << "The file to get is " << (get_file == "none" ? "index" : get_file) << "\n";
 	}
 	int	index;
 	index = open(get_file == "none" ? "index.html" : get_file.c_str(), O_RDONLY);
 	if (index == -1)
 	{
 		std::cout << "Couldn't open " << (get_file == "none" ? "index.html" : get_file) << "\n";
-		send(client, "HTTP/1.1 403 Not Found\r\n\r\n", sizeof("HTTP/1.1 404 Not Found\r\n\r\n"), 0);
+		send(client, "HTTP/1.1 403 Not Found\r\n\r\n", sizeof("HTTP/1.1 403 Not Found\r\n\r\n"), 0);
 		exit(EXIT_FAILURE);
 	}
 	else
@@ -61,11 +62,9 @@ void	parse_request(str& request, int client)
 	ssize_t	bytes = 1;
 	while ((bytes = read(index, buffer, 1)) > 0)
 	{
-		//std::cout << buffer << "\n";
-		// if (buffer[0] != '\n')
-			send(client, buffer, 1, 0);
-		// else
-		// 	send(client, "\r\n", 2, 0);
+		send(client, buffer, 1, 0);
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			std::cout << "send issue\n";
 	}
 	// close(client);
 }
@@ -124,6 +123,9 @@ int main(int ac, char **av)
 	{
 		;
 	}
+	// print blocks
+
+
 	std::vector<Socket *>	listeners = p->returnSockets();
 
 	std::vector<struct pollfd>	sock_fds;
@@ -140,7 +142,7 @@ int main(int ac, char **av)
 
 	 while (g_quit != true)
 	 {
-	 	int res = poll(&sock_fds[0], sock_fds.size(), 50);
+	 	int res = poll(&sock_fds[0], sock_fds.size(), 1000);
 		if (res == -1)
 		{
 			perror("poll");
@@ -167,23 +169,45 @@ int main(int ac, char **av)
 					cli.revents = 0;
 					sock_fds.push_back(cli);
 				}
-				else if (sock_fds.at(i).revents & POLLHUP)
-					throw (std::exception());
-				else if (sock_fds.at(i).revents & POLLERR)
-					std::cout << "Error\n";
-				else if (sock_fds.at(i).revents & POLLOUT)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
-				{
-					char buf[4096];
-					recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 
-					std::string	req(buf);
-					std::cout << req;
-					parse_request(req, sock_fds.at(i).fd);
-					close(sock_fds.at(i).fd);
-					std::cout << "Size before popping: " << sock_fds.size() << "\n";
-					sock_fds.pop_back();
-					std::cout << "Size after popping: " << sock_fds.size() << "\n";
-				}
+			}
+			else if (sock_fds.at(i).revents & POLLHUP)
+			{
+				std::cout << "Hangup\n";
+				close(sock_fds.at(i).fd);
+				sock_fds.pop_back();
+				// throw (std::exception());
+			}
+			else if (sock_fds.at(i).revents & POLLERR)
+			{
+				std::cout << "Error\n";
+				close(sock_fds.at(i).fd);
+				sock_fds.pop_back();
+				// throw (std::exception());
+			}
+			else if (sock_fds.at(i).revents & POLLOUT)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+			{
+				char buf[4096];
+				memset(buf, 0, sizeof(buf));
+				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+				if (bytes > 0)
+					std::cout << "read " << bytes << " bytes\n";
+				else if (bytes == 0)
+					std::cout << "read till the end of the request\n";
+				// else if (bytes < 0)
+				else if (errno == EAGAIN || errno == EWOULDBLOCK)
+					std::cout << "cannot receive data at the moment\n";
+				std::fstream	request_file;
+
+				request_file.open("request_file.txt");
+				std::string	req(buf);
+				request_file << req;
+				request_file.close();
+				parse_request(req, sock_fds.at(i).fd);
+				close(sock_fds.at(i).fd);
+				// std::cout << "Size before popping: " << sock_fds.size() << "\n";
+				sock_fds.pop_back();
+				// std::cout << "Size after popping: " << sock_fds.size() << "\n";
 			}
 		}
 	 }
@@ -193,6 +217,11 @@ int main(int ac, char **av)
 		for (unsigned int i = 0; i < sock_fds.size(); i++)
 		{
 			close(sock_fds.at(i).fd);
+			sock_fds.pop_back();
+		}
+		for (unsigned int i = 0; i < listeners.size(); i++)
+		{
+			listeners.pop_back();
 		}
 	}
 	std::cout << (g_quit == true ? "True" : "False") << "\n";

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/03 17:55:13 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/02/04 14:02:23 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,16 @@ Socket	&Socket::operator=(const Socket &obj)
 	return (*this);
 }
 
+void	Socket::printAddress()
+{
+	char	addressBuffer[INET_ADDRSTRLEN];
+	
+	if (inet_ntop(AF_INET, &this->server.sin_addr, \
+		addressBuffer, INET_ADDRSTRLEN) != NULL)
+		std::cout << "Address is " << addressBuffer << "\n";
+	
+}
+
 Socket::Socket(Server &obj, int listener_index)
 {
 	struct addrinfo	*info;
@@ -64,17 +74,7 @@ Socket::Socket(Server &obj, int listener_index)
 	this->server = *temp;
 	this->serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	server.sin_family = AF_INET;
-	char	buf[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &server.sin_addr, buf, INET_ADDRSTRLEN);
-	std::cout << "Address is: " << buf << "\n";
-	//server.sin_port = htons(atoi(obj.returnPort(listener_index).c_str()));
-	//if (obj.returnIP(listener_index) != "none")
-	//{
-	//	std::cout << "Address to bind: " << obj.returnIP(listener_index) << "\n";
-	//	//server.sin_addr.s_addr = inet_addr(obj.returnIP(listener_index).c_str());
-	//}
-	//else
-	//	server.sin_addr.s_addr = INADDR_ANY;
+	Socket::printAddress();
 	int	opt = 1;
 	setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	if (bind(serv_sock, (sockaddr *)&this->server, sizeof(this->server)) < 0)

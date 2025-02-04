@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 16:48:00 by pipolint          #+#    #+#             */
-/*   Updated: 2025/01/28 11:44:19 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/02/04 12:49:28 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ class Socket
 		Socket(Server &obj, int listener_index);
 		int					returnSocket(int index);
 		struct sockaddr_in	returnClient();
+		
+		void	printAddress();
 		
 		class	BindException
 		{
