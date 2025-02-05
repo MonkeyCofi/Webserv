@@ -108,7 +108,7 @@ int main(int ac, char **av)
 	{
 		std::cerr << e.what() << "\n";
 	}
-
+	exit(0);
 	Http	*p = eng.getProtocol();
 	try
 	{
