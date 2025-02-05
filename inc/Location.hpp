@@ -15,9 +15,9 @@ class Location: public BlockOBJ
 		int	ret_code;
 		str	alias, ret_str;
 		const static str	directives[];
+		std::vector<Location *>	locations;
 
 	public:
-		std::vector<Location *>	locations;
 		Location();
 		Location(const Location &copy);
 		~Location();
@@ -28,6 +28,7 @@ class Location: public BlockOBJ
 		void	setAlias(const str &s);
 		str		getAlias() const;
 		str				getType();
+		std::vector<Location *>	getLocations();
 
 		const Location &operator =(const Location &copy);
 };

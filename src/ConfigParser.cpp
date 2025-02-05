@@ -87,7 +87,7 @@ str ConfigParser::parseNext(str &line) const
 	return next;
 }
 
-bool ConfigParser::handleNext(str &word, Engine &engine)
+bool ConfigParser::handleNext(str &word)
 {
 	BlockOBJ	*ptr = NULL;
 
@@ -127,14 +127,15 @@ bool ConfigParser::handleNext(str &word, Engine &engine)
 				}
 				if (word[0] == '{')
 				{
+					std::cout << blocks.top()->getType() << " ------------ \n";
 					ptr = blocks.top()->handleBlock(parsed_opts);
 					if (!ptr)
 					{
 						err_msg = "Incorrect arguments for block directive!\n";
 						return false;
 					}
-					if (ptr->getType() == "server")
-						engine.getProtocol()->servers.push_back(dynamic_cast<Server *>(ptr));
+					// if (ptr->getType() == "server")
+					// 	engine.getProtocol()->getServers().push_back(dynamic_cast<Server *>(ptr));
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
@@ -146,11 +147,10 @@ bool ConfigParser::handleNext(str &word, Engine &engine)
 		if (word == "}")
 			blocks.pop();
 	}
-	(void)engine;
 	return true;
 }
 
-bool ConfigParser::parseLine(str &line, Engine &engine)
+bool ConfigParser::parseLine(str &line)
 {
 	str	word;
 
@@ -158,7 +158,7 @@ bool ConfigParser::parseLine(str &line, Engine &engine)
 	while (line != "")
 	{
 		word = parseNext(line);
-		if (!isValidNext(word) || !handleNext(word, engine))
+		if (!isValidNext(word) || !handleNext(word))
 			return false;
 		skipWhitespace(line);
 	}
@@ -170,7 +170,6 @@ Engine ConfigParser::parse(str &fn)
 	if (!validFilename(fn))
 		throw FilenameError("Invalid file name!");
 
-	Engine			eng;
 	str				line, cpy;
 	int				i = 0;
 	std::ifstream 	file;
@@ -183,15 +182,15 @@ Engine ConfigParser::parse(str &fn)
 	{
 		cpy = line;
 		i++;
-		if (!parseLine(cpy, eng))
+		if (!parseLine(cpy))
 			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 	}
 	if (inBlock)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	//std::cout << "Number of servers: " << eng.getProtocol()->servers.size() << "\n";
-	return (eng);
+	//std::cout << "Number of servers: " << webserv.getProtocol()->getServers().size() << "\n";
+	return (webserv);
 }
 
 ConfigParser::~ConfigParser()

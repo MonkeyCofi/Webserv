@@ -72,3 +72,8 @@ str	Location::getType()
 {
 	return ("location");
 }
+
+std::vector<Location *>	Location::getLocations()
+{
+	return locations;
+}

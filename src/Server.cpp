@@ -179,3 +179,8 @@ std::vector<str>	Server::returnPorts()
 {
 	return (this->ports);
 }
+
+std::vector<Location *>	Server::getLocations()
+{
+	return locations;
+}

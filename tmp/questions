@@ -1,3 +1,5 @@
 why atoi instead of stoi in BlockOBJ
 fix exceptions in Socket
-follow convention with getters
+follow convention with getters and camelCase
+made dotest.sh work on your config file
+unnecessary configparser change (adding a server to http)

@@ -16,9 +16,9 @@ class Http: public BlockOBJ
 	private:
 		const static str		directives[];
 		std::vector<Socket *>	listeners;
+		std::vector<Server *>	servers;
 
 	public:
-		std::vector<Server *>	servers;
 		Http();
 		Http(const Http &copy);
 		~Http();

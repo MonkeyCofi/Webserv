@@ -19,13 +19,13 @@ class Server: public BlockOBJ
 		std::vector<str>		names, ips, ports;
 		str						ret_str;
 		int						ret_code;
+		std::vector<Location *>	locations;
 		//Socket				serv;
 		
 
 		bool	handleAddress(str address);
 
 	public:
-		std::vector<Location *>	locations;
 		Server();
 		Server(const Server &copy);
 		~Server();
@@ -41,6 +41,7 @@ class Server: public BlockOBJ
 		std::vector<str>	returnNames();
 		std::vector<str>	returnIPs();
 		std::vector<str>	returnPorts();
+		std::vector<Location *>	getLocations();
 
 		const Server &operator =(const Server &copy);
 };

@@ -24,18 +24,18 @@ void	printengine(BlockOBJ *obj, int lvl)
 	std::cout<<type<<":\n";
 	if (type == "Http")
 	{
-		for(unsigned int i=0;i<((Http *)obj)->servers.size();i++)
-			printengine(((Http *)obj)->servers[i], lvl + 1);
+		for(unsigned int i=0;i<((Http *)obj)->getServers().size();i++)
+			printengine(((Http *)obj)->getServers()[i], lvl + 1);
 	}
 	if (type == "Server")
 	{
-		for(unsigned int i=0;i<((Server *)obj)->locations.size();i++)
-			printengine(((Server *)obj)->locations[i], lvl + 1);
+		for(unsigned int i=0;i<((Server *)obj)->getLocations().size();i++)
+			printengine(((Server *)obj)->getLocations()[i], lvl + 1);
 	}
 	if (type == "Location")
 	{
-		for(unsigned int i=0;i<((Location *)obj)->locations.size();i++)
-			printengine(((Location *)obj)->locations[i], lvl + 1);
+		for(unsigned int i=0;i<((Location *)obj)->getLocations().size();i++)
+			printengine(((Location *)obj)->getLocations()[i], lvl + 1);
 
 	}
 }
