@@ -30,17 +30,16 @@ class Server: public BlockOBJ
 		Server(const Server &copy);
 		~Server();
 
-		bool		handleDirective(std::queue<str> opts);
-		BlockOBJ	*handleBlock(std::queue<str> opts);
-
-		str	returnPort(int index);
-		str	returnIP(int index);
-		str		getType();
-		Socket*	init_listeners();
-		void	printPortsIpsNames();
-		std::vector<str>	returnNames();
-		std::vector<str>	returnIPs();
-		std::vector<str>	returnPorts();
+		bool					handleDirective(std::queue<str> opts);
+		BlockOBJ				*handleBlock(std::queue<str> opts);
+		str						returnPort(int index);
+		str						returnIP(int index);
+		str						getType();
+		Socket*					init_listeners();
+		void					printPortsIpsNames();
+		std::vector<str>		returnNames();
+		std::vector<str>		returnIPs();
+		std::vector<str>		returnPorts();
 		std::vector<Location *>	getLocations();
 
 		const Server &operator =(const Server &copy);
