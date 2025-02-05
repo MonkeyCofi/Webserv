@@ -134,27 +134,35 @@ int main(int ac, char **av)
 		temp.fd = listeners.at(i)->returnSocket(i);
 		fcntl(temp.fd, F_SETFL, fcntl(temp.fd, F_GETFL) | O_NONBLOCK);
 		fcntl(temp.fd, F_SETFD, fcntl(temp.fd, F_GETFD) | FD_CLOEXEC);
-		temp.events = POLLIN;
+		temp.events = POLLIN | POLL_PRI;
 		temp.revents = 0;
 		sock_fds.push_back(temp);
 	}
 	std::string	req;
+	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
 	 	int res = poll(&sock_fds[0], sock_fds.size(), 500);
-		if (res == -1)
+		if (res < 0)
 		{
+			std::cout << "TEST\n";
 			perror("poll");
 			exit(EXIT_FAILURE);
 		}
-		std::cout << "number of sockets in poll(): " << sock_fds.size() << "\n";
-		for (unsigned int i = 0; i < sock_fds.size(); i++)
+		if (res == 0)
+			continue ;
+		// }
+		// std::cout << "Number of sockets in poll(): " << sock_fds.size() << "\n";
+		for (unsigned int i = 1; i < sock_fds.size(); i++)
 		{
-			signal(SIGINT, sigint_handle);
-			if (sock_fds.at(i).revents & POLLIN)
+			if (sock_fds.at(i).revents == 0)
+				continue ;
+			if (sock_fds.at(i).revents & POLLOUT)
 			{
+				std::cout << "PULLOUT\n";
 				if (i < listeners.size())
 				{
+					std::cout << "ofc\n";
 					struct pollfd		cli;
 					struct sockaddr_in	client;
 					socklen_t			len;
@@ -176,7 +184,7 @@ int main(int ac, char **av)
 					sock_fds.push_back(cli);
 				}
 			}
-			else if (sock_fds.at(i).revents & POLLHUP)
+			if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "Hangup\n";
 				if (i < listeners.size())
@@ -187,7 +195,7 @@ int main(int ac, char **av)
 				}
 				continue ;
 			}
-			else if (sock_fds.at(i).revents & POLLERR)
+			if (sock_fds.at(i).revents & POLLERR)
 			{
 				std::cout << "Error\n";
 				if (i < listeners.size())
@@ -198,8 +206,20 @@ int main(int ac, char **av)
 				}
 				continue ;
 			}
-			else if (sock_fds.at(i).revents & POLLOUT)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+			if (sock_fds.at(i).revents & POLLNVAL)
 			{
+				std::cout << "INVALID\n";
+				if (i < listeners.size())
+				{
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					i--;
+				}
+				continue ;
+			}
+			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+			{
+				// std::cout << "POLLIN(TAN)\n";
 				char buf[2048];
 				//memset(buf, 0, sizeof(buf));
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
@@ -229,6 +249,97 @@ int main(int ac, char **av)
 			}
 		}
 	}
+	// while (g_quit != true)
+	// {
+	//  	int res = poll(&sock_fds[0], sock_fds.size(), 500);
+	// 	if (res == -1)
+	// 	{
+	// 		perror("poll");
+	// 		exit(EXIT_FAILURE);
+	// 	}
+	// 	// std::cout << "Number of sockets in poll(): " << sock_fds.size() << "\n";
+	// 	for (unsigned int i = 0; i < sock_fds.size(); i++)
+	// 	{
+	// 		if (sock_fds.at(i).revents & POLLOUT)
+	// 		{
+	// 			std::cout << "PULLOUT\n";
+	// 			if (i < listeners.size())
+	// 			{
+	// 				struct pollfd		cli;
+	// 				struct sockaddr_in	client;
+	// 				socklen_t			len;
+	// 				int					acc_sock;
+
+	// 				len = sizeof(client);
+	// 				acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len);
+	// 				if (errno == EWOULDBLOCK)
+	// 				{
+	// 					std::cout << "Nothing to accept\n";
+	// 					continue ;
+	// 				}
+	// 				std::cout << "received a request from a client\n";
+	// 				cli.fd = acc_sock;
+	// 				fcntl(cli.fd, F_SETFL, fcntl(cli.fd, F_GETFL) | O_NONBLOCK);
+	// 				fcntl(cli.fd, F_SETFD, fcntl(cli.fd, F_GETFD) | FD_CLOEXEC);
+	// 				cli.events = POLLIN | POLLOUT;
+	// 				cli.revents = 0;
+	// 				sock_fds.push_back(cli);
+	// 			}
+	// 		}
+	// 		else if (sock_fds.at(i).revents & POLLHUP)
+	// 		{
+	// 			std::cout << "Hangup\n";
+	// 			if (i < listeners.size())
+	// 			{
+	// 				close(sock_fds.at(i).fd);
+	// 				sock_fds.erase(sock_fds.begin() + i);
+	// 				i--;
+	// 			}
+	// 			continue ;
+	// 		}
+	// 		else if (sock_fds.at(i).revents & POLLERR)
+	// 		{
+	// 			std::cout << "Error\n";
+	// 			if (i < listeners.size())
+	// 			{
+	// 				close(sock_fds.at(i).fd);
+	// 				sock_fds.erase(sock_fds.begin() + i);
+	// 				i--;
+	// 			}
+	// 			continue ;
+	// 		}
+	// 		else if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+	// 		{
+	// 			std::cout << "POLLIN(TAN)\n";
+	// 			char buf[2048];
+	// 			//memset(buf, 0, sizeof(buf));
+	// 			ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+	// 			if (bytes > 0)
+	// 			{
+	// 				std::cout << "reading\n";
+	// 				req.append(buf, bytes);
+	// 				if (req.find("\r\n\r\n") != std::string::npos)
+	// 				{
+	// 					std::cout << req << "\n";
+	// 					parse_request(req, sock_fds.at(i).fd);
+	// 				}
+	// 			}
+	// 			else if (bytes == 0)
+	// 			{
+	// 				std::cout << "read till the end of the request\n";
+	// 				parse_request(req, sock_fds.at(i).fd);
+	// 				close(sock_fds.at(i).fd);
+	// 				sock_fds.erase(sock_fds.begin() + i);
+	// 				i--;
+	// 			}
+	// 			else if (errno == EAGAIN)
+	// 			{
+	// 				std::cout << "EAGAIN. wtf is that\n";
+	// 				continue ;
+	// 			}
+	// 		}
+	// 	}
+	// }
 	if (g_quit == true)
 	{
 		// close all sockets
