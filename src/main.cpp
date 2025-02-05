@@ -15,7 +15,7 @@ void	sigint_handle(int signal)
 		g_quit = true;
 }
 
-void	parse_request(str& request, int client)
+void	parse_request(str& request, int id, std::vector<struct pollfd> &pauldexter)//, std::vector<std::string> &reqs)
 {
 	char	buffer[4096];
 
@@ -52,21 +52,24 @@ void	parse_request(str& request, int client)
 	if (index == -1)
 	{
 		std::cout << "Couldn't open " << (get_file == "none" ? "index.html" : get_file) << "\n";
-		send(client, "HTTP/1.1 403 Not Found\r\n\r\n", sizeof("HTTP/1.1 403 Not Found\r\n\r\n"), 0);
+		send(pauldexter.at(id).fd, "HTTP/1.1 403 Not Found\r\n\r\n", sizeof("HTTP/1.1 403 Not Found\r\n\r\n"), 0);
 		exit(EXIT_FAILURE);
 	}
 	else
 		std::cout << "Successfully opened " << (get_file == "none" ? "index.html" : get_file) << "\n";
-	send(client, http_header.c_str(), http_header.length(), 0);
-	send(client, "\r\n", 2, 0);
+	send(pauldexter.at(id).fd, http_header.c_str(), http_header.length(), 0);
+	send(pauldexter.at(id).fd, "\r\n", 2, 0);
 	ssize_t	bytes = 1;
 	while ((bytes = read(index, buffer, 1)) > 0)
 	{
-		send(client, buffer, 1, 0);
+		send(pauldexter.at(id).fd, buffer, 1, 0);
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			std::cout << "send issue\n";
 	}
-	// close(client);
+	// close(pauldexter.at(id).fd);
+	// pauldexter.erase(pauldexter.begin() + id);
+	// reqs.erase(reqs.begin() + id);
+	// (void)reqs;
 }
 
 // void	parse_request(Request& request)
@@ -138,7 +141,8 @@ int main(int ac, char **av)
 		temp.revents = 0;
 		sock_fds.push_back(temp);
 	}
-	std::string	req;
+	std::vector<std::string>	reqs;
+	reqs.push_back("");
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
@@ -151,39 +155,34 @@ int main(int ac, char **av)
 		}
 		if (res == 0)
 			continue ;
-		// }
+		if (sock_fds.at(0).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+		{
+			struct pollfd		cli;
+			struct sockaddr_in	client;
+			socklen_t			len;
+			int					acc_sock;
+
+			len = sizeof(client);
+			acc_sock = accept(sock_fds.at(0).fd, (sockaddr *)&client, &len);
+			if (errno == EWOULDBLOCK)
+			{
+				std::cout << "Nothing to accept\n";
+				continue ;
+			}
+			std::cout << "Received a request from a new client\n";
+			cli.fd = acc_sock;
+			fcntl(cli.fd, F_SETFL, fcntl(cli.fd, F_GETFL) | O_NONBLOCK);
+			fcntl(cli.fd, F_SETFD, fcntl(cli.fd, F_GETFD) | FD_CLOEXEC);
+			cli.events = POLLIN | POLLOUT;
+			cli.revents = 0;
+			sock_fds.push_back(cli);
+			reqs.push_back("");
+		}
 		// std::cout << "Number of sockets in poll(): " << sock_fds.size() << "\n";
 		for (unsigned int i = 1; i < sock_fds.size(); i++)
 		{
 			if (sock_fds.at(i).revents == 0)
 				continue ;
-			if (sock_fds.at(i).revents & POLLOUT)
-			{
-				std::cout << "PULLOUT\n";
-				if (i < listeners.size())
-				{
-					std::cout << "ofc\n";
-					struct pollfd		cli;
-					struct sockaddr_in	client;
-					socklen_t			len;
-					int					acc_sock;
-
-					len = sizeof(client);
-					acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client, &len);
-					if (errno == EWOULDBLOCK)
-					{
-						std::cout << "Nothing to accept\n";
-						continue ;
-					}
-					std::cout << "received a request from a client\n";
-					cli.fd = acc_sock;
-					fcntl(cli.fd, F_SETFL, fcntl(cli.fd, F_GETFL) | O_NONBLOCK);
-					fcntl(cli.fd, F_SETFD, fcntl(cli.fd, F_GETFD) | FD_CLOEXEC);
-					cli.events = POLLIN | POLLOUT;
-					cli.revents = 0;
-					sock_fds.push_back(cli);
-				}
-			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "Hangup\n";
@@ -191,6 +190,7 @@ int main(int ac, char **av)
 				{
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
 					i--;
 				}
 				continue ;
@@ -202,6 +202,7 @@ int main(int ac, char **av)
 				{
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
 					i--;
 				}
 				continue ;
@@ -213,6 +214,7 @@ int main(int ac, char **av)
 				{
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
 					i--;
 				}
 				continue ;
@@ -225,20 +227,23 @@ int main(int ac, char **av)
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 				if (bytes > 0)
 				{
-					std::cout << "reading\n";
-					req.append(buf, bytes);
-					if (req.find("\r\n\r\n") != std::string::npos)
+					std::cout << "Reading...\n";
+					reqs.at(i).append(buf, bytes);
+					if (reqs.at(i).find("\r\n\r\n") != std::string::npos)
 					{
-						std::cout << req << "\n";
-						parse_request(req, sock_fds.at(i).fd);
+						std::cout << reqs.at(i) << "\n";
+						parse_request(reqs.at(i), i, sock_fds);
+						// parse_request(reqs.at(i), sock_fds.at(i).fd);
 					}
 				}
 				else if (bytes == 0)
 				{
-					std::cout << "read till the end of the request\n";
-					parse_request(req, sock_fds.at(i).fd);
+					std::cout << "Read till the end of the request\n";
+					// parse_request(reqs.at(i), sock_fds.at(i).fd);
+					parse_request(reqs.at(i), i, sock_fds);
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
 					i--;
 				}
 				else if (errno == EAGAIN)
@@ -246,6 +251,13 @@ int main(int ac, char **av)
 					std::cout << "EAGAIN. wtf is that\n";
 					continue ;
 				}
+			}
+			if (sock_fds.at(i).revents & POLLOUT)
+			{
+				// close(sock_fds.at(i).fd);
+				// sock_fds.erase(sock_fds.begin() + i);
+				// reqs.erase(reqs.begin() + i);
+				// i--;
 			}
 		}
 	}
@@ -347,6 +359,7 @@ int main(int ac, char **av)
 		{
 			close(sock_fds.at(i).fd);
 			sock_fds.pop_back();
+			reqs.pop_back();
 		}
 		for (unsigned int i = 0; i < listeners.size(); i++)
 		{
