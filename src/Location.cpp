@@ -70,5 +70,5 @@ const Location &Location::operator =(const Location &copy)
 
 str	Location::getType()
 {
-	return ("Location");
+	return ("location");
 }

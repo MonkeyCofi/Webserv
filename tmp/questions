@@ -1,0 +1,3 @@
+why atoi instead of stoi in BlockOBJ
+fix exceptions in Socket
+follow convention with getters

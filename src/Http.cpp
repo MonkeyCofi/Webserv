@@ -17,6 +17,7 @@ bool Http::handleDirective(std::queue<str> opts)
 	(void) opts;
 	return false;	
 }
+
 BlockOBJ *Http::handleBlock(std::queue<str> opts)
 {
 	if (opts.size() != 1 || opts.front() != "server")
@@ -25,21 +26,19 @@ BlockOBJ *Http::handleBlock(std::queue<str> opts)
 	return servers.back();
 }
 
-Http::~Http()
+std::vector<Server *> Http::getServers()
 {
-	for(std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
-    	delete *it;
+	return servers;
 }
 
-const Http &Http::operator =(const Http &copy)
+std::vector<Socket *>	Http::getListeners()
 {
-	(void)copy;
-	return *this;
+	return (this->listeners);
 }
 
 str	Http::getType()
 {
-	return ("Http");
+	return ("http");
 }
 
 void	Http::init_listeners()
@@ -88,7 +87,14 @@ void	Http::printPortsIpsNames()
 	}
 }
 
-std::vector<Socket *>	Http::returnSockets()
+const Http &Http::operator =(const Http &copy)
 {
-	return (this->listeners);
+	(void)copy;
+	return *this;
+}
+
+Http::~Http()
+{
+	for(std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+    	delete *it;
 }

@@ -4,7 +4,7 @@ const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name
 
 ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
-	// blocks.push(webserv.getProtocol());
+	
 }
 
 bool ConfigParser::validFilename(str &fn) const
@@ -133,7 +133,7 @@ bool ConfigParser::handleNext(str &word, Engine &engine)
 						err_msg = "Incorrect arguments for block directive!\n";
 						return false;
 					}
-					if (ptr->getType() == "Server")
+					if (ptr->getType() == "server")
 						engine.getProtocol()->servers.push_back(dynamic_cast<Server *>(ptr));
 					blocks.push(ptr);
 				}

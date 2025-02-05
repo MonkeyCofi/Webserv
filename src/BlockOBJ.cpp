@@ -10,11 +10,6 @@ BlockOBJ::BlockOBJ(const BlockOBJ &copy)
 	(void)copy;
 }
 
-BlockOBJ::~BlockOBJ()
-{
-
-}
-
 bool BlockOBJ::handleDirective(std::queue<str> opts)
 {
 	if (opts.size() == 0)
@@ -62,7 +57,6 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 			if (opts.front()[i] < '0' || opts.front()[i] > '9')
 				return false;
 		}
-		// client_max_body = std::stoi(opts.front());
 		client_max_body = atoi(opts.front().c_str());
 	}
 	else if (opts.front() == "min_delete_depth" && opts.size() == 2)
@@ -73,7 +67,6 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 			if (opts.front()[i] < '0' || opts.front()[i] > '9')
 				return false;
 		}
-		// min_del_depth = std::stoi(opts.front());
 		min_del_depth = atoi(opts.front().c_str());
 	}
 	else if (opts.front() == "autoindex" && opts.size() == 2)
@@ -105,7 +98,7 @@ const BlockOBJ &BlockOBJ::operator=(const BlockOBJ &copy)
 	return *this;
 }
 
-str	BlockOBJ::getType()
+BlockOBJ::~BlockOBJ()
 {
-	return ("Block");
+
 }

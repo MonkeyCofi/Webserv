@@ -162,7 +162,7 @@ str	Server::returnIP(int index)
 
 str	Server::getType()
 {
-	return ("Server");
+	return ("server");
 }
 
 std::vector<str>	Server::returnNames()

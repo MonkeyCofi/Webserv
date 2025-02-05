@@ -14,24 +14,24 @@ typedef std::string str;
 class Http: public BlockOBJ
 {
 	private:
-		const static str	directives[];
+		const static str		directives[];
 		std::vector<Socket *>	listeners;
+
 	public:
-		std::vector<Server *> servers;
+		std::vector<Server *>	servers;
 		Http();
 		Http(const Http &copy);
 		~Http();
 
-		bool		handleDirective(std::queue<str> opts);
-		BlockOBJ	*handleBlock(std::queue<str> opts);
+		bool					handleDirective(std::queue<str> opts);
+		BlockOBJ				*handleBlock(std::queue<str> opts);
 		std::vector<Server *>	getServers();
+		std::vector<Socket *>	getListeners();
+		str						getType();
+		void					printPortsIpsNames();
+		void					init_listeners();
 
 		const Http &operator =(const Http &copy);
-
-		str	getType();
-		void		printPortsIpsNames();
-		void		init_listeners();
-		std::vector<Socket *>	returnSockets();
 };
 
 #endif

@@ -108,7 +108,6 @@ int main(int ac, char **av)
 	{
 		std::cerr << e.what() << "\n";
 	}
-	exit(0);
 	Http	*p = eng.getProtocol();
 	try
 	{
@@ -125,7 +124,7 @@ int main(int ac, char **av)
 	}
 
 
-	std::vector<Socket *>	listeners = p->returnSockets();
+	std::vector<Socket *>	listeners = p->getListeners();
 
 	std::vector<struct pollfd>	sock_fds;
 	for (unsigned int i = 0; i < listeners.size(); i++)
