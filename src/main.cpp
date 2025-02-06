@@ -186,37 +186,37 @@ int main(int ac, char **av)
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "Hangup\n";
-				if (i < listeners.size())
-				{
+				// if (i < listeners.size())
+				// {
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
 					reqs.erase(reqs.begin() + i);
 					i--;
-				}
+				// }
 				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLERR)
 			{
 				std::cout << "Error\n";
-				if (i < listeners.size())
-				{
+				// if (i < listeners.size())
+				// {
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
 					reqs.erase(reqs.begin() + i);
 					i--;
-				}
+				// }
 				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLNVAL)
 			{
 				std::cout << "INVALID\n";
-				if (i < listeners.size())
-				{
+				// if (i < listeners.size())
+				// {
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
 					reqs.erase(reqs.begin() + i);
 					i--;
-				}
+				// }
 				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
@@ -233,6 +233,10 @@ int main(int ac, char **av)
 					{
 						std::cout << reqs.at(i) << "\n";
 						parse_request(reqs.at(i), i, sock_fds);
+						close(sock_fds.at(i).fd);
+						sock_fds.erase(sock_fds.begin() + i);
+						reqs.erase(reqs.begin() + i);
+						i--;
 						// parse_request(reqs.at(i), sock_fds.at(i).fd);
 					}
 				}
@@ -251,6 +255,8 @@ int main(int ac, char **av)
 					std::cout << "EAGAIN. wtf is that\n";
 					continue ;
 				}
+				else if (bytes < 0)
+					break;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
