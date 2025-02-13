@@ -1,5 +1,5 @@
 #ifndef SERVER_HPP
-# define SERVER_HPP
+#define SERVER_HPP
 
 # include <iostream>
 # include <exception>
@@ -7,6 +7,7 @@
 # include <queue>
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
+# include "ConnectionManager.hpp"
 
 typedef std::string str;
 
@@ -20,9 +21,9 @@ class Server: public BlockOBJ
 		str						ret_str;
 		int						ret_code;
 		std::vector<Location *>	locations;
-		//Socket				serv;
+		ConnectionManager		cm;
 		
-
+		bool	validAddress(str address);
 		bool	handleAddress(str address);
 
 	public:

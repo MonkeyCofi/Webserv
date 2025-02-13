@@ -97,4 +97,6 @@ Http::~Http()
 {
 	for(std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
     	delete *it;
+	for(std::vector<Socket *>::iterator it = listeners.begin(); it != listeners.end(); it++)
+    	delete *it;
 }

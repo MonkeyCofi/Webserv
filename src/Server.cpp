@@ -18,75 +18,58 @@ Server::~Server()
     	delete *it;
 }
 
-static bool	countSeparators(str address, const str separator, unsigned int amount)
+bool Server::validAddress(str address)
 {
-	unsigned int	count;
+	unsigned int	dot_count = 0;
+	bool			colon = false;
 
-	count = 0;
-	if (address.find(separator) == std::string::npos)
-		return (false);
-	while (address.find(separator) != std::string::npos)
+	for (int i = 0; i < address.length(); i++)
 	{
-		address = address.substr(address.find(separator) + 1);
-		count++;
+		if (!std::isdigit(address[i]) && address[i] != '.' && address[i] != ':')
+			return false;
+		else if (address[i] == '.')
+		{
+			dot_count++;
+			if (i == 0 || i == address.length() - 1 || !std::isdigit(address[i - 1]) || !std::isdigit(address[i + 1]))
+				return false;
+		}
+		else if (address[i] == ':')
+		{
+			colon = true;
+			if (i == 0 || i == address.length() - 1 || dot_count < 3 || !std::isdigit(address[i - 1]) || !std::isdigit(address[i + 1]))
+				return false;
+		}
 	}
-	return (count == amount);
+	if (dot_count != 3 && (dot_count != 0 || colon))
+		return false;
+	return true;
 }
 
 bool Server::handleAddress(str address)
 {
-	int	colon_cnt;
 	int	last_colon;
 
-	colon_cnt = 0;
-	if (address.find_first_of('.') != std::string::npos)	// ip address is present
+	if (!validAddress(address))
+		return false;
+	if (address.find(":") == str::npos)
 	{
-		if (countSeparators(address, ".", 3) == false)
-			return (false);	// throw an invalid address exception
-	}
-	for (unsigned int i = 0; i < address.length(); i++)
-	{
-		if (address[i] != ':' && address[i] < '0' && address[i] > '9')
-			return false;
-		else if (address[i] == ':')
-		{
-			if (i == 0 || i == address.length() - 1 || address[i - 1] == ':' || address[i + 1] == ':')
-				return false;
-			colon_cnt++;
-			last_colon = i;
-		}
-	}
-	if (colon_cnt == 0)
-	{
-		// if the address has a dot, then its am ip
 		if (address.find_first_of('.') == std::string::npos)
 		{
-			ports.push_back(address);
 			ips.push_back("none");
+			ports.push_back(address);
 		}
 		else
 		{
-			ports.push_back("80");
 			ips.push_back(address);
-		} // else its a port
+			ports.push_back("80");
+		}
 	}
 	else
 	{
+		last_colon = address.find(":");
 		ips.push_back(address.substr(0, last_colon));
 		ports.push_back(address.substr(last_colon + 1));
 	}
-	// else if (colon_cnt == 3)
-	// {
-	// 	ips.push_back(address);
-	// 	ports.push_back("80");
-	// }
-	// else if (colon_cnt == 3)
-	// {
-	// 	ips.push_back(address.substr(0, last_colon));
-	// 	ports.push_back(address.substr(last_colon + 1));
-	// }
-	// else
-	// 	return false;
 	return true;
 }
 
