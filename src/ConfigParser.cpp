@@ -192,6 +192,11 @@ Engine ConfigParser::parse(str &fn)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
 	servers = webserv.getProtocol()->getServers();
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+	{
+		if ((*it).getNames().size() == 0)
+			(*it).setDefault();
+	}
+	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
     {
 		for (std::vector<Server *>::iterator it2 = ++it; it2 != servers.end(); it2++)
 		{

@@ -18,7 +18,14 @@
 # include <arpa/inet.h>
 # include <iostream>
 # include <exception>
+# include <algorithm>
 # include <unistd.h>
+# include <sys/socket.h>
+# include <arpa/inet.h>
+# include <poll.h>
+# include <signal.h>
+# include <fcntl.h>
+# include <pair>
 # include <cstring>
 # include <map>
 # include <cstdio>
@@ -36,6 +43,9 @@ class ConnectionManager
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
+		void	addServerToMap(std::map<str, Server *>	&map, Server &server);
+		void	addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port);
+		struct sockaddr_in setupSocket(str ip, str port);
 
 	public:
 		ConnectionManager(std::vector<Server *> servers);

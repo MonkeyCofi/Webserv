@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-const str	Server::default_ip = "0.0.0.0";
+const str	Server::default_ip = "none";
 const str	Server::default_port = "80";
 const str	Server::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "autoindex", "return", "" };
 
@@ -170,6 +170,11 @@ std::vector<Location *>	Server::getLocations()
 	return locations;
 }
 
+str Server::setDefault()
+{
+	names.push_back("default");
+}
+
 const bool Server::operator ==(const Server &server1, const Server &server2)
 {
 	std::vector<str>	tmp, tmp2, tmp3, tmp4;
@@ -194,7 +199,7 @@ const bool Server::operator ==(const Server &server1, const Server &server2)
 	{
 		for (int j = 0; j < tmp2.size; j++)
 		{
-			if (*tmp[i] == *tmp2[j] && *tmp3[i] == *tmp4[j])
+			if (tmp[i] == tmp2[j] && tmp3[i] == tmp4[j])
 			{
 				same_ipport = true;
 				break;

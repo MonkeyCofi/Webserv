@@ -2,10 +2,10 @@
 #include "ConfigParser.hpp"
 #include "Socket.hpp"
 #include <poll.h>
+#include <signal.h>
 #include <fstream>
 #include <fcntl.h>
 #include "Request.hpp"
-#include <signal.h>
 
 bool	g_quit = false;
 

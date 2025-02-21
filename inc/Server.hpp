@@ -37,6 +37,7 @@ class Server: public BlockOBJ
 		str						getPort(int index);
 		str						getIP(int index);
 		str						getType();
+		str						setDefault();
 		Socket*					init_listeners();
 		void					printPortsIpsNames();
 		std::vector<str>		getNames();
