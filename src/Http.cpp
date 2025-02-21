@@ -74,9 +74,9 @@ void	Http::printPortsIpsNames()
 	for (unsigned int i = 0; i < servers.size(); i++)
 	{
 		//for (std::vector<str>::iterator it = this->names.begin(); it != this->names.end(); it++)
-		std::vector<str>	names = this->servers.at(i)->returnNames();
-		std::vector<str>	ips = this->servers.at(i)->returnIPs();
-		std::vector<str>	ports = this->servers.at(i)->returnPorts();
+		std::vector<str>	names = this->servers.at(i)->getNames();
+		std::vector<str>	ips = this->servers.at(i)->getIPs();
+		std::vector<str>	ports = this->servers.at(i)->getPorts();
 		for (std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
 			std::cout << "name: " << *it << "\n";
 		for (std::vector<str>::iterator it = ips.begin(); it != ips.end(); it++)

@@ -170,9 +170,10 @@ Engine ConfigParser::parse(str &fn)
 	if (!validFilename(fn))
 		throw FilenameError("Invalid file name!");
 
-	str				line, cpy;
-	int				i = 0;
-	std::ifstream 	file;
+	str						line, cpy;
+	int						i = 0;
+	std::ifstream 			file;
+	std::vector <Server *>	servers;
 
 	file.open(fn.c_str());
 	if (!file)
@@ -189,7 +190,15 @@ Engine ConfigParser::parse(str &fn)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	//std::cout << "Number of servers: " << webserv.getProtocol()->getServers().size() << "\n";
+	servers = webserv.getProtocol()->getServers();
+	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+    {
+		for (std::vector<Server *>::iterator it2 = ++it; it2 != servers.end(); it2++)
+		{
+			if (*it == *it2)
+				throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
+		}
+	}
 	return (webserv);
 }
 

@@ -20,6 +20,7 @@
 # include <exception>
 # include <unistd.h>
 # include <cstring>
+# include <map>
 # include <cstdio>
 # include "Server.hpp"
 
@@ -28,35 +29,20 @@ typedef std::string str;
 class ConnectionManager
 {
 	private:
-		std::vector<struct pollfd>	sock_fds;
-		std::vector<std::string>	reqs;
-		std::vector<Socket *>		listeners;
+		std::vector<std::string>				reqs;
+		std::vector<struct pollfd>				sock_fds;
+		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 
-	public:
 		ConnectionManager();
-		~ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
-		
-		ConnectionManager(Server &obj, int listener_index);
-		int					returnConnectionManager(int index);
-		struct sockaddr_in	returnClient();
-		
-		void	printAddress();
-		
-		class	BindException
-		{
-			const char*	what();
-		};
-		
-		class	AddrinfoException
-		{
-			const char*	what();
-		};
-		class	ListenException
-		{
-			const char*	what();
-		};
+
+	public:
+		ConnectionManager(std::vector<Server *> servers);
+
+		void	startConnections();
+
+		~ConnectionManager();
 };
 
 #endif

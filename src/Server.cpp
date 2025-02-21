@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+const str	Server::default_ip = "0.0.0.0";
+const str	Server::default_port = "80";
 const str	Server::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "autoindex", "return", "" };
 
 Server::Server() : BlockOBJ()
@@ -55,13 +57,13 @@ bool Server::handleAddress(str address)
 	{
 		if (address.find_first_of('.') == std::string::npos)
 		{
-			ips.push_back("none");
+			ips.push_back(Server::default_ip);
 			ports.push_back(address);
 		}
 		else
 		{
 			ips.push_back(address);
-			ports.push_back("80");
+			ports.push_back(Server::default_port);
 		}
 	}
 	else
@@ -125,7 +127,7 @@ const Server &Server::operator =(const Server &copy)
 	return *this;
 }
 
-str	Server::returnPort(int index)
+str	Server::getPort(int index)
 {
 	if ((unsigned int) index > ports.size())
 		return ("out of range");
@@ -134,7 +136,7 @@ str	Server::returnPort(int index)
 	return (ports.at(index));
 }
 
-str	Server::returnIP(int index)
+str	Server::getIP(int index)
 {
 	if ((unsigned int) index > ips.size())
 		return ("out of range");
@@ -148,17 +150,17 @@ str	Server::getType()
 	return ("server");
 }
 
-std::vector<str>	Server::returnNames()
+std::vector<str>	Server::getNames()
 {
 	return (this->names);
 }
 
-std::vector<str>	Server::returnIPs()
+std::vector<str>	Server::getIPs()
 {
 	return (this->ips);
 }
 
-std::vector<str>	Server::returnPorts()
+std::vector<str>	Server::getPorts()
 {
 	return (this->ports);
 }
@@ -166,4 +168,38 @@ std::vector<str>	Server::returnPorts()
 std::vector<Location *>	Server::getLocations()
 {
 	return locations;
+}
+
+const bool Server::operator ==(const Server &server1, const Server &server2)
+{
+	std::vector<str>	tmp, tmp2, tmp3, tmp4;
+	bool				same_name = false;
+	bool				same_ipport = false;
+
+	tmp = server1.getNames();
+	tmp2 = server2.getNames();
+	for(std::vector<str>::iterator it = tmp; it != tmp.end(); it++)
+	{
+		if (std::find(tmp2.begin(), tmp2.end(), item) == tmp2.end())
+		{
+			same_name = true;
+			break;
+		}
+	}
+	tmp = server1.getIPs();
+	tmp2 = server2.getIPs();
+	tmp3 = server1.getPorts();
+	tmp4 = server2.getPorts();
+	for (int i = 0; i < tmp.size(); i++)
+	{
+		for (int j = 0; j < tmp2.size; j++)
+		{
+			if (*tmp[i] == *tmp2[j] && *tmp3[i] == *tmp4[j])
+			{
+				same_ipport = true;
+				break;
+			}
+		}
+	}
+	return same_name && same_ipport;
 }

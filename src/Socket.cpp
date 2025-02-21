@@ -62,8 +62,8 @@ Socket::Socket(Server &obj, int listener_index)
 	const char	*addr;
 	const char	*port;
 	
-	addr = (obj.returnIP(listener_index) == "none" ? NULL : obj.returnIP(listener_index).c_str());
-	port = (obj.returnPort(listener_index) == "none" ? NULL : obj.returnPort(listener_index).c_str());
+	addr = (obj.getIP(listener_index) == "none" ? NULL : obj.getIP(listener_index).c_str());
+	port = (obj.getPort(listener_index) == "none" ? NULL : obj.getPort(listener_index).c_str());
 	int addr_ret = getaddrinfo(addr, port, NULL, &info);
 	if (addr_ret != 0)
 	{
