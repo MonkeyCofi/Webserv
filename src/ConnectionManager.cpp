@@ -10,7 +10,15 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ConnectionManager.hpp"
+#include "../inc/ConnectionManager.hpp"
+
+bool	g_quit = false;
+
+void	sigint_handle(int signal)
+{
+	if (signal == SIGINT)
+		g_quit = true;
+}
 
 ConnectionManager::ConnectionManager()
 {
@@ -110,5 +118,116 @@ ConnectionManager	&ConnectionManager::operator=(const ConnectionManager &obj)
 
 void	ConnectionManager::startConnections()
 {
+	signal(SIGINT, sigint_handle);
+	while (g_quit != true)
+	{
+	 	int res = poll(&sock_fds[0], sock_fds.size(), 500);
+		// std::cout << "Number of sockets " << sock_fds.size() << "\n";
+		if (res < 0)
+		{
+			std::cout << "TEST\n";
+			perror("poll");
+			exit(EXIT_FAILURE);
+		}
+		if (res == 0)
+			continue ;
+		if (sock_fds.at(0).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+		{
+			struct pollfd		cli;
+			struct sockaddr_in	client;
+			socklen_t			len;
+			int					acc_sock;
 
+			len = sizeof(client);
+			acc_sock = accept(sock_fds.at(0).fd, (sockaddr *)&client, &len);
+			if (errno == EWOULDBLOCK)
+			{
+				std::cout << "Nothing to accept\n";
+				continue ;
+			}
+			std::cout << "Received a request from a new client\n";
+			cli.fd = acc_sock;
+			fcntl(cli.fd, F_SETFL, fcntl(cli.fd, F_GETFL) | O_NONBLOCK);
+			fcntl(cli.fd, F_SETFD, fcntl(cli.fd, F_GETFD) | FD_CLOEXEC);
+			cli.events = POLLIN | POLLOUT;
+			cli.revents = 0;
+			sock_fds.push_back(cli);
+			reqs.push_back("");
+			std::cout << "Number of sockets in poll(): " << sock_fds.size() << "\n";
+		}
+		for (unsigned int i = 1; i < sock_fds.size(); i++)
+		{
+			if (sock_fds.at(i).revents == 0)
+				continue ;
+			if (sock_fds.at(i).revents & POLLHUP)
+			{
+				std::cout << "Hangup\n";
+				// if (i < listeners.size())
+				// {
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
+					i--;
+				// }
+				continue ;
+			}
+			if (sock_fds.at(i).revents & POLLERR)
+			{
+				std::cout << "Error\n";
+				// if (i < listeners.size())
+				// {
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
+					i--;
+				// }
+				continue ;
+			}
+			if (sock_fds.at(i).revents & POLLNVAL)
+			{
+				std::cout << "INVALID\n";
+				// if (i < listeners.size())
+				// {
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
+					i--;
+				// }
+				continue ;
+			}
+			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+			{
+				j = 0;
+				std::cout << "POLLIN(TAN)\n";
+				char buf[2048];
+				//memset(buf, 0, sizeof(buf));
+				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+				(void)bytes;
+			}
+			if (sock_fds.at(i).revents & POLLOUT)
+			{
+				if (j == 0)
+				{
+					j = 1;
+					std::cout << "POLLOUT(TAN)\n";
+				}
+			}
+		}
+	}
+	if (g_quit == true)
+	{
+		// close all sockets
+		for (unsigned int i = 0; i < sock_fds.size(); i++)
+		{
+			close(sock_fds.at(i).fd);
+			sock_fds.pop_back();
+			reqs.pop_back();
+		}
+		for (unsigned int i = 0; i < listeners.size(); i++)
+		{
+			delete listeners[i];
+			listeners.pop_back();
+		}
+	}
+	signal(SIGINT, SIG_DFLT);
 }
