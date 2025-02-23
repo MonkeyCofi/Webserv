@@ -39,6 +39,7 @@ class ConnectionManager
 		std::vector<std::string>				reqs;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
+		int										main_listeners;
 
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
@@ -48,7 +49,7 @@ class ConnectionManager
 		struct sockaddr_in setupSocket(str ip, str port);
 
 	public:
-		ConnectionManager(std::vector<Server *> servers);
+		ConnectionManager(Http protocol);
 
 		void	startConnections();
 

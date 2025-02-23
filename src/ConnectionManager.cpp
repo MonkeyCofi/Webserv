@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../inc/ConnectionManager.hpp"
+#include "ConnectionManager.hpp"
 
 bool	g_quit = false;
 
@@ -20,14 +20,14 @@ void	sigint_handle(int signal)
 		g_quit = true;
 }
 
-ConnectionManager::ConnectionManager()
+ConnectionManager::ConnectionManager(): main_listeners(0)
 {
 	
 }
 
-ConnectionManager::ConnectionManager(std::vector<Server *> servers)
+ConnectionManager::ConnectionManager(Http protocol): main_listeners(0)
 {
-	std::vector<struct pollfd>				sock_fds;
+	std::vector<Server *>	servers = protocol.getServers();
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
 		for (int i = 0; i < (*it).getIPs(); i++)
@@ -84,7 +84,7 @@ void	ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, 
 	temp.fd = setupSocket(ip, port);
 	fcntl(temp.fd, F_SETFL, fcntl(temp.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(temp.fd, F_SETFD, fcntl(temp.fd, F_GETFD) | FD_CLOEXEC);
-	temp.events = POLLIN;
+	temp.events = POLLIN | POLLPRI;
 	temp.revents = 0;
 	sock_fds.push_back(temp);
 }
@@ -93,18 +93,15 @@ void	ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &ser
 {
 	std::vector<str>	names = server.getNames();
 	for (std::vector<str>::iterator it = names; it != names.end(); it++)
-	{
-		map.insert(std::pair<*it, &server>);
-	}
+		map.insert_or_assign(std::pair<*it, &server>);
 }
 
 ConnectionManager::~ConnectionManager()
 {
-	if (serv_sock != -1)
-		close(serv_sock);
+	
 }
 
-ConnectionManager::ConnectionManager(const ConnectionManager &obj)
+ConnectionManager::ConnectionManager(const ConnectionManager &obj): main_listeners(0)
 {
 	(void)obj;
 }
@@ -112,90 +109,78 @@ ConnectionManager::ConnectionManager(const ConnectionManager &obj)
 ConnectionManager	&ConnectionManager::operator=(const ConnectionManager &obj)
 {
 	(void)obj;
-	this->serv_sock = obj.serv_sock;
 	return (*this);
 }
 
 void	ConnectionManager::startConnections()
 {
+	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
 	 	int res = poll(&sock_fds[0], sock_fds.size(), 500);
-		// std::cout << "Number of sockets " << sock_fds.size() << "\n";
+		if (res == 0)
+			continue ;
 		if (res < 0)
 		{
-			std::cout << "TEST\n";
 			perror("poll");
 			exit(EXIT_FAILURE);
 		}
-		if (res == 0)
-			continue ;
-		if (sock_fds.at(0).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+		for (unsigned int i = 0; i < main_listeners; i++)
 		{
-			struct pollfd		cli;
-			struct sockaddr_in	client;
-			socklen_t			len;
-			int					acc_sock;
-
-			len = sizeof(client);
-			acc_sock = accept(sock_fds.at(0).fd, (sockaddr *)&client, &len);
-			if (errno == EWOULDBLOCK)
+			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
 			{
-				std::cout << "Nothing to accept\n";
-				continue ;
+				struct sockaddr_in	client_addr;
+				struct pollfd		client;
+				socklen_t			len;
+				int					acc_sock;
+
+				len = sizeof(client_addr);
+				acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client_addr, &len);
+				if (errno == EWOULDBLOCK)
+				{
+					std::cout << "Nothing to accept\n";
+					continue ;
+				}
+				std::cout << "Received a request from a new client\n";
+				client.fd = acc_sock;
+				fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
+				fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
+				client.events = POLLIN | POLLOUT;
+				client.revents = 0;
+				sock_fds.push_back(client);
+				reqs.push_back("");
 			}
-			std::cout << "Received a request from a new client\n";
-			cli.fd = acc_sock;
-			fcntl(cli.fd, F_SETFL, fcntl(cli.fd, F_GETFL) | O_NONBLOCK);
-			fcntl(cli.fd, F_SETFD, fcntl(cli.fd, F_GETFD) | FD_CLOEXEC);
-			cli.events = POLLIN | POLLOUT;
-			cli.revents = 0;
-			sock_fds.push_back(cli);
-			reqs.push_back("");
-			std::cout << "Number of sockets in poll(): " << sock_fds.size() << "\n";
 		}
-		for (unsigned int i = 1; i < sock_fds.size(); i++)
+		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
 			if (sock_fds.at(i).revents == 0)
 				continue ;
-			if (sock_fds.at(i).revents & POLLHUP)
+			else if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "Hangup\n";
-				// if (i < listeners.size())
-				// {
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					reqs.erase(reqs.begin() + i);
-					i--;
-				// }
-				continue ;
+				close(sock_fds.at(i).fd);
+				sock_fds.erase(sock_fds.begin() + i);
+				reqs.erase(reqs.begin() + i);
+				i--;
 			}
-			if (sock_fds.at(i).revents & POLLERR)
+			else if (sock_fds.at(i).revents & POLLERR)
 			{
 				std::cout << "Error\n";
-				// if (i < listeners.size())
-				// {
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					reqs.erase(reqs.begin() + i);
-					i--;
-				// }
-				continue ;
+				close(sock_fds.at(i).fd);
+				sock_fds.erase(sock_fds.begin() + i);
+				reqs.erase(reqs.begin() + i);
+				i--;
 			}
-			if (sock_fds.at(i).revents & POLLNVAL)
+			else if (sock_fds.at(i).revents & POLLNVAL)
 			{
 				std::cout << "INVALID\n";
-				// if (i < listeners.size())
-				// {
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					reqs.erase(reqs.begin() + i);
-					i--;
-				// }
-				continue ;
+				close(sock_fds.at(i).fd);
+				sock_fds.erase(sock_fds.begin() + i);
+				reqs.erase(reqs.begin() + i);
+				i--;
 			}
-			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+			else if (sock_fds.at(i).revents & POLLIN)
 			{
 				j = 0;
 				std::cout << "POLLIN(TAN)\n";
@@ -204,7 +189,7 @@ void	ConnectionManager::startConnections()
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 				(void)bytes;
 			}
-			if (sock_fds.at(i).revents & POLLOUT)
+			else if (sock_fds.at(i).revents & POLLOUT)
 			{
 				if (j == 0)
 				{
