@@ -21,13 +21,7 @@ typedef std::string str;
 class Response
 {
 	private:
-		str		method;
-		str		serveFile;
-		str		contentType;
-		int		fileFD;
-		str		host;
-		size_t	contentLength;
-		bool	keepAlive;	// either keep-alive, or close
+		
 	public:
 		Response();
 		Response(str& request);

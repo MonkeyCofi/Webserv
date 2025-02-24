@@ -57,7 +57,7 @@ const char*	Request::NoHostException::what()
 
 Request	Request::parseRequest(str& request)
 {
-	const str	status_line, tmp;
+	str	status_line, tmp;
 
 	if (request.find("\r\n") == str::npos || request.find("HTTP/1.1") == str::npos || request.find("Host: ") == str::npos)
 		return (*this);
@@ -66,14 +66,14 @@ Request	Request::parseRequest(str& request)
 	this->serveFile = status_line.substr(status_line.find_first_of(' ') + 1);
 	if (serveFile.substr(status_line.find_first_of(' ') + 1) != "HTTP/1.1")
 		return (*this);
-	this->serveFile = serveFile.substr(0, file_name.find_first_of(' '));
+	this->serveFile = serveFile.substr(0, serveFile.find_first_of(' '));
 	this->host = request.substr(request.find("Host: ") + 1, request.find("\r\n"));
 	if (this->host.length() < 1)
 		return (*this);
-	if (request.find("Connection: ") != str::npos)
-	{
-		tmp = request.substr(request.find("Host: ") + 1, request.find("\r\n"))
-	}
+	// if (request.find("Connection: ") != str::npos)
+	// {
+	// 	tmp = request.substr(request.find("Host: ") + 1, request.find("\r\n"));
+	// }
 	// std::cout << request << "\n";
 	// if (file_name.at(0) == '/' && file_name.length() == 1)
 	// 	file_name = "root";

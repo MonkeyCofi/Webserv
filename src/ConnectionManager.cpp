@@ -191,7 +191,7 @@ void	ConnectionManager::startConnections()
 			}
 			else if (sock_fds.at(i).revents & POLLIN)
 			{
-				std::cout << "POLLIN(TAN)\n";
+				// std::cout << "POLLIN(TAN)\n";
 				char buf[2048];
 				memset(buf, 0, sizeof(buf));
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
@@ -199,7 +199,7 @@ void	ConnectionManager::startConnections()
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{
-				std::cout << "POLLOUT(TAN)\n";
+				// std::cout << "POLLOUT(TAN)\n";
 			}
 		}
 	}
