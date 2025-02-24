@@ -9,7 +9,7 @@ Http::Http(): BlockOBJ()
 
 Http::Http(const Http &copy): BlockOBJ(copy)
 {
-	(void)copy;
+	
 }
 
 bool Http::handleDirective(std::queue<str> opts)
@@ -49,7 +49,7 @@ void	Http::init_listeners()
 		for (unsigned int i = 0; i < servers.size(); i++)
 		{
 			// create a listener for each listen directive
-			std::vector<str>	ports = servers.at(i)->returnPorts();
+			std::vector<str>	ports = servers.at(i)->getPorts();
 			unsigned int j = 0;
 			for (; j < ports.size(); j++)
 			{

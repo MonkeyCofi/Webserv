@@ -1,8 +1,8 @@
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -I./inc/ #-fsanitize=address -g3
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -I./inc/ -fsanitize=address -g3
 SRCDIR = ./src/
 SRCFIL = main.cpp BlockOBJ.cpp ConfigParser.cpp Engine.cpp Location.cpp Http.cpp Server.cpp ../tmp/printengine.cpp \
-		Socket.cpp Request.cpp
+		Socket.cpp Request.cpp ConnectionManager.cpp
 SRCS = $(addprefix $(SRCDIR),$(SRCFIL))
 OBJS = $(SRCS:.cpp=.o)
 NAME = webserv

@@ -24,7 +24,7 @@ class ConfigParser
 		};
 
 		const static str		directives[];
-		Engine					webserv;
+		Engine					*webserv;
 		str						err_msg;
 		int						inBlock;
 		e_next					expected;
@@ -46,7 +46,7 @@ class ConfigParser
 		ConfigParser();
 		~ConfigParser();
 
-		Engine	parse(str &fn);		
+		Engine	*parse(str &fn);		
 
 		class FilenameError: public std::exception
 		{

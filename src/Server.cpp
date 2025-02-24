@@ -25,7 +25,7 @@ bool Server::validAddress(str address)
 	unsigned int	dot_count = 0;
 	bool			colon = false;
 
-	for (int i = 0; i < address.length(); i++)
+	for (unsigned int i = 0; i < address.length(); i++)
 	{
 		if (!std::isdigit(address[i]) && address[i] != '.' && address[i] != ':')
 			return false;
@@ -170,34 +170,34 @@ std::vector<Location *>	Server::getLocations()
 	return locations;
 }
 
-str Server::setDefault()
+void Server::setDefault()
 {
 	names.push_back("default");
 }
 
-const bool Server::operator ==(const Server &server1, const Server &server2)
+bool Server::operator ==(Server &server2)
 {
 	std::vector<str>	tmp, tmp2, tmp3, tmp4;
 	bool				same_name = false;
 	bool				same_ipport = false;
 
-	tmp = server1.getNames();
+	tmp = this->getNames();
 	tmp2 = server2.getNames();
-	for(std::vector<str>::iterator it = tmp; it != tmp.end(); it++)
+	for(std::vector<str>::iterator it = tmp.begin(); it != tmp.end(); it++)
 	{
-		if (std::find(tmp2.begin(), tmp2.end(), item) == tmp2.end())
+		if (std::find(tmp2.begin(), tmp2.end(), *it) != tmp2.end())
 		{
 			same_name = true;
 			break;
 		}
 	}
-	tmp = server1.getIPs();
+	tmp = this->getIPs();
 	tmp2 = server2.getIPs();
-	tmp3 = server1.getPorts();
+	tmp3 = this->getPorts();
 	tmp4 = server2.getPorts();
-	for (int i = 0; i < tmp.size(); i++)
+	for (unsigned int i = 0; i < tmp.size(); i++)
 	{
-		for (int j = 0; j < tmp2.size; j++)
+		for (unsigned int j = 0; j < tmp2.size(); j++)
 		{
 			if (tmp[i] == tmp2[j] && tmp3[i] == tmp4[j])
 			{

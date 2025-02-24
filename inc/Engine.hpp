@@ -4,6 +4,7 @@
 #include <iostream>
 #include <exception>
 #include <fstream>
+#include "ConnectionManager.hpp"
 #include "Http.hpp"
 #include "tmpdel.hpp"
 
@@ -12,7 +13,8 @@ typedef std::string str;
 class Engine
 {
 	private:
-		Http		*protocol;
+		Http				*protocol;
+		ConnectionManager	*cm;
 
 	public:
 		Engine();
@@ -20,6 +22,7 @@ class Engine
 		~Engine();
 
 		Http	*getProtocol();
+		void	start();
 
 		const Engine &operator =(const Engine &copy);
 };

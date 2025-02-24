@@ -25,30 +25,33 @@ ConnectionManager::ConnectionManager(): main_listeners(0)
 	
 }
 
-ConnectionManager::ConnectionManager(Http protocol): main_listeners(0)
+ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 {
-	std::vector<Server *>	servers = protocol.getServers();
+	if (!protocol)
+		throw std::exception();
+	std::vector<Server *>	servers = protocol->getServers();
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
-		for (int i = 0; i < (*it).getIPs(); i++)
+		for (unsigned int i = 0; i < (*it)->getIPs().size(); i++)
 		{
-			str	ipp = (*it).getIP(i) + ":" + (*it).getPort(i);
+			str	ipp = (*it)->getIP(i) + ":" + (*it)->getPort(i);
 			std::vector<str>::iterator	found_socket = std::find(reqs.begin(), reqs.end(), ipp);
 			if (found_socket == reqs.end())
 			{
+				addSocket(sock_fds, (*it)->getIP(i), (*it)->getPort(i));
 				servers_per_ippp.push_back(std::map<str, Server *>());
 				reqs.push_back(ipp);
-				addServerToMap(servers_per_ippp.back(), it);
+				addServerToMap(servers_per_ippp.back(), **it);
 			}
 			else
-				addServerToMap(servers_per_ippp.at(found_socket - reqs.begin()), it);
+				addServerToMap(servers_per_ippp.at(found_socket - reqs.begin()), **it);
 		}
 	}
-	for (int i = 0; i < reqs.size(); i++)
+	for (unsigned int i = 0; i < reqs.size(); i++)
 		reqs[i] = "";
 }
 
-struct sockaddr_in ConnectionManager::setupSocket(str ip, str port)
+int ConnectionManager::setupSocket(str ip, str port)
 {
 	struct sockaddr_in	ret;
 	struct addrinfo		*info;
@@ -56,7 +59,7 @@ struct sockaddr_in ConnectionManager::setupSocket(str ip, str port)
 	const char			*cport;
 	int					fd;
 	int					opt = 1;
-	
+
 	caddr = (ip == "none" ? NULL : ip.c_str());
 	cport = (port == "none" ? NULL : port.c_str());
 	int addr_ret = getaddrinfo(caddr, cport, NULL, &info);
@@ -72,10 +75,16 @@ struct sockaddr_in ConnectionManager::setupSocket(str ip, str port)
 	if (bind(fd, (sockaddr *)&ret, sizeof(ret)) < 0)
 	{
 		perror("Bind in parameterized constructor");
+		freeaddrinfo(info);
 		throw (std::exception());
 	}
 	if (listen(fd, 128) == -1)
+	{
+		freeaddrinfo(info);
 		throw (std::exception());
+	}
+	freeaddrinfo(info);
+	return fd;
 }
 
 void	ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port)
@@ -92,8 +101,8 @@ void	ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, 
 void	ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &server)
 {
 	std::vector<str>	names = server.getNames();
-	for (std::vector<str>::iterator it = names; it != names.end(); it++)
-		map.insert_or_assign(std::pair<*it, &server>);
+	for (std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
+		map[*it] = &server;
 }
 
 ConnectionManager::~ConnectionManager()
@@ -182,25 +191,20 @@ void	ConnectionManager::startConnections()
 			}
 			else if (sock_fds.at(i).revents & POLLIN)
 			{
-				j = 0;
 				std::cout << "POLLIN(TAN)\n";
 				char buf[2048];
-				//memset(buf, 0, sizeof(buf));
+				memset(buf, 0, sizeof(buf));
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 				(void)bytes;
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{
-				if (j == 0)
-				{
-					j = 1;
-					std::cout << "POLLOUT(TAN)\n";
-				}
+				std::cout << "POLLOUT(TAN)\n";
 			}
 		}
 	}
-	if (g_quit == true)
-	{
+	// if (g_quit == true)
+	// {
 		// close all sockets
 		for (unsigned int i = 0; i < sock_fds.size(); i++)
 		{
@@ -208,11 +212,6 @@ void	ConnectionManager::startConnections()
 			sock_fds.pop_back();
 			reqs.pop_back();
 		}
-		for (unsigned int i = 0; i < listeners.size(); i++)
-		{
-			delete listeners[i];
-			listeners.pop_back();
-		}
-	}
-	signal(SIGINT, SIG_DFLT);
+	// }
+	signal(SIGINT, SIG_DFL);
 }

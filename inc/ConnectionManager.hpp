@@ -19,16 +19,17 @@
 # include <iostream>
 # include <exception>
 # include <algorithm>
+# include <cerrno>
 # include <unistd.h>
 # include <sys/socket.h>
 # include <arpa/inet.h>
 # include <poll.h>
 # include <signal.h>
 # include <fcntl.h>
-# include <pair>
 # include <cstring>
 # include <map>
 # include <cstdio>
+# include "Http.hpp"
 # include "Server.hpp"
 
 typedef std::string str;
@@ -39,17 +40,18 @@ class ConnectionManager
 		std::vector<std::string>				reqs;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
-		int										main_listeners;
+		unsigned int							main_listeners;
 
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
+	
 		void	addServerToMap(std::map<str, Server *>	&map, Server &server);
 		void	addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port);
-		struct sockaddr_in setupSocket(str ip, str port);
+		int		setupSocket(str ip, str port);
 
 	public:
-		ConnectionManager(Http protocol);
+		ConnectionManager(Http *protocol);
 
 		void	startConnections();
 

@@ -2,9 +2,9 @@
 
 const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
 
-ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
+ConfigParser::ConfigParser(): webserv(NULL), err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
-	
+	webserv = new Engine();
 }
 
 bool ConfigParser::validFilename(str &fn) const
@@ -116,7 +116,7 @@ bool ConfigParser::handleNext(str &word)
 					err_msg = "Incorrect arguments for block directive!\n";
 					return false;
 				}
-				blocks.push(webserv.getProtocol());
+				blocks.push(webserv->getProtocol());
 			}
 			else
 			{
@@ -127,7 +127,6 @@ bool ConfigParser::handleNext(str &word)
 				}
 				if (word[0] == '{')
 				{
-					std::cout << blocks.top()->getType() << " ------------ \n";
 					ptr = blocks.top()->handleBlock(parsed_opts);
 					if (!ptr)
 					{
@@ -165,7 +164,7 @@ bool ConfigParser::parseLine(str &line)
 	return true;
 }
 
-Engine ConfigParser::parse(str &fn)
+Engine *ConfigParser::parse(str &fn)
 {
 	if (!validFilename(fn))
 		throw FilenameError("Invalid file name!");
@@ -182,6 +181,8 @@ Engine ConfigParser::parse(str &fn)
 	while (getline(file, line))
 	{
 		cpy = line;
+		if (cpy.find("#") != str::npos)
+			cpy = cpy.substr(0, cpy.find("#"));
 		i++;
 		if (!parseLine(cpy))
 			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
@@ -190,17 +191,17 @@ Engine ConfigParser::parse(str &fn)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	servers = webserv.getProtocol()->getServers();
+	servers = webserv->getProtocol()->getServers();
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
-		if ((*it).getNames().size() == 0)
-			(*it).setDefault();
+		if ((*it)->getNames().size() == 0)
+			(*it)->setDefault();
 	}
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
     {
-		for (std::vector<Server *>::iterator it2 = ++it; it2 != servers.end(); it2++)
+		for (std::vector<Server *>::iterator it2 = it + 1; it2 != servers.end(); it2++)
 		{
-			if (*it == *it2)
+			if (**it == **it2)
 				throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
 		}
 	}

@@ -8,7 +8,6 @@
 # include <queue>
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
-# include "ConnectionManager.hpp"
 
 typedef std::string str;
 
@@ -22,7 +21,6 @@ class Server: public BlockOBJ
 		str						ret_str;
 		int						ret_code;
 		std::vector<Location *>	locations;
-		ConnectionManager		cm;
 		
 		bool	validAddress(str address);
 		bool	handleAddress(str address);
@@ -37,7 +35,7 @@ class Server: public BlockOBJ
 		str						getPort(int index);
 		str						getIP(int index);
 		str						getType();
-		str						setDefault();
+		void					setDefault();
 		Socket*					init_listeners();
 		void					printPortsIpsNames();
 		std::vector<str>		getNames();
@@ -46,7 +44,7 @@ class Server: public BlockOBJ
 		std::vector<Location *>	getLocations();
 
 		const Server	&operator =(const Server &copy);
-		const bool		operator ==(const Server &server1, const Server &server2);
+		bool			operator ==(Server &server2);
 };
 
 #endif

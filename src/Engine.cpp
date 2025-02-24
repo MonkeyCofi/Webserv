@@ -1,14 +1,16 @@
 #include "Engine.hpp"
 
-Engine::Engine(): protocol(NULL)
+Engine::Engine(): protocol(NULL), cm(NULL)
 {
 	protocol = new Http();
 }
 
-Engine::Engine(const Engine &copy)
+Engine::Engine(const Engine &copy): cm(NULL)
 {
-	(void)copy;
-	this->protocol = copy.protocol;
+	if (!copy.protocol)
+		protocol = new Http();
+	else
+		protocol = new Http(*copy.protocol);
 }
 
 Http *Engine::getProtocol()
@@ -16,15 +18,33 @@ Http *Engine::getProtocol()
 	return protocol;
 }
 
-Engine::~Engine()
+void	Engine::start()
 {
-	//printengine(protocol, 0);
-	//delete protocol;
+	if (!protocol)
+		throw std::exception();
+	if (!cm)
+		cm = new ConnectionManager(protocol);
+	cm->startConnections();
 }
 
 const Engine &Engine::operator =(const Engine &copy)
 {
-	(void)copy;
-	this->protocol = copy.protocol;
+	if (protocol)
+		delete protocol;
+	if (cm)
+		delete cm;
+	if (!copy.protocol)
+		protocol = new Http();
+	else
+		protocol = new Http(*copy.protocol);
+	cm = NULL;
 	return *this;
+}
+
+Engine::~Engine()
+{
+	if (protocol)
+		delete protocol;
+	if (cm)
+		delete cm;
 }
