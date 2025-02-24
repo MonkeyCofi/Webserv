@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
+/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/16 17:11:29 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/02/24 20:46:42 by pipolint         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ Request::Request()
 	this->hostIP = "none";
 	this->contentLength = 0;
 	this->keepAlive = false;
+	this->URI_fd = -1;
 	//throw(NoHostException());
 }
 
@@ -45,6 +46,7 @@ Request	&Request::operator=(const Request& obj)
 	this->file_URI = obj.file_URI;
 	this->contentLength = obj.contentLength;
 	this->keepAlive = obj.keepAlive;
+	this->URI_fd = obj.URI_fd;
 	return (*this);
 }
 
@@ -74,10 +76,11 @@ void	Request::setRequestFields(t_header str_case, str& headerFieldContent)
 {
 	switch (str_case)
 	{
-		case(accept):	// should parse each passage of commas
+		case(accept):
 		{
 			std::istringstream	acc_types(headerFieldContent);
 			str					type;
+
 			while (std::getline(acc_types, type, ','))
 			{
 				this->accept_types.push_back(type);
@@ -86,31 +89,29 @@ void	Request::setRequestFields(t_header str_case, str& headerFieldContent)
 			return ;	
 		}
 		case (content_length):
-		{
 			this->contentLength = atoi(headerFieldContent.c_str());
 			return ;
-		}
 		case (content_type):
-		{
 			this->contentType = headerFieldContent;
 			return ;
-		}
 		case (host):
-		{
 			this->hostIP = headerFieldContent;
 			return ;
-		}
 		case (connection):
-		{
 			this->keepAlive = (headerFieldContent == "keep-alive" ? true : false);
 			return ;
-		}
 		case (none):
 			return ;
 	}
 }
 
-Request	Request::parseRequest(str& request)
+void	Request::changeToLower(char& c)
+{
+	if (c >= 'A' && c <= 'Z')
+		c += 32;
+}
+
+void	Request::parseRequest(str& request)
 {
 	std::istringstream	reqStream(request);
 	str					line;
@@ -127,12 +128,13 @@ Request	Request::parseRequest(str& request)
 			break ;
 		}
 		str_case = returnHeader(line.substr(0, line.find_first_of(":")));
+		
 		headerFieldContent = line.substr(line.find(":") + 1);
 		if (headerFieldContent.at(0) == ' ')
 			headerFieldContent.erase(headerFieldContent.begin());
+		std::for_each(headerFieldContent.begin(), headerFieldContent.end(), changeToLower);
 		setRequestFields(str_case, headerFieldContent);
 	}
-	return (*this);
 }
 
 int	Request::getFileFD() const
