@@ -62,8 +62,6 @@ Request	Request::parseRequest(str& request)
 	if (request.find("\r\n") == str::npos || request.find("HTTP/1.1") == str::npos || request.find("Host: ") == str::npos)
 		return (*this);
 	status_line = request.substr(0, request.find_first_of("\r\n"));
-	if (std::count(status_line.begin(), status_line.end(), ' ') < 2)
-		return (*this);
 	this->method = status_line.substr(0, status_line.find_first_of(' '));
 	this->serveFile = status_line.substr(status_line.find_first_of(' ') + 1);
 	if (serveFile.substr(status_line.find_first_of(' ') + 1) != "HTTP/1.1")
