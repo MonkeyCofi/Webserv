@@ -37,6 +37,7 @@ typedef std::string str;
 class ConnectionManager
 {
 	private:
+		static ssize_t	max_request_size;
 		std::vector<std::string>				reqs;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
@@ -46,9 +47,11 @@ class ConnectionManager
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
 	
+		int		setupSocket(str ip, str port);
 		void	addServerToMap(std::map<str, Server *>	&map, Server &server);
 		void	addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port);
-		int		setupSocket(str ip, str port);
+		void	newClient(struct pollfd client);
+		void	printError(int revents);
 
 	public:
 		ConnectionManager(Http *protocol);

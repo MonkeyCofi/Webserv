@@ -13,8 +13,9 @@
 #include "ConnectionManager.hpp"
 
 bool	g_quit = false;
+ssize_t	ConnectionManager::max_request_size = 65535;
 
-void	sigint_handle(int signal)
+void sigint_handle(int signal)
 {
 	if (signal == SIGINT)
 		g_quit = true;
@@ -87,7 +88,7 @@ int ConnectionManager::setupSocket(str ip, str port)
 	return fd;
 }
 
-void	ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port)
+void ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port)
 {
 	struct pollfd	temp;
 	temp.fd = setupSocket(ip, port);
@@ -98,7 +99,7 @@ void	ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, 
 	sock_fds.push_back(temp);
 }
 
-void	ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &server)
+void ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &server)
 {
 	std::vector<str>	names = server.getNames();
 	for (std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
@@ -115,103 +116,96 @@ ConnectionManager::ConnectionManager(const ConnectionManager &obj): main_listene
 	(void)obj;
 }
 
-ConnectionManager	&ConnectionManager::operator=(const ConnectionManager &obj)
+ConnectionManager &ConnectionManager::operator=(const ConnectionManager &obj)
 {
 	(void)obj;
 	return (*this);
 }
 
-void	ConnectionManager::startConnections()
+void ConnectionManager::newClient(struct pollfd client)
 {
+	struct sockaddr_in	client_addr;
+	struct pollfd		client;
+	socklen_t			len;
+	int					acc_sock;
+
+	len = sizeof(client_addr);
+	acc_sock = accept(client.fd, (sockaddr *)&client_addr, &len);
+	if (errno == EWOULDBLOCK)
+	{
+		std::cout << "Nothing to accept\n";
+		continue ;
+	}
+	std::cout << "Received a request from a new client\n";
+	client.fd = acc_sock;
+	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
+	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
+	client.events = POLLIN | POLLOUT;
+	client.revents = 0;
+	sock_fds.push_back(client);
+	reqs.push_back("");
+}
+
+void ConnectionManager::printError(int revents)
+{
+	if (revents & POLLHUP)
+		std::cerr << "Hangup\n";
+	else if (revents & POLLERR)
+		std::cerr << "Error\n";
+	else if (revents & POLLNVAL)
+		std::cerr << "INVALID\n";
+}
+
+void ConnectionManager::startConnections()
+{
+	int		res;
+	char	buf[max_request_size];
+
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
-	 	int res = poll(&sock_fds[0], sock_fds.size(), 500);
+	 	res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
 			continue ;
 		if (res < 0)
 		{
 			perror("poll");
-			exit(EXIT_FAILURE);
+			throw std::exception();
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
-			{
-				struct sockaddr_in	client_addr;
-				struct pollfd		client;
-				socklen_t			len;
-				int					acc_sock;
-
-				len = sizeof(client_addr);
-				acc_sock = accept(sock_fds.at(i).fd, (sockaddr *)&client_addr, &len);
-				if (errno == EWOULDBLOCK)
-				{
-					std::cout << "Nothing to accept\n";
-					continue ;
-				}
-				std::cout << "Received a request from a new client\n";
-				client.fd = acc_sock;
-				fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
-				fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
-				client.events = POLLIN | POLLOUT;
-				client.revents = 0;
-				sock_fds.push_back(client);
-				reqs.push_back("");
-			}
+				newClient(sock_fds.at(i));
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
 			if (sock_fds.at(i).revents == 0)
 				continue ;
-			else if (sock_fds.at(i).revents & POLLHUP)
-			{
-				std::cout << "Hangup\n";
-				close(sock_fds.at(i).fd);
-				sock_fds.erase(sock_fds.begin() + i);
-				reqs.erase(reqs.begin() + i);
-				i--;
-			}
-			else if (sock_fds.at(i).revents & POLLERR)
-			{
-				std::cout << "Error\n";
-				close(sock_fds.at(i).fd);
-				sock_fds.erase(sock_fds.begin() + i);
-				reqs.erase(reqs.begin() + i);
-				i--;
-			}
-			else if (sock_fds.at(i).revents & POLLNVAL)
-			{
-				std::cout << "INVALID\n";
-				close(sock_fds.at(i).fd);
-				sock_fds.erase(sock_fds.begin() + i);
-				reqs.erase(reqs.begin() + i);
-				i--;
-			}
 			else if (sock_fds.at(i).revents & POLLIN)
 			{
-				// std::cout << "POLLIN(TAN)\n";
-				char buf[2048];
 				memset(buf, 0, sizeof(buf));
 				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 				(void)bytes;
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{
-				// std::cout << "POLLOUT(TAN)\n";
+			}
+			else
+			{
+				printError(sock_fds.at(i).revents);
+				close(sock_fds.at(i).fd);
+				sock_fds.erase(sock_fds.begin() + i);
+				reqs.erase(reqs.begin() + i);
+				i--;
 			}
 		}
 	}
-	// if (g_quit == true)
-	// {
-		// close all sockets
-		for (unsigned int i = 0; i < sock_fds.size(); i++)
-		{
-			close(sock_fds.at(i).fd);
-			sock_fds.pop_back();
-			reqs.pop_back();
-		}
-	// }
+	for (unsigned int i = 0; i < sock_fds.size(); i++)
+	{
+		close(sock_fds.at(i).fd);
+		sock_fds.pop_back();
+		reqs.pop_back();
+	}
 	signal(SIGINT, SIG_DFL);
 }
