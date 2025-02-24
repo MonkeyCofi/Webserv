@@ -17,8 +17,6 @@ Request::Request()
 	this->method = "";
 	this->serveFile = "";
 	this->host = "";
-	this->contentType = "";
-	this->contentLength = 0;
 	this->keepAlive = false;
 	this->validRequest = false;
 	this->status = 400;
@@ -45,8 +43,10 @@ Request	&Request::operator=(const Request& obj)
 		return (*this);
 	this->method = obj.method;
 	this->serveFile = obj.serveFile;
-	this->contentLength = obj.contentLength;
 	this->keepAlive = obj.keepAlive;
+	this->host = obj.host;
+	this->validRequest = obj.validRequest;
+	this->status = obj.status;
 	return (*this);
 }
 
@@ -57,15 +57,21 @@ const char*	Request::NoHostException::what()
 
 Request	Request::parseRequest(str& request)
 {
-	if (request.find("\r\n") == str::npos)
+	const str	status_line;
+
+	if (request.find("\r\n") == str::npos || request.find("HTTP/1.1") == str::npos || request.find("Host: ") == str::npos)
 		return (*this);
-	const str	status_line = request.substr(0, request.find_first_of("\r\n"));
-	method = status_line.substr(0, status_line.find_first_of(' '));
-	serveFile = status_line.substr(status_line.find_first_of(' ') + 1);
+	status_line = request.substr(0, request.find_first_of("\r\n"));
+	if (std::count(status_line.begin(), status_line.end(), ' ') < 2)
+		return (*this);
+	this->method = status_line.substr(0, status_line.find_first_of(' '));
+	this->serveFile = status_line.substr(status_line.find_first_of(' ') + 1);
 	if (serveFile.substr(status_line.find_first_of(' ') + 1) != "HTTP/1.1")
 		return (*this);
-	serveFile = serveFile.substr(0, file_name.find_first_of(' '));
-	
+	this->serveFile = serveFile.substr(0, file_name.find_first_of(' '));
+	this->host = request.substr(request.find("Host: ") + 1, request.find("\r\n"));
+	if (this->host.length() < 1)
+		return (*this);
 	// std::cout << request << "\n";
 	// if (file_name.at(0) == '/' && file_name.length() == 1)
 	// 	file_name = "root";
@@ -83,6 +89,11 @@ Request	Request::parseRequest(str& request)
 bool Request::isValidRequest()
 {
 	return validRequest;
+}
+
+int Request::getStatus()
+{
+	return status;
 }
 
 str Request::getServeFile()
@@ -104,14 +115,3 @@ bool Request::shouldKeepAlive()
 {
 	return keepAlive;
 }
-
-str Request::getContentType()
-{
-	return contentType;
-}
-
-size_t Request::getContentLength()
-{
-	return contentLength;
-}
-

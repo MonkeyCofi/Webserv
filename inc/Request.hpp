@@ -26,8 +26,6 @@ class Request
 		str		method;
 		int		status;
 		str		serveFile;
-		str		contentType;
-		size_t	contentLength;
 		bool	keepAlive;
 		bool	validRequest;
 
@@ -40,13 +38,12 @@ class Request
 
 		Request	parseRequest(str& request);
 
+		bool	shouldKeepAlive();
 		bool	isValidRequest();
 		str		getServeFile();
 		str		getMethod();
+		int		getStatus();
 		str		getHost();
-		bool	shouldKeepAlive();
-		str		getContentType();
-		size_t	getContentLength();
 
 		class	NoHostException
 		{
