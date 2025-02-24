@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
+/*   Response.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,9 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Request.hpp"
+#include "Response.hpp"
 
-Request::Request()
+Response::Response()
 {
 	this->method = "none";
 	this->serveFile = "none";
@@ -22,22 +22,22 @@ Request::Request()
 	//throw(NoHostException());
 }
 
-//Request::Request(str& request)
+//Response::Response(str& request)
 //{
 	
 //}
 
-Request::~Request()
+Response::~Response()
 {
 	
 }
 
-Request::Request(const Request& obj)
+Response::Response(const Response& obj)
 {
 	(void)obj;
 }
 
-Request	&Request::operator=(const Request& obj)
+Response	&Response::operator=(const Response& obj)
 {
 	if (&obj == this)
 		return (*this);
@@ -48,14 +48,14 @@ Request	&Request::operator=(const Request& obj)
 	return (*this);
 }
 
-const char*	Request::NoHostException::what()
+const char*	Response::NoHostException::what()
 {
-	return ("Request doesn't contain Host header");
+	return ("Response doesn't contain Host header");
 }
 
-Request	Request::parseRequest(str& request)
+Response	Response::parseResponse(str& request)
 {
-	Request		req;
+	Response		req;
 	str			file_name;
 	const str	status_line = request.substr(0, request.find_first_of("\r\n"));
 	const str	method = status_line.substr(0, status_line.find_first_of(' '));
@@ -79,38 +79,7 @@ Request	Request::parseRequest(str& request)
 	return (req);
 }
 
-int Request::getFileFD()
+int	Response::getFileFD()
 {
-	return fileFD;
+	return (this->fileFD);
 }
-
-str Request::getServeFile()
-{
-	return serveFile;
-}
-
-str Request::getMethod()
-{
-	return method;
-}
-
-str Request::getHost()
-{
-	return host;
-}
-
-bool Request::shouldKeepAlive()
-{
-	return keepAlive;
-}
-
-str Request::getContentType()
-{
-	return contentType;
-}
-
-size_t Request::getContentLength()
-{
-	return contentLength;
-}
-

@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.hpp                                        :+:      :+:    :+:   */
+/*   Response.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,15 +10,15 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef REQUEST_HPP
-# define REQUEST_HPP
+#ifndef RESPONSE_HPP
+# define RESPONSE_HPP
 
 # include <iostream>
 # include <fcntl.h>
 
 typedef std::string str;
 
-class Request
+class Response
 {
 	private:
 		str		method;
@@ -28,22 +28,15 @@ class Request
 		str		host;
 		size_t	contentLength;
 		bool	keepAlive;	// either keep-alive, or close
-
 	public:
-		Request();
-		Request(str& request);
-		~Request();
-		Request(const Request& obj);
-		Request		&operator=(const Request& obj);
+		Response();
+		Response(str& request);
+		~Response();
+		Response(const Response& obj);
+		Response		&operator=(const Response& obj);
 
-		Request	parseRequest(str& request);
+		Response	parseResponse(str& request);
 		int		getFileFD();
-		str		getServeFile();
-		str		getMethod();
-		str		getHost();
-		bool	shouldKeepAlive();
-		str		getContentType();
-		size_t	getContentLength();
 
 		class	NoHostException
 		{
