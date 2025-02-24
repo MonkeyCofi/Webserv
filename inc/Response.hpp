@@ -34,7 +34,7 @@ class Response
 		~Response();
 		Response(const Response& obj);
 		Response		&operator=(const Response& obj);
-
+// req.fileFD = open(req.serveFile.c_str(), O_RDWR);
 		Response	parseResponse(str& request);
 		int		getFileFD();
 

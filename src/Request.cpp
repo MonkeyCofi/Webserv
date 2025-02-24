@@ -14,12 +14,14 @@
 
 Request::Request()
 {
-	this->method = "none";
-	this->serveFile = "none";
-	this->host = "none";
+	this->method = "";
+	this->serveFile = "";
+	this->host = "";
+	this->contentType = "";
 	this->contentLength = 0;
 	this->keepAlive = false;
-	//throw(NoHostException());
+	this->validRequest = false;
+	this->status = 400;
 }
 
 //Request::Request(str& request)
@@ -55,33 +57,32 @@ const char*	Request::NoHostException::what()
 
 Request	Request::parseRequest(str& request)
 {
-	Request		req;
-	str			file_name;
+	if (request.find("\r\n") == str::npos)
+		return (*this);
 	const str	status_line = request.substr(0, request.find_first_of("\r\n"));
-	const str	method = status_line.substr(0, status_line.find_first_of(' '));
-
-	file_name = status_line.substr(status_line.find_first_of(' ') + 1);\
-	file_name = file_name.substr(0, file_name.find_first_of(' '));
-	std::cout << request << "\n";
-	if (file_name.at(0) == '/' && file_name.length() == 1)
-		file_name = "root";
-	else
-	{
-		std::string::iterator	it = file_name.begin();
-		file_name.erase(it);
-	}
-	std::cout << "The file to get is " << file_name << "\n";
-	req.serveFile = file_name;
-	req.fileFD = open(req.serveFile.c_str(), O_RDWR);
+	method = status_line.substr(0, status_line.find_first_of(' '));
+	serveFile = status_line.substr(status_line.find_first_of(' ') + 1);
+	if (serveFile.substr(status_line.find_first_of(' ') + 1) != "HTTP/1.1")
+		return (*this);
+	serveFile = serveFile.substr(0, file_name.find_first_of(' '));
 	
-	
-	
-	return (req);
+	// std::cout << request << "\n";
+	// if (file_name.at(0) == '/' && file_name.length() == 1)
+	// 	file_name = "root";
+	// else
+	// {
+	// 	std::string::iterator	it = file_name.begin();
+	// 	file_name.erase(it);
+	// }
+	// std::cout << "The file to get is " << file_name << "\n";
+	status = 200;
+	validRequest = true;
+	return (*this);
 }
 
-int Request::getFileFD()
+bool Request::isValidRequest()
 {
-	return fileFD;
+	return validRequest;
 }
 
 str Request::getServeFile()

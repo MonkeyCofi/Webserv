@@ -15,19 +15,21 @@
 
 # include <iostream>
 # include <fcntl.h>
+# include <algorithm>
 
 typedef std::string str;
 
 class Request
 {
 	private:
+		str		host;
 		str		method;
+		int		status;
 		str		serveFile;
 		str		contentType;
-		int		fileFD;
-		str		host;
 		size_t	contentLength;
-		bool	keepAlive;	// either keep-alive, or close
+		bool	keepAlive;
+		bool	validRequest;
 
 	public:
 		Request();
@@ -37,7 +39,8 @@ class Request
 		Request		&operator=(const Request& obj);
 
 		Request	parseRequest(str& request);
-		int		getFileFD();
+
+		bool	isValidRequest();
 		str		getServeFile();
 		str		getMethod();
 		str		getHost();
