@@ -17,7 +17,7 @@ Request::Request()
 	this->method = "";
 	this->serveFile = "";
 	this->host = "";
-	this->keepAlive = false;
+	this->keepAlive = true;
 	this->validRequest = false;
 	this->status = 400;
 }
