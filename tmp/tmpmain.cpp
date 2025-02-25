@@ -59,7 +59,7 @@ void	parse_request(str& request, int id, std::vector<struct pollfd> &pauldexter)
 		std::cout << "Successfully opened " << (get_file == "none" ? "index.html" : get_file) << "\n";
 	send(pauldexter.at(id).fd, http_header.c_str(), http_header.length(), 0);
 	send(pauldexter.at(id).fd, "\r\n", 2, 0);
-	ssize_t	bytes = 1;
+	size_t	bytes = 1;
 	while ((bytes = read(index, buffer, 1)) > 0)
 	{
 		send(pauldexter.at(id).fd, buffer, 1, 0);
@@ -79,7 +79,7 @@ void	parse_request(str& request, int id, std::vector<struct pollfd> &pauldexter)
 // 	str	http_header = "HTTP/1.1 200 OK\r\nContent-Type:text/html\r\nConnection:close\r\n";
 // 	send(request.getFileFD(), http_header.c_str(), http_header.length(), 0);
 // 	send(request.getFileFD(), "\r\n", 2, 0);
-// 	ssize_t	bytes = 1;
+// 	size_t	bytes = 1;
 // 	while ((bytes = read(request.getFileFD(), buffer, 1)) > 0)
 // 	{
 // 		//std::cout << buffer << "\n";
@@ -231,7 +231,7 @@ int main(int ac, char **av)
 	// // 			// std::cout << "POLLIN(TAN)\n";
 	// // 			char buf[2048];
 	// // 			//memset(buf, 0, sizeof(buf));
-	// // 			ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+	// // 			size_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 	// // 			if (bytes > 0)
 	// // 			{
 	// // 				std::cout << "Reading...\n";
@@ -357,7 +357,7 @@ int main(int ac, char **av)
 	// 			std::cout << "POLLIN(TAN)\n";
 	// 			char buf[2048];
 	// 			//memset(buf, 0, sizeof(buf));
-	// 			ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+	// 			size_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 	// 			(void)bytes;
 	// 		}
 	// 		if (sock_fds.at(i).revents & POLLOUT)
@@ -434,7 +434,7 @@ int main(int ac, char **av)
 	// // 			std::cout << "POLLIN(TAN)\n";
 	// // 			char buf[2048];
 	// // 			//memset(buf, 0, sizeof(buf));
-	// // 			ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
+	// // 			size_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
 	// // 			if (bytes > 0)
 	// // 			{
 	// // 				std::cout << "reading\n";

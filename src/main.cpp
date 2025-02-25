@@ -51,7 +51,7 @@ void	parse_request(str& request, int id, std::vector<struct pollfd> &pauldexter)
 		std::cout << "Successfully opened " << (get_file == "none" ? "index.html" : get_file) << "\n";
 	send(pauldexter.at(id).fd, http_header.c_str(), http_header.length(), 0);
 	send(pauldexter.at(id).fd, "\r\n", 2, 0);
-	ssize_t	bytes = 1;
+	size_t	bytes = 1;
 	while ((bytes = read(index, buffer, 1)) > 0)
 	{
 		send(pauldexter.at(id).fd, buffer, 1, 0);

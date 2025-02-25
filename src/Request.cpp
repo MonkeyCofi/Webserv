@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pipolint <pipolint@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/02 12:08:17 by pipolint         ###   ########.fr       */
+/*   Updated: 2025/02/25 15:35:12 by ehammoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,10 @@
 Request::Request()
 {
 	this->method = "";
-	this->serveFile = "";
+	this->file_URI = "";
 	this->host = "";
+	this->contentLength = 0;
+	this->contentType = "";
 	this->keepAlive = true;
 	this->validRequest = false;
 	this->status = 400;
@@ -42,11 +44,13 @@ Request	&Request::operator=(const Request& obj)
 	if (&obj == this)
 		return (*this);
 	this->method = obj.method;
-	this->serveFile = obj.serveFile;
+	this->file_URI = obj.file_URI;
 	this->keepAlive = obj.keepAlive;
 	this->host = obj.host;
 	this->validRequest = obj.validRequest;
 	this->status = obj.status;
+	this->contentLength = obj.contentLength;
+	this->contentType = obj.contentType;
 	return (*this);
 }
 
@@ -55,34 +59,38 @@ const char*	Request::NoHostException::what()
 	return ("Request doesn't contain Host header");
 }
 
-Request	Request::parseRequest(str& request)
+void Request::changeToLower(char &c)
 {
-	str	status_line, tmp;
+	if (c >= 'A' && c <= 'Z')
+		c += 32;
+}
 
-	if (request.find("\r\n") == str::npos || request.find("HTTP/1.1") == str::npos || request.find("Host: ") == str::npos)
-		return (*this);
-	status_line = request.substr(0, request.find_first_of("\r\n"));
-	this->method = status_line.substr(0, status_line.find_first_of(' '));
-	this->serveFile = status_line.substr(status_line.find_first_of(' ') + 1);
-	if (serveFile.substr(status_line.find_first_of(' ') + 1) != "HTTP/1.1")
-		return (*this);
-	this->serveFile = serveFile.substr(0, serveFile.find_first_of(' '));
-	this->host = request.substr(request.find("Host: ") + 1, request.find("\r\n"));
-	if (this->host.length() < 1)
-		return (*this);
-	// if (request.find("Connection: ") != str::npos)
-	// {
-	// 	tmp = request.substr(request.find("Host: ") + 1, request.find("\r\n"));
-	// }
-	// std::cout << request << "\n";
-	// if (file_name.at(0) == '/' && file_name.length() == 1)
-	// 	file_name = "root";
-	// else
-	// {
-	// 	std::string::iterator	it = file_name.begin();
-	// 	file_name.erase(it);
-	// }
-	// std::cout << "The file to get is " << file_name << "\n";
+Request	&Request::parseRequest(str& request)
+{
+	std::istringstream	reqStream(request);
+	str					headerFieldContent;
+	str					line;
+	str		 			str_case;
+
+	while (std::getline(reqStream, line) && line.find_first_not_of(" \t\n\r") == str::npos)
+		;
+	
+	this->method = 
+	while (std::getline(reqStream, line)) // \n will be stripped from the end of the string so only look for \r
+	{
+		if (line == "\r")
+		{
+			std::cout << "Reached end of request header\n";
+			break ;
+		}
+		str_case = returnHeader(line.substr(0, line.find_first_of(":")));
+		
+		headerFieldContent = line.substr(line.find(":") + 1);
+		if (headerFieldContent.at(0) == ' ')
+			headerFieldContent.erase(headerFieldContent.begin());
+		std::for_each(headerFieldContent.begin(), headerFieldContent.end(), Request::changeToLower);
+		setRequestFields(str_case, headerFieldContent);
+	}
 	status = 200;
 	validRequest = true;
 	return (*this);
@@ -98,9 +106,9 @@ int Request::getStatus()
 	return status;
 }
 
-str Request::getServeFile()
+str Request::getFileURI()
 {
-	return serveFile;
+	return file_URI;
 }
 
 str Request::getMethod()
@@ -116,4 +124,14 @@ str Request::getHost()
 bool Request::shouldKeepAlive()
 {
 	return keepAlive;
+}
+
+str Request::getContentType()
+{
+	return contentType;
+}
+
+size_t Request::getContentLen()
+{
+	return contentLength;
 }

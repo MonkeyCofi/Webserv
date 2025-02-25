@@ -13,7 +13,7 @@
 #include "ConnectionManager.hpp"
 
 bool	g_quit = false;
-ssize_t	ConnectionManager::max_request_size = 65535;
+size_t	ConnectionManager::max_request_size = 65535;
 
 void sigint_handle(int signal)
 {
@@ -134,7 +134,7 @@ void ConnectionManager::newClient(struct pollfd client)
 	if (errno == EWOULDBLOCK)
 	{
 		std::cout << "Nothing to accept\n";
-		continue ;
+		return ;
 	}
 	std::cout << "Received a request from a new client\n";
 	client.fd = acc_sock;
@@ -160,7 +160,7 @@ void ConnectionManager::startConnections()
 {
 	int		res;
 	char	buffer[max_request_size];
-	ssize_t	bytes;
+	size_t	bytes;
 	Request	*req;
 
 	main_listeners = sock_fds.size();
@@ -188,7 +188,7 @@ void ConnectionManager::startConnections()
 			{
 				memset(buffer, 0, sizeof(buffer));
 				bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
-				req = new Request(bytes, buffer, max_request_size);
+				// req = new Request(bytes, buffer, max_request_size);
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{

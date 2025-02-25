@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/01 16:13:41 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/02/25 15:29:52 by ehammoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 # include <iostream>
 # include <fcntl.h>
 # include <algorithm>
+# include <sstream>
+# include <cctype>
 
 typedef std::string str;
 
@@ -25,11 +27,15 @@ class Request
 		str		host;
 		str		method;
 		int		status;
-		str		contentType;
 		str		file_URI;
 		bool	keepAlive;
+		str		contentType;
 		bool	validRequest;
-		size_t	
+		size_t	contentLength;
+
+		static void	changeToLower(char &c);
+		void		parseStatusLine(str& request);
+		void		setRequestFields(t_header str_case, str& headerFieldContent);
 
 	public:
 		Request();
@@ -38,11 +44,13 @@ class Request
 		Request(const Request& obj);
 		Request		&operator=(const Request& obj);
 
-		Request	parseRequest(str& request);
+		Request	&parseRequest(str& request);
 
 		bool	shouldKeepAlive();
 		bool	isValidRequest();
-		str		getServeFile();
+		str		getFileURI();
+		str		getContentType();
+		size_t	getContentLen();
 		str		getMethod();
 		int		getStatus();
 		str		getHost();

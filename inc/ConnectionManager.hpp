@@ -38,7 +38,7 @@ typedef std::string str;
 class ConnectionManager
 {
 	private:
-		static ssize_t	max_request_size;
+		static size_t	max_request_size;
 		std::vector<std::string>				reqs;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
