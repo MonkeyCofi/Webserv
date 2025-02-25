@@ -31,6 +31,7 @@
 # include <cstdio>
 # include "Http.hpp"
 # include "Server.hpp"
+# include "Request.hpp"
 
 typedef std::string str;
 

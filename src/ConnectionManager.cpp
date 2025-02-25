@@ -159,7 +159,9 @@ void ConnectionManager::printError(int revents)
 void ConnectionManager::startConnections()
 {
 	int		res;
-	char	buf[max_request_size];
+	char	buffer[max_request_size];
+	ssize_t	bytes;
+	Request	*req;
 
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
@@ -184,9 +186,9 @@ void ConnectionManager::startConnections()
 				continue ;
 			else if (sock_fds.at(i).revents & POLLIN)
 			{
-				memset(buf, 0, sizeof(buf));
-				ssize_t	bytes = recv(sock_fds.at(i).fd, buf, sizeof(buf), 0);
-				(void)bytes;
+				memset(buffer, 0, sizeof(buffer));
+				bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
+				req = new Request(bytes, buffer, max_request_size);
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{

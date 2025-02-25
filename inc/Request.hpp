@@ -25,9 +25,11 @@ class Request
 		str		host;
 		str		method;
 		int		status;
-		str		serveFile;
+		str		contentType;
+		str		file_URI;
 		bool	keepAlive;
 		bool	validRequest;
+		size_t	
 
 	public:
 		Request();
