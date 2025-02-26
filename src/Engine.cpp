@@ -21,7 +21,7 @@ Http *Engine::getProtocol()
 void	Engine::start()
 {
 	if (!protocol)
-		throw std::exception();
+		throw std::runtime_error("e3");
 	if (!cm)
 		cm = new ConnectionManager(protocol);
 	cm->startConnections();

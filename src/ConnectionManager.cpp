@@ -13,12 +13,12 @@
 #include "ConnectionManager.hpp"
 
 bool	g_quit = false;
-size_t	ConnectionManager::max_request_size = 65535;
 
 void sigint_handle(int signal)
 {
 	if (signal == SIGINT)
 		g_quit = true;
+	std::cout << "\n";
 }
 
 ConnectionManager::ConnectionManager(): main_listeners(0)
@@ -29,7 +29,7 @@ ConnectionManager::ConnectionManager(): main_listeners(0)
 ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 {
 	if (!protocol)
-		throw std::exception();
+		throw std::runtime_error("e1");
 	std::vector<Server *>	servers = protocol->getServers();
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
@@ -39,10 +39,11 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 			std::vector<str>::iterator	found_socket = std::find(reqs.begin(), reqs.end(), ipp);
 			if (found_socket == reqs.end())
 			{
-				addSocket(sock_fds, (*it)->getIP(i), (*it)->getPort(i));
+				addSocket((*it)->getIP(i), (*it)->getPort(i));
 				servers_per_ippp.push_back(std::map<str, Server *>());
 				reqs.push_back(ipp);
 				defaults.push_back(*it);
+				handlers.push_back(NULL);
 				addServerToMap(servers_per_ippp.back(), **it);
 			}
 			else
@@ -89,7 +90,7 @@ int ConnectionManager::setupSocket(str ip, str port)
 	return fd;
 }
 
-void ConnectionManager::addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port)
+void ConnectionManager::addSocket(str ip, str port)
 {
 	struct pollfd	temp;
 	temp.fd = setupSocket(ip, port);
@@ -123,7 +124,7 @@ ConnectionManager &ConnectionManager::operator=(const ConnectionManager &obj)
 	return (*this);
 }
 
-void ConnectionManager::newClient(struct pollfd client)
+void ConnectionManager::newClient(int i, struct pollfd sock)
 {
 	struct sockaddr_in	client_addr;
 	struct pollfd		client;
@@ -131,20 +132,22 @@ void ConnectionManager::newClient(struct pollfd client)
 	int					acc_sock;
 
 	len = sizeof(client_addr);
-	acc_sock = accept(client.fd, (sockaddr *)&client_addr, &len);
-	if (errno == EWOULDBLOCK)
-	{
-		std::cout << "Nothing to accept\n";
-		return ;
-	}
+	acc_sock = accept(sock.fd, (sockaddr *)&client_addr, &len);
+	// if (errno == EWOULDBLOCK)
+	// {
+	// 	std::cout << "Nothing to accept\n";
+	// 	return ;
+	// }
 	std::cout << "Received a request from a new client\n";
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
 	client.events = POLLIN | POLLOUT;
 	client.revents = 0;
+	handlers.push_back(NULL);
 	sock_fds.push_back(client);
 	reqs.push_back("");
+	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
 }
 
 void ConnectionManager::printError(int revents)
@@ -159,20 +162,19 @@ void ConnectionManager::printError(int revents)
 
 void ConnectionManager::passRequestToServer(int i, Request *req)
 {
-	if (!req->validRequest() || servers_per_ippp.find(req->host) == servers_per_ippp.end())
-		defaults.at(i)->handleRequest(req);
+	if (!req->isValidRequest() || servers_per_ippp.at(i).find(req->getHost()) == servers_per_ippp.at(i).end())
+		handlers.at(i) = defaults.at(i);
 	else
-	{
-		
-	}
+		handlers.at(i) = servers_per_ippp.at(i)[req->getHost()];
+	// handlers.at(i)->handleRequest(req);
 }
 
 void ConnectionManager::startConnections()
 {
 	int		res;
-	size_t	bytes;
-	char	buffer[max_request_size];
-	Request	*req = NULL;
+	ssize_t	bytes;
+	char	buffer[4096];
+	// Request	*req = NULL;
 
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
@@ -183,13 +185,15 @@ void ConnectionManager::startConnections()
 			continue ;
 		if (res < 0)
 		{
+			if (g_quit)
+				break ;
 			perror("poll");
-			throw std::exception();
+			throw std::runtime_error("e2");
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
-				newClient(sock_fds.at(i));
+				newClient(i, sock_fds.at(i));
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
@@ -197,9 +201,15 @@ void ConnectionManager::startConnections()
 				continue ;
 			else if (sock_fds.at(i).revents & POLLIN)
 			{
+				reqs.at(i) = "";
 				memset(buffer, 0, sizeof(buffer));
-				bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
-				if (bytes < 0)
+				while ((bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0)) > 0)
+				{
+					reqs.at(i) += str(buffer);
+					memset(buffer, 0, sizeof(buffer));
+				}
+				std::cout << "% " << bytes << "\n";
+				if (bytes == 0)
 				{
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
@@ -207,11 +217,29 @@ void ConnectionManager::startConnections()
 					i--;
 					continue ;
 				}
-				req = new Request(str(buffer));
-				handleRequest(req);
+				std::cout << "==> " << i << std::endl;
+				std::cout << "\n--------------\n";
+				std::cout << reqs.at(i) << "\n";
+				std::cout << "--------------\n\n";
+				// close(sock_fds.at(i).fd);
+				// sock_fds.erase(sock_fds.begin() + i);
+				// reqs.erase(reqs.begin() + i);
+				// i--;
+				sock_fds.at(i).events = POLLOUT;
+				// req = new Request(str(buffer));
+				// passRequestToServer(i, req);
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{
+				// if (handlers.at(i))
+				// 	handlers.at(i)->respond(sock_fds.at(i).fd);
+				// sock_fds.at(i).events = POLLIN;
+				std::cout << "PULLOUT!\n";
+				sock_fds.at(i).events = POLLIN;
+				// close(sock_fds.at(i).fd);
+				// sock_fds.erase(sock_fds.begin() + i);
+				// reqs.erase(reqs.begin() + i);
+				// i--;
 			}
 			else
 			{

@@ -106,7 +106,7 @@ int main(int ac, char **av)
 		str		tmp = av[1];
 		eng = conf.parse(tmp);
 		if (!eng)
-			throw std::exception();
+			throw std::runtime_error();
 		std::cout << "Parsing done!\n";
 	}
 	catch (const std::exception &e)

@@ -150,7 +150,7 @@ Request	&Request::parseRequest(str& request)
 			return (*this);
 		line = line.find_first_not_of(" \t\r", line.find(":") + 1);
 		field_value = line.substr(0, line.find_first_of(" \t\r"));
-		if (!std::all_of(field_value.begin(), field_value.end(), Request::is_digit))
+		if (field_value.find_first_not_of("0123456789") != str::npos)
 			return (*this);
 		if (line.substr(line.find_first_of(" \t\r")) != "\r")
 			ignore = true;
