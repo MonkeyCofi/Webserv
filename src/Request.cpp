@@ -6,7 +6,7 @@
 /*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/25 15:35:12 by ehammoud         ###   ########.fr       */
+/*   Updated: 2025/02/25 18:03:45 by ehammoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,31 +65,77 @@ void Request::changeToLower(char &c)
 		c += 32;
 }
 
+bool Request::parseRequestLine(str &line)
+{
+	if (std::count(line.begin(), line.end(), ' ') != 2 || line.length() < 14)
+		return false;
+	if (line.find_first_of(" ") > 6)
+	{
+		this->status = 501;
+		return false;
+	}
+	this->method = line.substr(0, line.find_first_of(" "));
+	if (method != "GET" && method != "POST" && method != "DELETE")
+		return false;
+	line = line.substr(line.find_first_of(" ") + 1);
+	if (line.find_first_of(" ") > 256 || line.find_first_of(" ") == 0)
+	{
+		this->status = 414;
+		return false;
+	}
+	this->file_URI = line.substr(0, line.find_first_of(" "));
+	if (file_URI.at(0) != '/' || this->file_URI.find_first_of("\t\r") != str::npos)
+		return false;
+	line = line.substr(line.find_first_of(" ") + 1);
+	if (line != "HTTP/1.1\r")
+		return false;
+	return true;
+}
+
+void Request::setRequestField(str &header_field, str &field_content)
+{
+	if (header_field == "host")
+		this->host = field_content;
+	if (header_field == "connection" && field_content == "close")
+		this->keepAlive = false;
+	if (header_field == "content-type")
+		this->contentType = field_content;
+	if (header_field == "content-length")
+		this->contentType = field_content;
+}
+
 Request	&Request::parseRequest(str& request)
 {
 	std::istringstream	reqStream(request);
-	str					headerFieldContent;
+	str		 			header_field;
+	str					field_value;
 	str					line;
-	str		 			str_case;
+	bool				ignore;
 
-	while (std::getline(reqStream, line) && line.find_first_not_of(" \t\n\r") == str::npos)
-		;
-	
-	this->method = 
+	std::getline(reqStream, line);
+	if (!parseRequestLine(line))
+		return (*this);
+	ignore = false;
 	while (std::getline(reqStream, line)) // \n will be stripped from the end of the string so only look for \r
 	{
 		if (line == "\r")
-		{
-			std::cout << "Reached end of request header\n";
 			break ;
+		if (ignore)
+		{
+			ignore = false;
+			continue;
 		}
-		str_case = returnHeader(line.substr(0, line.find_first_of(":")));
-		
-		headerFieldContent = line.substr(line.find(":") + 1);
-		if (headerFieldContent.at(0) == ' ')
-			headerFieldContent.erase(headerFieldContent.begin());
-		std::for_each(headerFieldContent.begin(), headerFieldContent.end(), Request::changeToLower);
-		setRequestFields(str_case, headerFieldContent);
+		if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
+			return (*this);
+		std::for_each(line.begin(), line.end(), Request::changeToLower);
+		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
+		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
+			return (*this);
+		line = line.find_first_not_of(" \t\r", line.find(":") + 1);
+		field_value = line.substr(0, line.find_first_of(" \t\r"));
+		if (line.substr(line.find_first_of(" \t\r")) != "\r")
+			ignore = true;
+		setRequestField(header_field, field_value);
 	}
 	status = 200;
 	validRequest = true;

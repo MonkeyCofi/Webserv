@@ -6,7 +6,7 @@
 /*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/25 15:29:52 by ehammoud         ###   ########.fr       */
+/*   Updated: 2025/02/25 17:06:55 by ehammoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,8 @@ class Request
 		size_t	contentLength;
 
 		static void	changeToLower(char &c);
-		void		parseStatusLine(str& request);
-		void		setRequestFields(t_header str_case, str& headerFieldContent);
+		bool		parseRequestLine(str &line);
+		void		setRequestField(str &header_field, str &field_conent);
 
 	public:
 		Request();
