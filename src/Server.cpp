@@ -172,7 +172,7 @@ std::vector<Location *>	Server::getLocations()
 
 void Server::setDefault()
 {
-	names.push_back("default");
+	names.push_back("_");
 }
 
 bool Server::operator ==(Server &server2)

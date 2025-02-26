@@ -17,7 +17,6 @@
 # include <fcntl.h>
 # include <algorithm>
 # include <sstream>
-# include <cctype>
 
 typedef std::string str;
 
@@ -33,15 +32,17 @@ class Request
 		bool	validRequest;
 		size_t	contentLength;
 
+		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, str &field_conent);
 
-	public:
 		Request();
-		Request(str& request);
-		~Request();
 		Request(const Request& obj);
+
+	public:
+		Request(str request);
+		~Request();
 		Request		&operator=(const Request& obj);
 
 		Request	&parseRequest(str& request);

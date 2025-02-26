@@ -42,6 +42,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 				addSocket(sock_fds, (*it)->getIP(i), (*it)->getPort(i));
 				servers_per_ippp.push_back(std::map<str, Server *>());
 				reqs.push_back(ipp);
+				defaults.push_back(*it);
 				addServerToMap(servers_per_ippp.back(), **it);
 			}
 			else
@@ -156,12 +157,22 @@ void ConnectionManager::printError(int revents)
 		std::cerr << "INVALID\n";
 }
 
+void ConnectionManager::passRequestToServer(int i, Request *req)
+{
+	if (!req->validRequest() || servers_per_ippp.find(req->host) == servers_per_ippp.end())
+		defaults.at(i)->handleRequest(req);
+	else
+	{
+		
+	}
+}
+
 void ConnectionManager::startConnections()
 {
 	int		res;
-	char	buffer[max_request_size];
 	size_t	bytes;
-	Request	*req;
+	char	buffer[max_request_size];
+	Request	*req = NULL;
 
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
@@ -188,7 +199,16 @@ void ConnectionManager::startConnections()
 			{
 				memset(buffer, 0, sizeof(buffer));
 				bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
-				// req = new Request(bytes, buffer, max_request_size);
+				if (bytes < 0)
+				{
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
+					i--;
+					continue ;
+				}
+				req = new Request(str(buffer));
+				handleRequest(req);
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{

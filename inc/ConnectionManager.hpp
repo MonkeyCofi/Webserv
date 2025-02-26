@@ -40,6 +40,7 @@ class ConnectionManager
 	private:
 		static size_t	max_request_size;
 		std::vector<std::string>				reqs;
+		std::vector<Server *>					defaults;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		unsigned int							main_listeners;
@@ -53,6 +54,7 @@ class ConnectionManager
 		void	addSocket(std::vector<struct pollfd> &sock_fds, str ip, str port);
 		void	newClient(struct pollfd client);
 		void	printError(int revents);
+		void	handleRequest(Request *req);
 
 	public:
 		ConnectionManager(Http *protocol);

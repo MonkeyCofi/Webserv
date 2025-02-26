@@ -36,7 +36,19 @@ Request::~Request()
 
 Request::Request(const Request& obj)
 {
-	(void)obj;
+	this->method = obj.method;
+	this->file_URI = obj.file_URI;
+	this->keepAlive = obj.keepAlive;
+	this->host = obj.host;
+	this->validRequest = obj.validRequest;
+	this->status = obj.status;
+	this->contentLength = obj.contentLength;
+	this->contentType = obj.contentType;
+}
+
+Request::Request(str request)
+{
+	parseRequest(request);
 }
 
 Request	&Request::operator=(const Request& obj)
@@ -63,6 +75,11 @@ void Request::changeToLower(char &c)
 {
 	if (c >= 'A' && c <= 'Z')
 		c += 32;
+}
+
+bool is_digit(char c)
+{
+	return c >= '0' && c <= '9';
 }
 
 bool Request::parseRequestLine(str &line)
@@ -133,6 +150,8 @@ Request	&Request::parseRequest(str& request)
 			return (*this);
 		line = line.find_first_not_of(" \t\r", line.find(":") + 1);
 		field_value = line.substr(0, line.find_first_of(" \t\r"));
+		if (!std::all_of(field_value.begin(), field_value.end(), Request::is_digit))
+			return (*this);
 		if (line.substr(line.find_first_of(" \t\r")) != "\r")
 			ignore = true;
 		setRequestField(header_field, field_value);
