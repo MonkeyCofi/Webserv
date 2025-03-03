@@ -3,11 +3,21 @@
 
 # include <iostream>
 # include <exception>
-# include <vector>
 # include <algorithm>
+# include <unistd.h>
+# include <fcntl.h>
+# include <vector>
 # include <queue>
+# include <poll.h>
+# include <signal.h>
+# include <cstring>
+# include <sstream>
+# include <sys/socket.h>
+# include <map>
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
+# include "Request.hpp"
+# include "Response.hpp"
 
 typedef std::string str;
 
@@ -16,20 +26,31 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
+		str						root;
+		int						file_fd;
+		str						response;
+		bool					keep_alive;
+		ssize_t					total_length;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports;
-		str						ret_str;
-		int						ret_code;
+		std::map<str, str>		error_pages;
 		std::vector<Location *>	locations;
-		
-		bool	validAddress(str address);
-		bool	handleAddress(str address);
+
+		bool			printPortsIpsNames();
+		bool			validAddress(str address);
+		bool			handleAddress(str address);
+		str				reasonPhrase(str status);
+		str				fileType(str file_name);
+		str				errorPage(str status);
+		str				ssizeToStr(ssize_t x);
+		unsigned int	fileSize(int fd);
 
 	public:
 		Server();
 		Server(const Server &copy);
 		~Server();
 
+		void					handleRequest(Request *req);
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);
 		str						getPort(int index);
@@ -37,11 +58,12 @@ class Server: public BlockOBJ
 		str						getType();
 		void					setDefault();
 		Socket*					init_listeners();
-		void					printPortsIpsNames();
 		std::vector<str>		getNames();
 		std::vector<str>		getIPs();
 		std::vector<str>		getPorts();
 		std::vector<Location *>	getLocations();
+
+		bool					respond(int client_fd);
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);

@@ -54,7 +54,7 @@ class ConnectionManager
 		void	addSocket(str ip, str port);
 		void	newClient(int i, struct pollfd sock);
 		void	printError(int revents);
-		void	passRequestToServer(int i, Request *req);
+		void	passRequestToServer(int i, Request **req);
 
 	public:
 		ConnectionManager(Http *protocol);

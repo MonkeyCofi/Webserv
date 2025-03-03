@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-const str	Location::directives[] = { "root", "index", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
+const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
 
 Location::Location(): BlockOBJ(), alias()
 {

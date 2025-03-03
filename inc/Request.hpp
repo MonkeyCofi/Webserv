@@ -25,7 +25,7 @@ class Request
 	private:
 		str		host;
 		str		method;
-		int		status;
+		str		status;
 		str		file_URI;
 		bool	keepAlive;
 		str		contentType;
@@ -53,7 +53,7 @@ class Request
 		str		getContentType();
 		size_t	getContentLen();
 		str		getMethod();
-		int		getStatus();
+		str		getStatus();
 		str		getHost();
 
 		class	NoHostException

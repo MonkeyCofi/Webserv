@@ -147,6 +147,7 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	handlers.push_back(NULL);
 	sock_fds.push_back(client);
 	reqs.push_back("");
+	defaults.push_back(defaults.at(i));
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
 }
 
@@ -160,21 +161,23 @@ void ConnectionManager::printError(int revents)
 		std::cerr << "INVALID\n";
 }
 
-void ConnectionManager::passRequestToServer(int i, Request *req)
+void ConnectionManager::passRequestToServer(int i, Request **req)
 {
-	if (!req->isValidRequest() || servers_per_ippp.at(i).find(req->getHost()) == servers_per_ippp.at(i).end())
+	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else
-		handlers.at(i) = servers_per_ippp.at(i)[req->getHost()];
-	// handlers.at(i)->handleRequest(req);
+		handlers.at(i) = servers_per_ippp.at(i)[(*req)->getHost()];
+	handlers.at(i)->handleRequest(*req);
+	delete *req;
+	*req = NULL;
 }
 
 void ConnectionManager::startConnections()
 {
 	int		res;
-	ssize_t	bytes;
 	char	buffer[4096];
-	// Request	*req = NULL;
+	ssize_t	bytes;
+	Request	*req = NULL;
 
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
@@ -221,25 +224,32 @@ void ConnectionManager::startConnections()
 				std::cout << "\n--------------\n";
 				std::cout << reqs.at(i) << "\n";
 				std::cout << "--------------\n\n";
-				// close(sock_fds.at(i).fd);
-				// sock_fds.erase(sock_fds.begin() + i);
-				// reqs.erase(reqs.begin() + i);
-				// i--;
-				sock_fds.at(i).events = POLLOUT;
-				// req = new Request(str(buffer));
-				// passRequestToServer(i, req);
+				std::cout << "Beginning:\n";
+				req = new Request(reqs.at(i));
+				passRequestToServer(i, &req);
+				// sock_fds.at(i).events = POLLOUT;
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{
-				// if (handlers.at(i))
-				// 	handlers.at(i)->respond(sock_fds.at(i).fd);
-				// sock_fds.at(i).events = POLLIN;
-				std::cout << "PULLOUT!\n";
-				sock_fds.at(i).events = POLLIN;
-				// close(sock_fds.at(i).fd);
-				// sock_fds.erase(sock_fds.begin() + i);
-				// reqs.erase(reqs.begin() + i);
-				// i--;
+				if (handlers.at(i))
+				{
+					if (!handlers.at(i)->respond(sock_fds.at(i).fd))
+					{
+						close(sock_fds.at(i).fd);
+						sock_fds.erase(sock_fds.begin() + i);
+						reqs.erase(reqs.begin() + i);
+						i--;
+					}
+					// else
+					// 	sock_fds.at(i).events = POLLIN;
+				}
+				else
+				{
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					reqs.erase(reqs.begin() + i);
+					i--;
+				}
 			}
 			else
 			{

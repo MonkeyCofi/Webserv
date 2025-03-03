@@ -6,7 +6,10 @@ const str	Server::directives[] = { "root", "listen", "index", "server_name", "er
 
 Server::Server() : BlockOBJ()
 {
-
+	response = "";
+	root = "/";
+	keep_alive = false;
+	file_fd = -1;
 }
 
 Server::Server(const Server &copy): BlockOBJ(copy)
@@ -87,6 +90,13 @@ bool Server::handleDirective(std::queue<str> opts)
 		opts.pop();
 		return (handleAddress(opts.front()));
 	}
+	else if (opts.front() == "root" && opts.size() == 2)
+	{
+		opts.pop();
+		if (opts.front().length() == 0 || opts.front().at(0) != '/')
+			return false;
+		root = opts.front();
+	}
 	else if (opts.front() == "server_name" && opts.size() >= 2)
 	{
 		opts.pop();
@@ -98,15 +108,26 @@ bool Server::handleDirective(std::queue<str> opts)
 			opts.pop();
 		}
 	}
-	else if (opts.front() == "return" && opts.size() >= 2 && opts.size() <= 3)
+	else if (opts.front() == "error_page" && opts.size() >= 3)
 	{
 		opts.pop();
-		// ret_code = std::stoi(opts.front());
-		ret_code = atoi(opts.front().c_str());
-		opts.pop();
-		if (opts.size() > 0)
-			ret_str = opts.front();
+		while (opts.size() > 1)
+		{
+			if (opts.front().length() == 0 || opts.front().find_first_not_of("0123456789") != str::npos)
+				return false;
+			error_pages[opts.front()] = opts.back();
+			opts.pop();
+		}
 	}
+	// else if (opts.front() == "return" && opts.size() >= 2 && opts.size() <= 3)
+	// {
+	// 	opts.pop();
+	// 	// ret_code = std::stoi(opts.front());
+	// 	ret_code = atoi(opts.front().c_str());
+	// 	opts.pop();
+	// 	if (opts.size() > 0)
+	// 		ret_str = opts.front();
+	// }
 	else
 		return parent_ret;
 	return true;
@@ -173,6 +194,179 @@ std::vector<Location *>	Server::getLocations()
 void Server::setDefault()
 {
 	names.push_back("_");
+}
+
+unsigned int Server::fileSize(int fd)
+{
+	unsigned int	bytes, full;
+	unsigned char	buffer[4096];
+
+	full = 0;
+	while ((bytes = read(fd, buffer, 4096)) > 0)
+		full += bytes;
+	close(fd);
+	return full;
+}
+
+str	Server::reasonPhrase(str status)
+{
+	if (status == "200")
+		return "OK";
+	if (status == "414")
+		return "URI Too Long";
+	if (status == "501")
+		return "Not Implemented";
+	if (status == "505")
+		return "HTTP Version Not Supported";
+	return "";
+}
+
+str	Server::errorPage(str status)
+{
+	if (status == "400")
+		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 400</h1>\r\n<p>Bad Request!</p>\r\n</body>\r\n</html>\r\n";
+	if (status == "404")
+		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 404</h1>\r\n<p>Page not found!</p>\r\n</body>\r\n</html>\r\n";
+	if (status == "414")
+		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 414</h1>\r\n<p>URI Too Long!</p>\r\n</body>\r\n</html>\r\n";
+	if (status == "501")
+		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 501</h1>\r\n<p>Not Implemented!</p>\r\n</body>\r\n</html>\r\n";
+	if (status == "505")
+		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 505</h1>\r\n<p>HTTP Version Not Supported!</p>\r\n</body>\r\n</html>\r\n";
+	return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Page</h1>\r\n<p>Unknown Error Code</p>\r\n</body>\r\n</html>\r\n";
+}
+
+str	Server::fileType(str file_name)
+{
+	str	type;
+
+	if (file_name == "/")
+		return "text/html";
+	if (file_name.find(".") == str::npos || file_name.length() - file_name.find_last_of(".") > 5)
+		return "text/plain";
+	type = file_name.substr(file_name.find_last_of(".") + 1);
+	std::cout << "FINALLYYY!\n";
+	if (type == "jpg" || type == "svg" || type == "jpeg" || type == "png" || type == "gif" || type == "avif" || type == "webp" || type == "ico")
+		return "image/" + type;
+	else if (type == "mp4" || type == "vod" || type == "mp3")
+		return "video/" + type;
+	else if (type == "m4a" || type == "mp3")
+		return "sound/" + type;
+	return "text/" + type;
+}
+
+str	Server::ssizeToStr(ssize_t x)
+{
+	std::stringstream s;
+	s << std::hex << x;
+	return s.str();
+}
+
+void Server::handleRequest(Request *req)
+{
+	int					fd;
+	str					file;
+	std::stringstream	resp;
+
+	keep_alive = req->shouldKeepAlive();
+	if (!req->isValidRequest())
+	{
+		resp << "HTTP/1.1 " + req->getStatus() + " " + reasonPhrase(req->getStatus()) + "\r\n";
+		resp << "Transfer-Encoding: Chunked\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n";
+		if (error_pages.find(req->getStatus()) == error_pages.end()
+			|| (fd = open(error_pages[req->getStatus()].c_str(), O_RDONLY)) == -1)
+		{
+			total_length = errorPage(req->getStatus()).length() - 2;
+			resp << "Content-Length: " << total_length << "\r\n\r\n";
+			resp << errorPage(req->getStatus());
+			file_fd = -1;
+		}
+		else
+		{
+			total_length = fileSize(fd);
+			fd = open(error_pages[req->getStatus()].c_str(), O_RDONLY);
+			if (fd == -1)
+			{
+				total_length = errorPage(req->getStatus()).length() - 2;
+				resp << "Content-Length: " << total_length << "\r\n\r\n";
+				resp << errorPage(req->getStatus());
+				file_fd = -1;
+			}
+			else
+			{
+				resp << "Content-Length: " << total_length << "\r\n\r\n";
+				file_fd = fd;
+			}
+		}
+	}
+	else if (req->getMethod() == "GET")
+	{
+		if (req->getFileURI() == "/")
+			file = root + "/index.html";
+		else
+			file = root + req->getFileURI();
+		std::cout << "The file to get is " << file << "\n";
+		fd = open(file.c_str(), O_RDONLY);
+		if (fd == -1)
+		{
+			total_length = errorPage("404").length() - 2;
+			resp << "HTTP/1.1 404 Not Found\r\n" << "Transfer-Encoding: Chunked\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n";
+			resp << "Content-Length: " << total_length << "\r\n\r\n" << errorPage("404");
+			response = resp.str();
+			file_fd = -1;
+			return ;
+		}
+		total_length = fileSize(fd);
+		fd = open(file.c_str(), O_RDONLY);
+		if (fd == -1)
+		{
+			total_length = errorPage("404").length() - 2;
+			resp << "HTTP/1.1 404 Not Found\r\n" << "Transfer-Encoding: Chunked\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\n";
+			resp << "Content-Length: " << total_length << "\r\n\r\n" << errorPage("404");
+			response = resp.str();
+			file_fd = -1;
+			return ;
+		}
+		file_fd = fd;
+		resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
+		resp << "Content-Length: " << total_length << "\r\n"  << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+	}
+	response = resp.str();
+}
+
+bool Server::respond(int client_fd)
+{
+	str		tmp;
+	ssize_t	bytes, sb;
+	char	buffer[4096];
+
+	if (response == "")
+		return true;
+	std::cout << "Response:\n======================================\n";
+	std::cout << response;
+	send(client_fd, response.c_str(), response.length(), 0);
+	response = "";
+	if (file_fd != -1)
+	{
+		while ((bytes = read(file_fd, buffer, 4096)) > 0)
+		{
+			tmp = ssizeToStr(bytes) + "\r\n";
+			write(1, tmp.c_str(), tmp.length());
+			send(client_fd, tmp.c_str(), tmp.length(), 0);
+			// tmp = str(buffer) + "\r\n";
+			// sb = send(client_fd, tmp.c_str(), tmp.length(), 0);
+			sb = send(client_fd, buffer, bytes, 0);
+			send(client_fd, "\r\n", 2, 0);
+			if (response.find("css") != str::npos || response.find("html") != str::npos)
+			write(1, buffer, bytes);
+			total_length -= sb - 2;
+		}
+		tmp = "0\r\n\r\n";
+		send(client_fd, tmp.c_str(), tmp.length(), 0);
+		close(file_fd);
+	}
+	std::cout << "\n===========================================\n";
+	return keep_alive;
 }
 
 bool Server::operator ==(Server &server2)

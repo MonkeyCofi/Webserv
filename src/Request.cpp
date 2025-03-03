@@ -21,7 +21,7 @@ Request::Request()
 	this->contentType = "";
 	this->keepAlive = true;
 	this->validRequest = false;
-	this->status = 400;
+	this->status = "400";
 }
 
 //Request::Request(str& request)
@@ -88,7 +88,7 @@ bool Request::parseRequestLine(str &line)
 		return false;
 	if (line.find_first_of(" ") > 6)
 	{
-		this->status = 501;
+		this->status = "501";
 		return false;
 	}
 	this->method = line.substr(0, line.find_first_of(" "));
@@ -97,7 +97,7 @@ bool Request::parseRequestLine(str &line)
 	line = line.substr(line.find_first_of(" ") + 1);
 	if (line.find_first_of(" ") > 256 || line.find_first_of(" ") == 0)
 	{
-		this->status = 414;
+		this->status = "414";
 		return false;
 	}
 	this->file_URI = line.substr(0, line.find_first_of(" "));
@@ -105,7 +105,10 @@ bool Request::parseRequestLine(str &line)
 		return false;
 	line = line.substr(line.find_first_of(" ") + 1);
 	if (line != "HTTP/1.1\r")
+	{
+		this->status = "505";
 		return false;
+	}
 	return true;
 }
 
@@ -123,11 +126,12 @@ void Request::setRequestField(str &header_field, str &field_content)
 
 Request	&Request::parseRequest(str& request)
 {
-	std::istringstream	reqStream(request);
+	std::stringstream	reqStream(request);
 	str		 			header_field;
 	str					field_value;
 	str					line;
 	bool				ignore;
+	unsigned int		lnsp;
 
 	std::getline(reqStream, line);
 	if (!parseRequestLine(line))
@@ -149,14 +153,19 @@ Request	&Request::parseRequest(str& request)
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
 		line = line.find_first_not_of(" \t\r", line.find(":") + 1);
-		field_value = line.substr(0, line.find_first_of(" \t\r"));
-		if (field_value.find_first_not_of("0123456789") != str::npos)
-			return (*this);
-		if (line.substr(line.find_first_of(" \t\r")) != "\r")
+		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
+		{
+			if (line[lnsp] != ' ' && line[lnsp] != '\t' && line[lnsp] != '\r')
+				break;
+		}
+		if (lnsp < line.length() - 1)
 			ignore = true;
+		field_value = line.substr(0, lnsp + 1);
+		if (field_value.find_first_not_of("0123456789") != str::npos && header_field == "content-length")
+			return (*this);
 		setRequestField(header_field, field_value);
 	}
-	status = 200;
+	status = "200";
 	validRequest = true;
 	return (*this);
 }
@@ -166,7 +175,7 @@ bool Request::isValidRequest()
 	return validRequest;
 }
 
-int Request::getStatus()
+str Request::getStatus()
 {
 	return status;
 }
