@@ -17,7 +17,6 @@
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"
-# include "Response.hpp"
 
 typedef std::string str;
 
@@ -36,7 +35,6 @@ class Server: public BlockOBJ
 		std::map<str, str>		error_pages;
 		std::vector<Location *>	locations;
 
-		bool			printPortsIpsNames();
 		void			handleError(str error_code, std::stringstream &resp);
 		bool			validAddress(str address);
 		bool			handleAddress(str address);

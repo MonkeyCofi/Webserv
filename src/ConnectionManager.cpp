@@ -133,12 +133,6 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 
 	len = sizeof(client_addr);
 	acc_sock = accept(sock.fd, (sockaddr *)&client_addr, &len);
-	// if (errno == EWOULDBLOCK)
-	// {
-	// 	std::cout << "Nothing to accept\n";
-	// 	return ;
-	// }
-	std::cout << "Received a request from a new client\n";
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
@@ -163,7 +157,6 @@ void ConnectionManager::printError(int revents)
 
 void ConnectionManager::passRequestToServer(int i, Request **req)
 {
-	std::cout << "HOSTNAME : " << (*req)->getHost() << "\n";
 	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else
@@ -180,13 +173,6 @@ void ConnectionManager::startConnections()
 	ssize_t	bytes;
 	Request	*req = NULL;
 
-	for(std::vector<std::map<str, Server *> >::iterator it2 = servers_per_ippp.begin(); it2 != servers_per_ippp.end(); it2++)
-	{
-		std::cout << "=-=-=-=-==--=-=-=-=-=-=\n";
-		for(std::map<str, Server *>::iterator it = it2->begin(); it != it2->end(); it++)
-			std::cout << "Server per hostname " << it->first << ": " << (*it2)[it->first] << "\n";
-	}
-	// return ;
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
@@ -219,7 +205,6 @@ void ConnectionManager::startConnections()
 					reqs.at(i) += str(buffer);
 					memset(buffer, 0, sizeof(buffer));
 				}
-				std::cout << "% " << bytes << "\n";
 				if (bytes == 0)
 				{
 					close(sock_fds.at(i).fd);
@@ -228,11 +213,6 @@ void ConnectionManager::startConnections()
 					i--;
 					continue ;
 				}
-				std::cout << "==> " << i << std::endl;
-				std::cout << "\n--------------\n";
-				std::cout << reqs.at(i) << "\n";
-				std::cout << "--------------\n\n";
-				std::cout << "Beginning:\n";
 				req = new Request(reqs.at(i));
 				passRequestToServer(i, &req);
 			}

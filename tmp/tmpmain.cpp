@@ -1,6 +1,5 @@
 #include <iostream>
 #include "ConfigParser.hpp"
-#include "Socket.hpp"
 #include <poll.h>
 #include <signal.h>
 #include <fstream>

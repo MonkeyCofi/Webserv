@@ -114,7 +114,6 @@ bool Request::parseRequestLine(str &line)
 
 void Request::setRequestField(str &header_field, str &field_content)
 {
-	std::cout << "-- SETTING: " << header_field << " " << field_content << " \n";
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")

@@ -21,12 +21,6 @@ Server::~Server()
 {
 	for(std::vector<Location *>::iterator it = locations.begin(); it != locations.end(); it++)
     	delete *it;
-	// for(std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
-    // 	std::cout << "Server " << *it << "\n";
-	// if (error_pages.find("404") == error_pages.end())
-	// 	std::cout << "Doesn't support 404!\n";
-	// for(std::map<str, str>::iterator it = error_pages.begin(); it != error_pages.end(); it++)
-    // 	std::cout << "Error page " << it->first << ": " << error_pages[it->first] << "\n";
 }
 
 bool Server::validAddress(str address)
@@ -102,6 +96,8 @@ bool Server::handleDirective(std::queue<str> opts)
 		if (opts.front().length() == 0 || opts.front().at(0) != '/')
 			return false;
 		root = opts.front();
+		if (root.at(root.length() - 1) == '/')
+			root = root.substr(0, root.length() - 1);
 	}
 	else if (opts.front() == "server_name" && opts.size() >= 2)
 	{
@@ -251,7 +247,6 @@ str	Server::fileType(str file_name)
 	if (file_name.find(".") == str::npos || file_name.length() - file_name.find_last_of(".") > 5)
 		return "text/plain";
 	type = file_name.substr(file_name.find_last_of(".") + 1);
-	std::cout << "FINALLYYY!\n";
 	if (type == "jpg" || type == "svg" || type == "jpeg" || type == "png" || type == "gif" || type == "avif" || type == "webp" || type == "ico")
 		return "image/" + type;
 	else if (type == "mp4" || type == "vod" || type == "mp3")
@@ -272,22 +267,11 @@ void Server::handleError(str error_code, std::stringstream &resp)
 {
 	int	fd;
 
-	for(std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
-    	std::cout << "Server " << *it << "\n";
-	if (error_pages.find("404") == error_pages.end())
-		std::cout << "Doesn't support 404!\n";
-	for(std::map<str, str>::iterator it = error_pages.begin(); it != error_pages.end(); it++)
-    	std::cout << "Error page " << it->first << ": " << error_pages[it->first] << "\n";
 	resp << "HTTP/1.1 " + error_code + " " + reasonPhrase(error_code) + "\r\n";
 	resp << "Connection: Keep-Alive\r\nContent-Type: text/html\r\n";
-	if (error_pages.find(error_code) != error_pages.end())
-		std::cout << "\n\nFOUND!!! File " << error_pages[error_code] << "\n\n";
-	else
-		std::cout << "\n\nWTFFFF NOT FOUNDDDD\n\n";
 	if (error_pages.find(error_code) == error_pages.end()
 		|| (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
-		std::cout << "\n\n\nasdjfkasjflkjasdklfjasdklfjklsadfjklasdjflksdjafkjaskfjaskldf\n\n\n";
 		total_length = errorPage(error_code).length() - 2;
 		resp << "Content-Length: " << total_length << "\r\n\r\n";
 		resp << errorPage(error_code);
@@ -331,7 +315,30 @@ void Server::handleRequest(Request *req)
 			file = root + "/index.html";
 		else
 			file = root + req->getFileURI();
-		std::cout << "The file to get is " << file << "\n";
+		fd = open(file.c_str(), O_RDONLY);
+		if (fd == -1)
+		{
+			handleError("404", resp);
+			return ;
+		}
+		total_length = fileSize(fd);
+		fd = open(file.c_str(), O_RDONLY);
+		if (fd == -1)
+		{
+			handleError("404", resp);
+			return ;
+		}
+		file_fd = fd;
+		resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
+		resp << "Content-Length: " << total_length << "\r\n"  << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+		header = resp.str();
+	}
+	else if (req->getMethod() == "DELETE")
+	{
+		if (req->getFileURI() == "/")
+			file = root + "/index.html";
+		else
+			file = root + req->getFileURI();
 		fd = open(file.c_str(), O_RDONLY);
 		if (fd == -1)
 		{
@@ -360,8 +367,6 @@ bool Server::respond(int client_fd)
 
 	if (header == "")
 		return true;
-	std::cout << "header:\n======================================\n";
-	std::cout << header;
 	send(client_fd, header.c_str(), header.length(), 0);
 	header = "";
 	if (file_fd != -1)
@@ -369,21 +374,15 @@ bool Server::respond(int client_fd)
 		while ((bytes = read(file_fd, buffer, 4096)) > 0)
 		{
 			tmp = ssizeToStr(bytes) + "\r\n";
-			write(1, tmp.c_str(), tmp.length());
 			send(client_fd, tmp.c_str(), tmp.length(), 0);
-			// tmp = str(buffer) + "\r\n";
-			// sb = send(client_fd, tmp.c_str(), tmp.length(), 0);
 			sb = send(client_fd, buffer, bytes, 0);
 			send(client_fd, "\r\n", 2, 0);
-			if (header.find("css") != str::npos || header.find("html") != str::npos)
-			write(1, buffer, bytes);
 			total_length -= sb - 2;
 		}
 		tmp = "0\r\n\r\n";
 		send(client_fd, tmp.c_str(), tmp.length(), 0);
 		close(file_fd);
 	}
-	std::cout << "\n===========================================\n";
 	return keep_alive;
 }
 
