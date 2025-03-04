@@ -189,7 +189,7 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
-			if (sock_fds.at(i).revents & POLLIN)	// a client in the poll; handle request; remove client if Connection: keep-alive is not present in request
+			if (sock_fds.at(i).revents & POLLIN)
 				newClient(i, sock_fds.at(i));
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)

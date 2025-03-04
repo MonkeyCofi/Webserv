@@ -24,11 +24,6 @@ Request::Request()
 	this->status = "400";
 }
 
-//Request::Request(str& request)
-//{
-	
-//}
-
 Request::~Request()
 {
 	
@@ -137,7 +132,7 @@ Request	&Request::parseRequest(str& request)
 	if (!parseRequestLine(line))
 		return (*this);
 	ignore = false;
-	while (std::getline(reqStream, line)) // \n will be stripped from the end of the string so only look for \r
+	while (std::getline(reqStream, line))
 	{
 		if (line == "\r")
 			break ;

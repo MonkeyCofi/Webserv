@@ -133,8 +133,6 @@ bool ConfigParser::handleNext(str &word)
 						err_msg = "Incorrect arguments for block directive!\n";
 						return false;
 					}
-					// if (ptr->getType() == "server")
-					// 	engine.getProtocol()->getServers().push_back(dynamic_cast<Server *>(ptr));
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
