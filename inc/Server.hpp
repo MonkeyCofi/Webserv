@@ -27,8 +27,8 @@ class Server: public BlockOBJ
 {
 	private:
 		str						root;
+		str						header;
 		int						file_fd;
-		str						response;
 		bool					keep_alive;
 		ssize_t					total_length;
 		const static str		default_ip, default_port, directives[];
@@ -37,6 +37,7 @@ class Server: public BlockOBJ
 		std::vector<Location *>	locations;
 
 		bool			printPortsIpsNames();
+		void			handleError(str error_code, std::stringstream &resp);
 		bool			validAddress(str address);
 		bool			handleAddress(str address);
 		str				reasonPhrase(str status);

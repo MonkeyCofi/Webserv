@@ -179,6 +179,13 @@ void ConnectionManager::startConnections()
 	ssize_t	bytes;
 	Request	*req = NULL;
 
+	for(std::vector<std::map<str, Server *> >::iterator it2 = servers_per_ippp.begin(); it2 != servers_per_ippp.end(); it2++)
+	{
+		std::cout << "=-=-=-=-==--=-=-=-=-=-=\n";
+		for(std::map<str, Server *>::iterator it = it2->begin(); it != it2->end(); it++)
+			std::cout << "Server per hostname " << it->first << ": " << (*it2)[it->first] << "\n";
+	}
+	// return ;
 	main_listeners = sock_fds.size();
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
@@ -227,7 +234,6 @@ void ConnectionManager::startConnections()
 				std::cout << "Beginning:\n";
 				req = new Request(reqs.at(i));
 				passRequestToServer(i, &req);
-				// sock_fds.at(i).events = POLLOUT;
 			}
 			else if (sock_fds.at(i).revents & POLLOUT)
 			{
@@ -240,8 +246,6 @@ void ConnectionManager::startConnections()
 						reqs.erase(reqs.begin() + i);
 						i--;
 					}
-					// else
-					// 	sock_fds.at(i).events = POLLIN;
 				}
 				else
 				{
