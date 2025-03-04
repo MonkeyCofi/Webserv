@@ -114,6 +114,7 @@ bool Request::parseRequestLine(str &line)
 
 void Request::setRequestField(str &header_field, str &field_content)
 {
+	std::cout << "-- SETTING: " << header_field << " " << field_content << " \n";
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")
@@ -152,7 +153,7 @@ Request	&Request::parseRequest(str& request)
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
-		line = line.find_first_not_of(" \t\r", line.find(":") + 1);
+		line = line.substr(line.find_first_not_of(" \t\r", line.find(":") + 1));
 		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
 		{
 			if (line[lnsp] != ' ' && line[lnsp] != '\t' && line[lnsp] != '\r')

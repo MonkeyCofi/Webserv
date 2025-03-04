@@ -163,6 +163,7 @@ void ConnectionManager::printError(int revents)
 
 void ConnectionManager::passRequestToServer(int i, Request **req)
 {
+	std::cout << "HOSTNAME : " << (*req)->getHost() << "\n";
 	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else
