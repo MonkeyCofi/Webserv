@@ -14,6 +14,10 @@ Server::Server() : BlockOBJ()
 
 Server::Server(const Server &copy): BlockOBJ(copy)
 {
+	header = "";
+	root = "/";
+	keep_alive = false;
+	file_fd = -1;
 	(void)copy;
 }
 
@@ -204,6 +208,8 @@ str	Server::reasonPhrase(str status)
 {
 	if (status == "200")
 		return "OK";
+	if (status == "404")
+		return "Page Not Found";
 	if (status == "414")
 		return "URI Too Long";
 	if (status == "501")
@@ -237,9 +243,9 @@ str	Server::fileType(str file_name)
 	if (file_name.find(".") == str::npos || file_name.length() - file_name.find_last_of(".") > 5)
 		return "text/plain";
 	type = file_name.substr(file_name.find_last_of(".") + 1);
-	if (type == "jpg" || type == "svg" || type == "jpeg" || type == "png" || type == "gif" || type == "avif" || type == "webp" || type == "ico")
+	if (type == "jpg" || type == "svg" || type == "jpeg" || type == "png" || type == "gif" || type == "avif" || type == "webp" || type == "ico" || type == "tiff")
 		return "image/" + type;
-	else if (type == "mp4" || type == "vod" || type == "mp3")
+	else if (type == "mp4" || type == "vod")
 		return "video/" + type;
 	else if (type == "m4a" || type == "mp3")
 		return "sound/" + type;
@@ -280,7 +286,7 @@ void Server::handleError(str error_code, std::stringstream &resp)
 		}
 		else
 		{
-			resp << "Transfer-Encoding: Chunked\r\nContent-Length: " << total_length << "\r\n\r\n";
+			resp << "Transfer-Encoding: Chunked\r\n\r\n";//\r\nContent-Length: " << total_length << "\r\n\r\n";
 			file_fd = fd;
 		}
 	}
@@ -305,13 +311,13 @@ void Server::handleRequest(Request *req)
 			file = root + "/index.html";
 		else
 			file = root + req->getFileURI();
-		fd = open(file.c_str(), O_RDONLY);
-		if (fd == -1)
-		{
-			handleError("404", resp);
-			return ;
-		}
-		total_length = fileSize(fd);
+		// fd = open(file.c_str(), O_RDONLY);
+		// if (fd == -1)
+		// {
+		// 	handleError("404", resp);
+		// 	return ;
+		// }
+		// total_length = fileSize(fd);
 		fd = open(file.c_str(), O_RDONLY);
 		if (fd == -1)
 		{
@@ -320,7 +326,7 @@ void Server::handleRequest(Request *req)
 		}
 		file_fd = fd;
 		resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
-		resp << "Content-Length: " << total_length << "\r\n"  << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+		resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
 		header = resp.str();
 	}
 	else if (req->getMethod() == "DELETE")
@@ -344,7 +350,7 @@ void Server::handleRequest(Request *req)
 		}
 		file_fd = fd;
 		resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
-		resp << "Content-Length: " << total_length << "\r\n"  << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+		resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
 		header = resp.str();
 	}
 }
@@ -364,13 +370,13 @@ bool Server::respond(int client_fd)
 		while ((bytes = read(file_fd, buffer, 4096)) > 0)
 		{
 			tmp = ssizeToStr(bytes) + "\r\n";
-			send(client_fd, tmp.c_str(), tmp.length(), 0);
-			sb = send(client_fd, buffer, bytes, 0);
-			send(client_fd, "\r\n", 2, 0);
+			while (send(client_fd, tmp.c_str(), tmp.length(), 0) < 0);
+			while ((sb = send(client_fd, buffer, bytes, 0)) < 0);
+			while (send(client_fd, "\r\n", 2, 0) < 0);
 			total_length -= sb - 2;
 		}
 		tmp = "0\r\n\r\n";
-		send(client_fd, tmp.c_str(), tmp.length(), 0);
+		while (send(client_fd, tmp.c_str(), tmp.length(), 0) < 0);
 		close(file_fd);
 	}
 	return keep_alive;

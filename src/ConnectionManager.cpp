@@ -133,14 +133,18 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 
 	len = sizeof(client_addr);
 	acc_sock = accept(sock.fd, (sockaddr *)&client_addr, &len);
+	if (acc_sock == -1)
+	{
+		return ;
+	}
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
 	client.events = POLLIN | POLLOUT;
 	client.revents = 0;
-	handlers.push_back(NULL);
 	sock_fds.push_back(client);
 	reqs.push_back("");
+	handlers.push_back(NULL);
 	defaults.push_back(defaults.at(i));
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
 }
@@ -200,16 +204,16 @@ void ConnectionManager::startConnections()
 			{
 				reqs.at(i) = "";
 				memset(buffer, 0, sizeof(buffer));
-				while ((bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0)) > 0)
-				{
-					reqs.at(i) += str(buffer);
-					memset(buffer, 0, sizeof(buffer));
-				}
+				bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
+				reqs.at(i) = str(buffer);
 				if (bytes == 0)
 				{
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
 					reqs.erase(reqs.begin() + i);
+					handlers.erase(handlers.begin() + i);
+					defaults.erase(defaults.begin() + i);
+					servers_per_ippp.erase(servers_per_ippp.begin() + i);
 					i--;
 					continue ;
 				}
@@ -220,11 +224,14 @@ void ConnectionManager::startConnections()
 			{
 				if (handlers.at(i))
 				{
-					if (!handlers.at(i)->respond(sock_fds.at(i).fd))
+					if (handlers.at(i)->respond(sock_fds.at(i).fd))
 					{
 						close(sock_fds.at(i).fd);
 						sock_fds.erase(sock_fds.begin() + i);
 						reqs.erase(reqs.begin() + i);
+						handlers.erase(handlers.begin() + i);
+						defaults.erase(defaults.begin() + i);
+						servers_per_ippp.erase(servers_per_ippp.begin() + i);
 						i--;
 					}
 				}
@@ -233,6 +240,9 @@ void ConnectionManager::startConnections()
 					close(sock_fds.at(i).fd);
 					sock_fds.erase(sock_fds.begin() + i);
 					reqs.erase(reqs.begin() + i);
+					handlers.erase(handlers.begin() + i);
+					defaults.erase(defaults.begin() + i);
+					servers_per_ippp.erase(servers_per_ippp.begin() + i);
 					i--;
 				}
 			}
@@ -242,6 +252,9 @@ void ConnectionManager::startConnections()
 				close(sock_fds.at(i).fd);
 				sock_fds.erase(sock_fds.begin() + i);
 				reqs.erase(reqs.begin() + i);
+				handlers.erase(handlers.begin() + i);
+				defaults.erase(defaults.begin() + i);
+				servers_per_ippp.erase(servers_per_ippp.begin() + i);
 				i--;
 			}
 		}
@@ -251,6 +264,9 @@ void ConnectionManager::startConnections()
 		close(sock_fds.at(i).fd);
 		sock_fds.pop_back();
 		reqs.pop_back();
+		handlers.pop_back();
+		defaults.pop_back();
+		servers_per_ippp.pop_back();
 	}
 	signal(SIGINT, SIG_DFL);
 }

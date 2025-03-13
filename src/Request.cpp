@@ -43,6 +43,14 @@ Request::Request(const Request& obj)
 
 Request::Request(str request)
 {
+	this->method = "";
+	this->file_URI = "";
+	this->host = "";
+	this->contentLength = 0;
+	this->contentType = "";
+	this->keepAlive = true;
+	this->validRequest = false;
+	this->status = "400";
 	parseRequest(request);
 }
 
