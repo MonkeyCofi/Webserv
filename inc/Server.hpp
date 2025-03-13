@@ -42,7 +42,7 @@ class Server: public BlockOBJ
 		str				fileType(str file_name);
 		str				errorPage(str status);
 		str				ssizeToStr(ssize_t x);
-		unsigned int	fileSize(int fd);
+		// unsigned int	fileSize(int fd);
 
 	public:
 		Server();

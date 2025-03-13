@@ -192,17 +192,17 @@ void Server::setDefault()
 	names.push_back("_");
 }
 
-unsigned int Server::fileSize(int fd)
-{
-	unsigned int	bytes, full;
-	unsigned char	buffer[4096];
+// unsigned int Server::fileSize(int fd)
+// {
+// 	unsigned int	bytes, full;
+// 	unsigned char	buffer[4096];
 
-	full = 0;
-	while ((bytes = read(fd, buffer, 4096)) > 0)
-		full += bytes;
-	close(fd);
-	return full;
-}
+// 	full = 0;
+// 	while ((bytes = read(fd, buffer, 4096)) > 0)
+// 		full += bytes;
+// 	close(fd);
+// 	return full;
+// }
 
 str	Server::reasonPhrase(str status)
 {
@@ -275,20 +275,8 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	}
 	else
 	{
-		total_length = fileSize(fd);
-		fd = open(error_pages[error_code].c_str(), O_RDONLY);
-		if (fd == -1)
-		{
-			total_length = errorPage(error_code).length() - 2;
-			resp << "Content-Length: " << total_length << "\r\n\r\n";
-			resp << errorPage(error_code);
-			file_fd = -1;
-		}
-		else
-		{
-			resp << "Transfer-Encoding: Chunked\r\n\r\n";//\r\nContent-Length: " << total_length << "\r\n\r\n";
-			file_fd = fd;
-		}
+		resp << "Transfer-Encoding: Chunked\r\n\r\n";
+		file_fd = fd;
 	}
 	header = resp.str();
 }
@@ -311,13 +299,6 @@ void Server::handleRequest(Request *req)
 			file = root + "/index.html";
 		else
 			file = root + req->getFileURI();
-		// fd = open(file.c_str(), O_RDONLY);
-		// if (fd == -1)
-		// {
-		// 	handleError("404", resp);
-		// 	return ;
-		// }
-		// total_length = fileSize(fd);
 		fd = open(file.c_str(), O_RDONLY);
 		if (fd == -1)
 		{
@@ -329,29 +310,13 @@ void Server::handleRequest(Request *req)
 		resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
 		header = resp.str();
 	}
+	else if (req->getMethod() == "POST")
+	{
+		
+	}
 	else if (req->getMethod() == "DELETE")
 	{
-		if (req->getFileURI() == "/")
-			file = root + "/index.html";
-		else
-			file = root + req->getFileURI();
-		fd = open(file.c_str(), O_RDONLY);
-		if (fd == -1)
-		{
-			handleError("404", resp);
-			return ;
-		}
-		total_length = fileSize(fd);
-		fd = open(file.c_str(), O_RDONLY);
-		if (fd == -1)
-		{
-			handleError("404", resp);
-			return ;
-		}
-		file_fd = fd;
-		resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
-		resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
-		header = resp.str();
+		
 	}
 }
 
@@ -363,7 +328,7 @@ bool Server::respond(int client_fd)
 
 	if (header == "")
 		return true;
-	send(client_fd, header.c_str(), header.length(), 0);
+	while (send(client_fd, header.c_str(), header.length(), 0) < 0);
 	header = "";
 	if (file_fd != -1)
 	{
