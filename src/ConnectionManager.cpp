@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConnectionManager.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/04 14:02:23 by ppolinta         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "ConnectionManager.hpp"
 
 bool	g_quit = false;
@@ -30,6 +18,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 {
 	if (!protocol)
 		throw std::runtime_error("e1");
+
 	std::vector<Server *>	servers = protocol->getServers();
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
@@ -134,12 +123,10 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	len = sizeof(client_addr);
 	acc_sock = accept(sock.fd, (sockaddr *)&client_addr, &len);
 	if (acc_sock == -1)
-	{
 		return ;
-	}
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
-	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
+	//fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
 	client.events = POLLIN | POLLOUT;
 	client.revents = 0;
 	sock_fds.push_back(client);
@@ -170,6 +157,37 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 	*req = NULL;
 }
 
+void	ConnectionManager::loopForClients()
+{
+	for (unsigned int i = 0; i < main_listeners; i++)
+	{
+		if (this->sock_fds.at(i).revents & POLLIN)	// add a client into the sock_fds vector
+			newClient(i, this->sock_fds.at(i));
+	}
+}
+
+void	 ConnectionManager::listenForRequest()
+{
+	for (unsigned int i = this->main_listeners; i < sock_fds.size(); i++)
+	{
+		if (this->sock_fds.at(i).revents == 0)
+		{
+			std::cout << "No event occured on client\n";
+			continue ;
+		}
+		else if (this->sock_fds.at(i).revents & POLLIN)
+		{
+			std::cout << "Client is ready for receiving\n";
+			this->sock_fds.at(i).revents = 0;
+		}
+		else if (this->sock_fds.at(i).revents & POLLOUT)
+		{
+			std::cout << "Client is ready for writing\n";
+			this->sock_fds.at(i).revents = 0;
+		}
+	}
+}
+
 void ConnectionManager::startConnections()
 {
 	int		res;
@@ -178,89 +196,100 @@ void ConnectionManager::startConnections()
 	Request	*req = NULL;
 
 	main_listeners = sock_fds.size();
+	std::cout << "There are " << main_listeners << " listeners\n";
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
-	 	res = poll(&sock_fds[0], sock_fds.size(), 500);
+	 	res = poll(&sock_fds[0], sock_fds.size(), 1000);
 		if (res == 0)
+		{
+			std::cout << "waiting\n";
 			continue ;
+		}
 		if (res < 0)
 		{
 			if (g_quit)
+			{
+				std::cout << "quitting\n";
 				break ;
+			}
 			perror("poll");
 			throw std::runtime_error("e2");
 		}
-		for (unsigned int i = 0; i < main_listeners; i++)
-		{
-			if (sock_fds.at(i).revents & POLLIN)
-				newClient(i, sock_fds.at(i));
-		}
-		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
-		{
-			if (sock_fds.at(i).revents == 0)
-				continue ;
-			else if (sock_fds.at(i).revents & POLLIN)
-			{
-				reqs.at(i) = "";
-				memset(buffer, 0, sizeof(buffer));
-				bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
-				reqs.at(i) = str(buffer);
-				if (bytes == 0)
-				{
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					reqs.erase(reqs.begin() + i);
-					handlers.erase(handlers.begin() + i);
-					defaults.erase(defaults.begin() + i);
-					servers_per_ippp.erase(servers_per_ippp.begin() + i);
-					i--;
-					continue ;
-				}
-				req = new Request(reqs.at(i));
-				passRequestToServer(i, &req);
-			}
-			else if (sock_fds.at(i).revents & POLLOUT)
-			{
-				if (handlers.at(i))
-				{
-					if (handlers.at(i)->respond(sock_fds.at(i).fd))
-					{
-						close(sock_fds.at(i).fd);
-						sock_fds.erase(sock_fds.begin() + i);
-						reqs.erase(reqs.begin() + i);
-						handlers.erase(handlers.begin() + i);
-						defaults.erase(defaults.begin() + i);
-						servers_per_ippp.erase(servers_per_ippp.begin() + i);
-						i--;
-					}
-				}
-				else
-				{
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					reqs.erase(reqs.begin() + i);
-					handlers.erase(handlers.begin() + i);
-					defaults.erase(defaults.begin() + i);
-					servers_per_ippp.erase(servers_per_ippp.begin() + i);
-					i--;
-				}
-			}
-			else
-			{
-				printError(sock_fds.at(i).revents);
-				close(sock_fds.at(i).fd);
-				sock_fds.erase(sock_fds.begin() + i);
-				reqs.erase(reqs.begin() + i);
-				handlers.erase(handlers.begin() + i);
-				defaults.erase(defaults.begin() + i);
-				servers_per_ippp.erase(servers_per_ippp.begin() + i);
-				i--;
-			}
-		}
+		loopForClients();
+		listenForRequest();
+		//for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
+		//{
+		//	if (sock_fds.at(i).revents == 0)
+		//	{
+		//		std::cout << "no event\n";
+		//		continue ;
+		//	}
+		//	else if (sock_fds.at(i).revents & POLLIN)
+		//	{
+		//		std::cout << "in pollin\n";
+		//		reqs.at(i) = "";
+		//		memset(buffer, 0, sizeof(buffer));
+		//		bytes = recv(sock_fds.at(i).fd, buffer, sizeof(buffer), 0);
+		//		reqs.at(i) = str(buffer);
+		//		if (bytes == 0)
+		//		{
+		//			close(sock_fds.at(i).fd);
+		//			sock_fds.erase(sock_fds.begin() + i);
+		//			reqs.erase(reqs.begin() + i);
+		//			handlers.erase(handlers.begin() + i);
+		//			defaults.erase(defaults.begin() + i);
+		//			servers_per_ippp.erase(servers_per_ippp.begin() + i);
+		//			i--;
+		//			continue ;
+		//		}
+		//		req = new Request(reqs.at(i));
+		//		passRequestToServer(i, &req);
+		//		sock_fds.at(i).revents = 0;
+		//	}
+		//	else if (sock_fds.at(i).revents & POLLOUT)
+		//	{
+		//		if (handlers.at(i))
+		//		{
+		//			if (handlers.at(i)->respond(sock_fds.at(i).fd))
+		//			{
+		//				close(sock_fds.at(i).fd);
+		//				sock_fds.erase(sock_fds.begin() + i);
+		//				reqs.erase(reqs.begin() + i);
+		//				handlers.erase(handlers.begin() + i);
+		//				defaults.erase(defaults.begin() + i);
+		//				servers_per_ippp.erase(servers_per_ippp.begin() + i);
+		//				i--;
+		//			}
+		//		}
+		//		else
+		//		{
+		//			close(sock_fds.at(i).fd);
+		//			sock_fds.erase(sock_fds.begin() + i);
+		//			reqs.erase(reqs.begin() + i);
+		//			handlers.erase(handlers.begin() + i);
+		//			defaults.erase(defaults.begin() + i);
+		//			servers_per_ippp.erase(servers_per_ippp.begin() + i);
+		//			i--;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		std::cout << "in here\n";
+		//		printError(sock_fds.at(i).revents);
+		//		close(sock_fds.at(i).fd);
+		//		sock_fds.erase(sock_fds.begin() + i);
+		//		reqs.erase(reqs.begin() + i);
+		//		handlers.erase(handlers.begin() + i);
+		//		defaults.erase(defaults.begin() + i);
+		//		servers_per_ippp.erase(servers_per_ippp.begin() + i);
+		//		i--;
+		//	}
+		//}
 	}
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
 	{
+		std::cout << "closing socket\n";
 		close(sock_fds.at(i).fd);
 		sock_fds.pop_back();
 		reqs.pop_back();

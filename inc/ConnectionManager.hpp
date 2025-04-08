@@ -56,6 +56,9 @@ class ConnectionManager
 		void	printError(int revents);
 		void	passRequestToServer(int i, Request **req);
 
+		void	loopForClients();
+		void	listenForRequest();
+
 	public:
 		ConnectionManager(Http *protocol);
 
