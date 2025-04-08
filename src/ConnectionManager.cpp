@@ -126,7 +126,7 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 		return ;
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
-	//fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
+	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
 	client.events = POLLIN | POLLOUT;
 	client.revents = 0;
 	sock_fds.push_back(client);
@@ -179,11 +179,13 @@ void	 ConnectionManager::listenForRequest()
 		{
 			std::cout << "Client is ready for receiving\n";
 			this->sock_fds.at(i).revents = 0;
+			this->sock_fds.erase(this->sock_fds.begin() + i);
 		}
 		else if (this->sock_fds.at(i).revents & POLLOUT)
 		{
 			std::cout << "Client is ready for writing\n";
 			this->sock_fds.at(i).revents = 0;
+			this->sock_fds.erase(this->sock_fds.begin() + i);
 		}
 	}
 }
