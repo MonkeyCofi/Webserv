@@ -25,9 +25,11 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 		for (unsigned int i = 0; i < (*it)->getIPs().size(); i++)
 		{
 			str	ipp = (*it)->getIP(i) + ":" + (*it)->getPort(i);
+			std::cout << "IP-Port-Pair: " << ipp << "\n";
 			std::vector<str>::iterator	found_socket = std::find(reqs.begin(), reqs.end(), ipp);
 			if (found_socket == reqs.end())
 			{
+				std::cout << "Adding IP-Port-Pair to map of IP-Port-Pairs\n";
 				addSocket((*it)->getIP(i), (*it)->getPort(i));
 				servers_per_ippp.push_back(std::map<str, Server *>());
 				reqs.push_back(ipp);
@@ -36,13 +38,20 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 				addServerToMap(servers_per_ippp.back(), **it);
 			}
 			else
+			{
+				std::cout << "Adding already existing IP-Port-Pair to map\n";
 				addServerToMap(servers_per_ippp.at(found_socket - reqs.begin()), **it);
+			}
 		}
 	}
 	for (unsigned int i = 0; i < reqs.size(); i++)
 		reqs[i] = "";
 }
 
+/// @brief sets up the listener socket
+/// @param ip the ip address
+/// @param port the port number
+/// @return returns the setup socket
 int ConnectionManager::setupSocket(str ip, str port)
 {
 	struct sockaddr_in	ret;
@@ -79,6 +88,9 @@ int ConnectionManager::setupSocket(str ip, str port)
 	return fd;
 }
 
+/// @brief add listener socket to sock_fds vector in ConnectionManager q
+/// @param ip the ip address
+/// @param port the port number
 void ConnectionManager::addSocket(str ip, str port)
 {
 	struct pollfd	temp;
@@ -94,7 +106,11 @@ void ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &ser
 {
 	std::vector<str>	names = server.getNames();
 	for (std::vector<str>::iterator it = names.begin(); it != names.end(); it++)
+	{
+		std::cout << "Name: " << (*it) << "\n";
 		map[*it] = &server;
+	}
+	for (std::map<Server *)
 }
 
 ConnectionManager::~ConnectionManager()
@@ -162,14 +178,67 @@ void	ConnectionManager::loopForClients()
 	for (unsigned int i = 0; i < main_listeners; i++)
 	{
 		if (this->sock_fds.at(i).revents & POLLIN)	// add a client into the sock_fds vector
+		{
 			newClient(i, this->sock_fds.at(i));
+		}
 	}
 }
 
 void	 ConnectionManager::listenForRequest()
 {
+	char request_buffer[4096] = {0};
+
+	//for (unsigned int i = this->main_listeners; i < sock_fds.size(); i++)
+	//{
+	//	//std::cout << "currently at index: " << i << "\n";
+	//	if (this->sock_fds.at(i).revents == 0)
+	//	{
+	//		std::cout << "No event occured on client\n";
+	//		continue ;
+	//	}
+	//	else if (this->sock_fds.at(i).revents & POLLIN)
+	//	{
+	//		std::cout << "Socket " << i << " in POLLIN\n";
+	//		unsigned int	bytes_read = 0;
+	//		bytes_read = recv(this->sock_fds.at(i).fd, request_buffer, sizeof(request_buffer), 0);
+	//		request_buffer[bytes_read] = 0;
+	//		std::cout << "Request: " << request_buffer;
+	//		if (bytes_read == 0)
+	//		{
+	//			std::cout << "Finished\n";
+	//			reqs.at(i) = request_buffer;
+	//			// remove the socket from sock_fds
+	//			this->sock_fds.erase(sock_fds.begin() + i);
+	//			i--;
+	//			continue ;
+	//		}
+	//	}
+	//	else if (this->sock_fds.at(i).revents & POLLOUT)	// the client is ready to write
+	//	{
+	//		std::cout << "Socket " << i << " in POLLOUT\n";
+	//		this->sock_fds.erase(sock_fds.begin() + i);
+	//		i--;
+	//		//char buffer[4096] = {0};
+	//		//std::string buf;
+	//		//buf = "HTTP/1.1 201 OK\r\nConnection: close\r\n\r\n<html><p>Text</p></html>";
+	//		//ssize_t	bytes_sent = send(this->sock_fds.at(i).fd, buf.c_str(), buf.size(), 0);
+	//		//if (bytes_sent == -1)
+	//		//{
+	//		//	std::cerr << "Error while responding\n";
+	//		//	this->sock_fds.erase(sock_fds.begin() + i);
+	//		//	i--;
+	//		//	return ;
+	//		//}
+	//		//this->sock_fds.erase(sock_fds.begin() + i);
+	//		//i--;
+	//		////std::cout << "Socket " << i << " in POLLOUT\n";
+	//		////this->sock_fds.at(i).revents = POLLIN;
+	//		////this->sock_fds.erase(sock_fds.begin() + i);
+	//	}
+	//}
 	for (unsigned int i = this->main_listeners; i < sock_fds.size(); i++)
 	{
+		//std::cout << "currently at index: " << i << "\n";
 		if (this->sock_fds.at(i).revents == 0)
 		{
 			std::cout << "No event occured on client\n";
@@ -177,15 +246,42 @@ void	 ConnectionManager::listenForRequest()
 		}
 		else if (this->sock_fds.at(i).revents & POLLIN)
 		{
-			std::cout << "Client is ready for receiving\n";
-			this->sock_fds.at(i).revents = 0;
-			this->sock_fds.erase(this->sock_fds.begin() + i);
+			std::cout << "Socket " << i << " in POLLIN\n";
+			unsigned int	bytes_read = 0;
+			bytes_read = recv(this->sock_fds.at(i).fd, request_buffer, sizeof(request_buffer), 0);
+			request_buffer[bytes_read] = 0;
+			std::cout << "Request: " << request_buffer;
+			if (bytes_read == 0)
+			{
+				std::cout << "Finished\n";
+				reqs.at(i) = request_buffer;
+				// remove the socket from sock_fds
+				this->sock_fds.erase(sock_fds.begin() + i);
+				i--;
+				continue ;
+			}
 		}
-		else if (this->sock_fds.at(i).revents & POLLOUT)
+		else if (this->sock_fds.at(i).revents & POLLOUT)	// the client is ready to write
 		{
-			std::cout << "Client is ready for writing\n";
-			this->sock_fds.at(i).revents = 0;
-			this->sock_fds.erase(this->sock_fds.begin() + i);
+			std::cout << "Socket " << i << " in POLLOUT\n";
+			this->sock_fds.erase(sock_fds.begin() + i);
+			i--;
+			//char buffer[4096] = {0};
+			//std::string buf;
+			//buf = "HTTP/1.1 201 OK\r\nConnection: close\r\n\r\n<html><p>Text</p></html>";
+			//ssize_t	bytes_sent = send(this->sock_fds.at(i).fd, buf.c_str(), buf.size(), 0);
+			//if (bytes_sent == -1)
+			//{
+			//	std::cerr << "Error while responding\n";
+			//	this->sock_fds.erase(sock_fds.begin() + i);
+			//	i--;
+			//	return ;
+			//}
+			//this->sock_fds.erase(sock_fds.begin() + i);
+			//i--;
+			////std::cout << "Socket " << i << " in POLLOUT\n";
+			////this->sock_fds.at(i).revents = POLLIN;
+			////this->sock_fds.erase(sock_fds.begin() + i);
 		}
 	}
 }
@@ -202,7 +298,7 @@ void ConnectionManager::startConnections()
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
-	 	res = poll(&sock_fds[0], sock_fds.size(), 1000);
+	 	res = poll(&sock_fds[0], sock_fds.size(), 2000);
 		if (res == 0)
 		{
 			std::cout << "waiting\n";
@@ -251,6 +347,7 @@ void ConnectionManager::startConnections()
 		//	}
 		//	else if (sock_fds.at(i).revents & POLLOUT)
 		//	{
+		//		std::cout << "In POLLOUT for cient\n";
 		//		if (handlers.at(i))
 		//		{
 		//			if (handlers.at(i)->respond(sock_fds.at(i).fd))
@@ -277,7 +374,6 @@ void ConnectionManager::startConnections()
 		//	}
 		//	else
 		//	{
-		//		std::cout << "in here\n";
 		//		printError(sock_fds.at(i).revents);
 		//		close(sock_fds.at(i).fd);
 		//		sock_fds.erase(sock_fds.begin() + i);
