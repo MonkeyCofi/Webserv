@@ -110,7 +110,7 @@ void ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &ser
 		std::cout << "Name: " << (*it) << "\n";
 		map[*it] = &server;
 	}
-	for (std::map<Server *)
+	//for (std::map<Server *)
 }
 
 ConnectionManager::~ConnectionManager()
