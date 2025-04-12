@@ -8,6 +8,7 @@
 
 int main(int ac, char **av)
 {
+	signal(SIGPIPE, SIG_IGN);
 	unlink("localhost");
 	if (ac != 2)
 	{

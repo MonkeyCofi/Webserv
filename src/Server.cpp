@@ -24,7 +24,7 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 Server::~Server()
 {
 	for(std::vector<Location *>::iterator it = locations.begin(); it != locations.end(); it++)
-    	delete *it;
+		delete *it;
 }
 
 bool Server::validAddress(str address)
@@ -328,20 +328,37 @@ bool Server::respond(int client_fd)
 
 	if (header == "")
 		return true;
-	while (send(client_fd, header.c_str(), header.length(), 0) < 0);
+	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
+		return false;
 	header = "";
 	if (file_fd != -1)
 	{
 		while ((bytes = read(file_fd, buffer, 4096)) > 0)
 		{
 			tmp = ssizeToStr(bytes) + "\r\n";
-			while (send(client_fd, tmp.c_str(), tmp.length(), 0) < 0);
-			while ((sb = send(client_fd, buffer, bytes, 0)) < 0);
-			while (send(client_fd, "\r\n", 2, 0) < 0);
+			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
+			{
+				std::cout << "Exited willingly!\n";
+				return false;
+			}
+			if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
+			{
+				std::cout << "Exited willingly!\n";
+				return false;
+			}
+			if (send(client_fd, "\r\n", 2, 0) <= 0)
+			{
+				std::cout << "Exited willingly!\n";
+				return false;
+			}
 			total_length -= sb - 2;
 		}
 		tmp = "0\r\n\r\n";
-		while (send(client_fd, tmp.c_str(), tmp.length(), 0) < 0);
+		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
+		{
+			std::cout << "Exited willingly!\n";
+			return false;
+		}
 		close(file_fd);
 	}
 	return keep_alive;
