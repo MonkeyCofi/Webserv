@@ -12,6 +12,8 @@
 # include <signal.h>
 # include <dirent.h>
 # include <cstring>
+# include <sys/stat.h>
+# include <ctime>
 # include <sstream>
 # include <sys/socket.h>
 # include <map>

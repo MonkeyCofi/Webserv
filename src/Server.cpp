@@ -275,6 +275,55 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	header = resp.str();
 }
 
+bool is_directory(const std::string& path) {
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0) {
+        return S_ISDIR(s.st_mode);
+    }
+    return false;
+}
+
+bool is_file(const std::string& path) {
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0) {
+        return S_ISREG(s.st_mode);
+    }
+    return false;
+}
+
+#include <iostream>
+#include <sys/stat.h>
+#include <ctime>
+
+void inspect_path(const std::string& path) {
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0) {
+        // Check if it's a directory
+        if (S_ISDIR(s.st_mode)) {
+            std::cout << path << " is a directory.\n";
+        } else if (S_ISREG(s.st_mode)) {
+            std::cout << path << " is a file.\n";
+
+            // Print size
+            std::cout << "Size: " << s.st_size << " bytes\n";
+
+            // Print last modified date
+            std::cout << "Last modified: " << std::ctime(&s.st_mtime);
+        } else {
+            std::cout << path << " exists but is not a regular file or directory.\n";
+        }
+    } else {
+        std::perror("stat");
+        std::cout << "Could not access path: " << path << "\n";
+    }
+}
+
+int main() {
+    std::string path = "some/path/to/check";
+    inspect_path(path);
+    return 0;
+}
+
 void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
 {
 	str				index, full_path;
