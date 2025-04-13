@@ -33,6 +33,7 @@ class Server: public BlockOBJ
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports;
 		std::map<str, str>		error_pages;
+		std::map<str, str>		http_errors;
 		std::vector<Location *>	locations;
 
 		void			handleError(str error_code, std::stringstream &resp);

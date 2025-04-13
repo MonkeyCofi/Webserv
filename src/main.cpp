@@ -22,7 +22,7 @@ int main(int ac, char **av)
 		str		tmp = av[1];
 		eng = conf.parse(tmp);
 		if (!eng)
-			throw std::runtime_error("e4");
+			throw std::runtime_error("failed to boot up server");
 		std::cout << "Server Ready!\n";
 		eng->start();
 	}

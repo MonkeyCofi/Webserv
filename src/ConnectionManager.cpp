@@ -69,7 +69,7 @@ int ConnectionManager::setupSocket(str ip, str port)
 	if (addr_ret != 0)
 	{
 		std::cout << gai_strerror(addr_ret) << "\n";
-		throw (std::exception());
+		throw std::runtime_error(gai_strerror(addr_ret));
 	}
 	ret = *((sockaddr_in *)info->ai_addr);
 	fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -134,10 +134,7 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	len = sizeof(client_addr);
 	acc_sock = accept(sock.fd, (sockaddr *)&client_addr, &len);
 	if (acc_sock == -1)
-	{
 		return ;
-	}
-	std::cout << "New Client!\n";
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
@@ -177,32 +174,21 @@ void ConnectionManager::startConnections()
 	char	buffer[4096];
 	ssize_t	bytes;
 	Request	*req = NULL;
-
-	bool prnt = true;
+	
 	main_listeners = sock_fds.size();
+	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
-		if (prnt)
-		{
-			std::cout << sock_fds.size() << "\n";
-			prnt = false;
-		}
-		if (sock_fds.size() < main_listeners)
-		std::cout << "WOAH ERROR!!!!!\n";
 		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
-		{
-			// std::cout << "RES 0\n";
 			continue ;
-		}
 		if (res < 0)
 		{
-			std::cout << "RES -1\n";
 			if (g_quit)
 				break ;
-			perror("poll");
-			throw std::runtime_error("e2");
+			perror("Poll");
+			throw std::runtime_error("unexpected error in poll function");
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
@@ -227,13 +213,9 @@ void ConnectionManager::startConnections()
 					handlers.erase(handlers.begin() + i);
 					defaults.erase(defaults.begin() + i);
 					servers_per_ippp.erase(servers_per_ippp.begin() + i);
-					prnt = true;
-					std::cout << "SOCKET DELETED1?\n";
 					i--;
 					continue ;
 				}
-				std::cout << "New request!\n";
-				std::cout << reqs.at(i) << "\n";
 				req = new Request(reqs.at(i));
 				passRequestToServer(i, &req);
 			}
@@ -249,11 +231,8 @@ void ConnectionManager::startConnections()
 						handlers.erase(handlers.begin() + i);
 						defaults.erase(defaults.begin() + i);
 						servers_per_ippp.erase(servers_per_ippp.begin() + i);
-						prnt = true;
-						std::cout << "SOCKET DELETED2?\n";
 						i--;
 					}
-					std::cout << "Responded!!\n";
 				}
 				else
 					continue;
@@ -267,13 +246,11 @@ void ConnectionManager::startConnections()
 				handlers.erase(handlers.begin() + i);
 				defaults.erase(defaults.begin() + i);
 				servers_per_ippp.erase(servers_per_ippp.begin() + i);
-				prnt = true;
-				std::cout << "SOCKET DELETED3?\n";
 				i--;
 			}
 		}
 	}
-	std::cout << "TEST\n";
+	std::cout << "Ending Server...\n";
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
 	{
 		close(sock_fds.at(i).fd);
@@ -283,5 +260,7 @@ void ConnectionManager::startConnections()
 		defaults.pop_back();
 		servers_per_ippp.pop_back();
 	}
+	std::cout << "Server closed!\n";
 	signal(SIGINT, SIG_DFL);
+	signal(SIGPIPE, SIG_DFL);
 }

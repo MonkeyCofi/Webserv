@@ -10,6 +10,16 @@ Server::Server() : BlockOBJ()
 	root = "/";
 	keep_alive = false;
 	file_fd = -1;
+	http_errors["200"] = "OK";
+	http_errors["201"] = "Created";
+	http_errors["202"] = "Accepted";
+	http_errors["204"] = "No Content";
+	http_errors["304"] = "Not Modified";
+	http_errors["404"] = "Page Not Found";
+	http_errors["414"] = "URI Too Long";
+	http_errors["500"] = "Internal Server Error";
+	http_errors["501"] = "Not Implemented";
+	http_errors["505"] = "HTTP Version Not Supported";
 }
 
 Server::Server(const Server &copy): BlockOBJ(copy)
@@ -192,46 +202,18 @@ void Server::setDefault()
 	names.push_back("_");
 }
 
-// unsigned int Server::fileSize(int fd)
-// {
-// 	unsigned int	bytes, full;
-// 	unsigned char	buffer[4096];
-
-// 	full = 0;
-// 	while ((bytes = read(fd, buffer, 4096)) > 0)
-// 		full += bytes;
-// 	close(fd);
-// 	return full;
-// }
-
 str	Server::reasonPhrase(str status)
 {
-	if (status == "200")
-		return "OK";
-	if (status == "404")
-		return "Page Not Found";
-	if (status == "414")
-		return "URI Too Long";
-	if (status == "501")
-		return "Not Implemented";
-	if (status == "505")
-		return "HTTP Version Not Supported";
-	return "";
+	if (http_errors.find(status) == http_errors.end())
+		return "";
+	return http_errors[status];
 }
 
 str	Server::errorPage(str status)
 {
-	if (status == "400")
-		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 400</h1>\r\n<p>Bad Request!</p>\r\n</body>\r\n</html>\r\n";
-	if (status == "404")
-		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 404</h1>\r\n<p>Page not found!</p>\r\n</body>\r\n</html>\r\n";
-	if (status == "414")
-		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 414</h1>\r\n<p>URI Too Long!</p>\r\n</body>\r\n</html>\r\n";
-	if (status == "501")
-		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 501</h1>\r\n<p>Not Implemented!</p>\r\n</body>\r\n</html>\r\n";
-	if (status == "505")
-		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code 505</h1>\r\n<p>HTTP Version Not Supported!</p>\r\n</body>\r\n</html>\r\n";
-	return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Page</h1>\r\n<p>Unknown Error Code</p>\r\n</body>\r\n</html>\r\n";
+	if (http_errors.find(status) == http_errors.end())
+		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Page</h1>\r\n<p>Unknown Error Code</p>\r\n</body>\r\n</html>\r\n";
+	return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code " + status + "</h1>\r\n<p>" + http_errors[status] + "!</p>\r\n</body>\r\n</html>\r\n";
 }
 
 str	Server::fileType(str file_name)
@@ -337,28 +319,16 @@ bool Server::respond(int client_fd)
 		{
 			tmp = ssizeToStr(bytes) + "\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-			{
-				std::cout << "Exited willingly!\n";
 				return false;
-			}
 			if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
-			{
-				std::cout << "Exited willingly!\n";
 				return false;
-			}
 			if (send(client_fd, "\r\n", 2, 0) <= 0)
-			{
-				std::cout << "Exited willingly!\n";
 				return false;
-			}
 			total_length -= sb - 2;
 		}
 		tmp = "0\r\n\r\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-		{
-			std::cout << "Exited willingly!\n";
 			return false;
-		}
 		close(file_fd);
 	}
 	return keep_alive;

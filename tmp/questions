@@ -1,5 +1,1 @@
-why atoi instead of stoi in BlockOBJ
-fix exceptions in Socket
-follow convention with getters and camelCase
-made dotest.sh work on your config file
-unnecessary configparser change (adding a server to http)
+echo -en 'GET / HTTP/1.1\r\nHost: none\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8000
