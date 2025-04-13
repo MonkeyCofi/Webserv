@@ -10,6 +10,7 @@
 # include <queue>
 # include <poll.h>
 # include <signal.h>
+# include <dirent.h>
 # include <cstring>
 # include <sstream>
 # include <sys/socket.h>
@@ -28,12 +29,12 @@ class Server: public BlockOBJ
 		str						root;
 		str						header;
 		int						file_fd;
-		bool					keep_alive;
 		ssize_t					total_length;
+		bool					keep_alive, autoindex;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports;
 		std::map<str, str>		error_pages;
-		std::map<str, str>		http_errors;
+		std::map<str, str>		http_codes;
 		std::vector<Location *>	locations;
 
 		void			handleError(str error_code, std::stringstream &resp);

@@ -9,17 +9,20 @@ Server::Server() : BlockOBJ()
 	header = "";
 	root = "/";
 	keep_alive = false;
+	autoindex = false;
 	file_fd = -1;
-	http_errors["200"] = "OK";
-	http_errors["201"] = "Created";
-	http_errors["202"] = "Accepted";
-	http_errors["204"] = "No Content";
-	http_errors["304"] = "Not Modified";
-	http_errors["404"] = "Page Not Found";
-	http_errors["414"] = "URI Too Long";
-	http_errors["500"] = "Internal Server Error";
-	http_errors["501"] = "Not Implemented";
-	http_errors["505"] = "HTTP Version Not Supported";
+	http_codes["200"] = "OK";
+	http_codes["201"] = "Created";
+	http_codes["202"] = "Accepted";
+	http_codes["204"] = "No Content";
+	http_codes["301"] = "Redirect";
+	http_codes["304"] = "Not Modified";
+	http_codes["403"] = "Forbidden";
+	http_codes["404"] = "Page Not Found";
+	http_codes["414"] = "URI Too Long";
+	http_codes["500"] = "Internal Server Error";
+	http_codes["501"] = "Not Implemented";
+	http_codes["505"] = "HTTP Version Not Supported";
 }
 
 Server::Server(const Server &copy): BlockOBJ(copy)
@@ -27,6 +30,7 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	header = "";
 	root = "/";
 	keep_alive = false;
+	autoindex = false;
 	file_fd = -1;
 	(void)copy;
 }
@@ -135,6 +139,14 @@ bool Server::handleDirective(std::queue<str> opts)
 			opts.pop();
 		}
 	}
+	else if (opts.front() == "autoindex" && opts.size() == 2)
+	{
+		opts.pop();
+		if (opts.front() != "off" && opts.front() != "on")
+			return false;
+		autoindex = (opts.front() == "on");
+		opts.pop();
+	}
 	else
 		return parent_ret;
 	return true;
@@ -204,16 +216,16 @@ void Server::setDefault()
 
 str	Server::reasonPhrase(str status)
 {
-	if (http_errors.find(status) == http_errors.end())
+	if (http_codes.find(status) == http_codes.end())
 		return "";
-	return http_errors[status];
+	return http_codes[status];
 }
 
 str	Server::errorPage(str status)
 {
-	if (http_errors.find(status) == http_errors.end())
+	if (http_codes.find(status) == http_codes.end())
 		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Page</h1>\r\n<p>Unknown Error Code</p>\r\n</body>\r\n</html>\r\n";
-	return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code " + status + "</h1>\r\n<p>" + http_errors[status] + "!</p>\r\n</body>\r\n</html>\r\n";
+	return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code " + status + "</h1>\r\n<p>" + http_codes[status] + "!</p>\r\n</body>\r\n</html>\r\n";
 }
 
 str	Server::fileType(str file_name)
@@ -263,9 +275,63 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	header = resp.str();
 }
 
+void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
+{
+	str				index, full_path;
+    DIR				*dir;
+    struct dirent	*item;
+
+	if (path.at(path.length() - 1) != '/')
+		path += "/";
+	full_path = root + path;
+	index = full_path + "index.html";
+	file_fd = open(index.c_str(), O_RDONLY);
+	if (fd > -1)
+	{
+		fileResponse(req, path, resp, true);
+		return ;
+	}
+	else if (!autoindex)
+	{
+		handleError("403", resp);
+		return ;
+	}
+	fd = -1;
+	dir = opendir(path);
+    if (dir == NULL)
+	{
+		handleError("404", resp);
+		return ;
+	}
+	file_fd = -1;
+	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
+	resp << "Connection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+	resp << "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n";
+	resp << "<a href=\"../\">../</a> <br>\r\n";
+    while ((item = readdir(dir)) != NULL)
+		resp << "<a href=\"./" + item->d_name + "\">" + item->d_name + "</a> <br>\r\n";
+	resp << "<hr></body>\r\n</html>\r\n";
+    closedir(dir);
+	header = resp.str();
+}
+
+void Server::fileResponse(Request *req, str path, std::stringstream &resp, bool checking_index)
+{
+	if (!checking_index)
+		file_fd = open(path.c_str(), O_RDONLY);
+	if (file_fd == -1)
+	{
+		if (!checking_index)
+			directoryResponse(req, path, resp);
+		return ;
+	}
+	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
+	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+	header = resp.str();
+}
+
 void Server::handleRequest(Request *req)
 {
-	int					fd;
 	str					file;
 	std::stringstream	resp;
 
@@ -277,20 +343,7 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "GET")
 	{
-		if (req->getFileURI() == "/")
-			file = root + "/index.html";
-		else
-			file = root + req->getFileURI();
-		fd = open(file.c_str(), O_RDONLY);
-		if (fd == -1)
-		{
-			handleError("404", resp);
-			return ;
-		}
-		file_fd = fd;
-		resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
-		resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
-		header = resp.str();
+		
 	}
 	else if (req->getMethod() == "POST")
 	{
