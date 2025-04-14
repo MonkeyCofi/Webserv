@@ -46,8 +46,8 @@ class Server: public BlockOBJ
 		str				errorPage(str status);
 		str				ssizeToStr(ssize_t x);
 		bool			isDirectory(const std::string& path);
-		void			directoryResponse(Request *req, str path, std::stringstream &resp);
-		void			fileResponse(Request *req, str path, std::stringstream &resp, bool checking_index);
+		void			directoryResponse(str path, std::stringstream &resp);
+		void			fileResponse(str path, std::stringstream &resp, bool checking_index);
 		// unsigned int	fileSize(int fd);
 
 	public:

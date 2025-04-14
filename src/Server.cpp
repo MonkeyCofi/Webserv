@@ -17,6 +17,7 @@ Server::Server() : BlockOBJ()
 	http_codes["202"] = "Accepted";
 	http_codes["204"] = "No Content";
 	http_codes["301"] = "Redirect";
+	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
@@ -322,13 +323,14 @@ bool Server::isDirectory(const std::string& path)
 	return false;
 }
 
-void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
+void Server::directoryResponse(str path, std::stringstream &resp)
 {
 	str				index, full_path, filename, body;
     DIR				*dir;
 	bool			redir;
     struct dirent	*item;
 
+	redir = false;
 	if (path.at(path.length() - 1) != '/')
 	{
 		path += "/";
@@ -339,7 +341,7 @@ void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
 	file_fd = open(index.c_str(), O_RDONLY);
 	if (file_fd > -1)
 	{
-		fileResponse(req, path + "index.html", resp, true);
+		fileResponse(path + "index.html", resp, true);
 		return ;
 	}
 	else if (!autoindex)
@@ -374,20 +376,21 @@ void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
 	header = resp.str() + body;
 }
 
-void Server::fileResponse(Request *req, str path, std::stringstream &resp, bool checking_index)
+void Server::fileResponse(str path, std::stringstream &resp, bool checking_index)
 {
-	(void)req;
-	path = root + path;
 	if (!checking_index)
+	{
+		path = root + path;
 		file_fd = open(path.c_str(), O_RDONLY);
+	}
 	if (file_fd == -1)
 	{
 		if (!checking_index)
 			handleError("404", resp);
 		return ;
 	}
-	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(path) << "\r\n";
-	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+	resp << "HTTP/1.1 " << (checking_index && path != "/index.html" ? "302 Found" : "200 OK") << "\r\nContent-Type: " << fileType(path) << "\r\n";
+	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << (checking_index && path != "/index.html" ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
 	header = resp.str();
 }
 
@@ -406,9 +409,9 @@ void Server::handleRequest(Request *req)
 	{
 		file = req->getFileURI();
 		if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
-			directoryResponse(req, file, resp);
+			directoryResponse(file, resp);
 		else
-			fileResponse(req, file, resp, false);
+			fileResponse(file, resp, false);
 	}
 	else if (req->getMethod() == "POST")
 	{
