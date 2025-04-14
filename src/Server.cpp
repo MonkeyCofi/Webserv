@@ -113,7 +113,8 @@ bool Server::handleAddress(str address)
 
 bool Server::handleDirective(std::queue<str> opts)
 {
-	bool			parent_ret;
+	bool	parent_ret;
+	size_t	pos;
 
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
@@ -131,6 +132,13 @@ bool Server::handleDirective(std::queue<str> opts)
 		root = opts.front();
 		if (root.at(root.length() - 1) == '/')
 			root = root.substr(0, root.length() - 1);
+		pos = root.find("%20");
+		while (pos != str::npos)
+		{
+			root.replace(pos, 3, " ");
+			pos += 3;
+			pos = root.find("%20", pos);
+		}
 	}
 	else if (opts.front() == "server_name" && opts.size() >= 2)
 	{
@@ -145,6 +153,7 @@ bool Server::handleDirective(std::queue<str> opts)
 	}
 	else if (opts.front() == "error_page" && opts.size() >= 3)
 	{
+		std::cout << "HERE WE GO!\n";
 		opts.pop();
 		while (opts.size() > 1)
 		{
