@@ -6,6 +6,7 @@ const str	Server::directives[] = { "root", "listen", "index", "server_name", "er
 
 Server::Server() : BlockOBJ()
 {
+	body = "";
 	header = "";
 	root = "/";
 	keep_alive = false;
@@ -27,11 +28,24 @@ Server::Server() : BlockOBJ()
 
 Server::Server(const Server &copy): BlockOBJ(copy)
 {
+	body = "";
 	header = "";
 	root = "/";
 	keep_alive = false;
 	autoindex = false;
 	file_fd = -1;
+	http_codes["200"] = "OK";
+	http_codes["201"] = "Created";
+	http_codes["202"] = "Accepted";
+	http_codes["204"] = "No Content";
+	http_codes["301"] = "Redirect";
+	http_codes["304"] = "Not Modified";
+	http_codes["403"] = "Forbidden";
+	http_codes["404"] = "Page Not Found";
+	http_codes["414"] = "URI Too Long";
+	http_codes["500"] = "Internal Server Error";
+	http_codes["501"] = "Not Implemented";
+	http_codes["505"] = "HTTP Version Not Supported";
 	(void)copy;
 }
 
@@ -189,22 +203,22 @@ str	Server::getType()
 	return ("server");
 }
 
-std::vector<str>	Server::getNames()
+std::vector<str> Server::getNames()
 {
 	return (this->names);
 }
 
-std::vector<str>	Server::getIPs()
+std::vector<str> Server::getIPs()
 {
 	return (this->ips);
 }
 
-std::vector<str>	Server::getPorts()
+std::vector<str> Server::getPorts()
 {
 	return (this->ports);
 }
 
-std::vector<Location *>	Server::getLocations()
+std::vector<Location *> Server::getLocations()
 {
 	return locations;
 }
@@ -232,7 +246,7 @@ str	Server::fileType(str file_name)
 {
 	str	type;
 
-	if (file_name == "/")
+	if (file_name.at(file_name.length() - 1) == '/')
 		return "text/html";
 	if (file_name.find(".") == str::npos || file_name.length() - file_name.find_last_of(".") > 5)
 		return "text/plain";
@@ -275,69 +289,57 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	header = resp.str();
 }
 
-bool is_directory(const std::string& path) {
-    struct stat s;
-    if (stat(path.c_str(), &s) == 0) {
-        return S_ISDIR(s.st_mode);
-    }
-    return false;
-}
+// void Server::getInfo(str &path)
+// {
+//     struct stat s;
+//     if (stat(path.c_str(), &s) == 0) {
+//         // Check if it's a directory
+//         if (S_ISDIR(s.st_mode)) {
+//             std::cout << path << " is a directory.\n";
+//         } else if (S_ISREG(s.st_mode)) {
+//             std::cout << path << " is a file.\n";
 
-bool is_file(const std::string& path) {
-    struct stat s;
-    if (stat(path.c_str(), &s) == 0) {
-        return S_ISREG(s.st_mode);
-    }
-    return false;
-}
+//             // Print size
+//             std::cout << "Size: " << s.st_size << " bytes\n";
 
-#include <iostream>
-#include <sys/stat.h>
-#include <ctime>
+//             // Print last modified date
+//             std::cout << "Last modified: " << std::ctime(&s.st_mtime);
+//         } else {
+//             std::cout << path << " exists but is not a regular file or directory.\n";
+//         }
+//     } else {
+//         std::perror("stat");
+//         std::cout << "Could not access path: " << path << "\n";
+//     }
+// }
 
-void inspect_path(const std::string& path) {
-    struct stat s;
-    if (stat(path.c_str(), &s) == 0) {
-        // Check if it's a directory
-        if (S_ISDIR(s.st_mode)) {
-            std::cout << path << " is a directory.\n";
-        } else if (S_ISREG(s.st_mode)) {
-            std::cout << path << " is a file.\n";
-
-            // Print size
-            std::cout << "Size: " << s.st_size << " bytes\n";
-
-            // Print last modified date
-            std::cout << "Last modified: " << std::ctime(&s.st_mtime);
-        } else {
-            std::cout << path << " exists but is not a regular file or directory.\n";
-        }
-    } else {
-        std::perror("stat");
-        std::cout << "Could not access path: " << path << "\n";
-    }
-}
-
-int main() {
-    std::string path = "some/path/to/check";
-    inspect_path(path);
-    return 0;
+bool Server::isDirectory(const std::string& path)
+{
+	struct stat	s;
+	
+    if (stat(path.c_str(), &s) == 0)
+		return S_ISDIR(s.st_mode);
+	return false;
 }
 
 void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
 {
-	str				index, full_path;
+	str				index, full_path, filename, body;
     DIR				*dir;
+	bool			redir;
     struct dirent	*item;
 
 	if (path.at(path.length() - 1) != '/')
+	{
 		path += "/";
+		redir = true;
+	}
 	full_path = root + path;
 	index = full_path + "index.html";
 	file_fd = open(index.c_str(), O_RDONLY);
-	if (fd > -1)
+	if (file_fd > -1)
 	{
-		fileResponse(req, path, resp, true);
+		fileResponse(req, path + "index.html", resp, true);
 		return ;
 	}
 	else if (!autoindex)
@@ -345,36 +347,46 @@ void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
 		handleError("403", resp);
 		return ;
 	}
-	fd = -1;
-	dir = opendir(path);
+	file_fd = -1;
+	dir = opendir(full_path.c_str());
     if (dir == NULL)
 	{
 		handleError("404", resp);
 		return ;
 	}
 	file_fd = -1;
-	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
-	resp << "Connection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
-	resp << "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n";
-	resp << "<a href=\"../\">../</a> <br>\r\n";
+	body = "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n<hr>\r\n";
+	body += "<a href=\"../\">..</a> <br>\r\n";
     while ((item = readdir(dir)) != NULL)
-		resp << "<a href=\"./" + item->d_name + "\">" + item->d_name + "</a> <br>\r\n";
-	resp << "<hr></body>\r\n</html>\r\n";
+	{
+		filename = str(item->d_name);
+		if (filename != "." && filename != "..")
+		{
+			if (isDirectory(full_path + filename))
+				filename += "/";
+			body += "<a href=\"./" + filename + "\">" + filename + "</a> <br>\r\n";
+		}
+	}
+	body += "<hr></body>\r\n</html>\r\n";
+	resp << "HTTP/1.1 " << (redir ? "301 Redirect" : "200 OK") << "\r\nContent-Type: text/html\r\nContent-Length: " << body.length() << "\r\n";
+	resp << "Connection: " << (keep_alive ? "Keep-Alive" : "close") << (redir ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
     closedir(dir);
-	header = resp.str();
+	header = resp.str() + body;
 }
 
 void Server::fileResponse(Request *req, str path, std::stringstream &resp, bool checking_index)
 {
+	(void)req;
+	path = root + path;
 	if (!checking_index)
 		file_fd = open(path.c_str(), O_RDONLY);
 	if (file_fd == -1)
 	{
 		if (!checking_index)
-			directoryResponse(req, path, resp);
+			handleError("404", resp);
 		return ;
 	}
-	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(req->getFileURI()) << "\r\n";
+	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(path) << "\r\n";
 	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
 	header = resp.str();
 }
@@ -392,7 +404,11 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "GET")
 	{
-		
+		file = req->getFileURI();
+		if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
+			directoryResponse(req, file, resp);
+		else
+			fileResponse(req, file, resp, false);
 	}
 	else if (req->getMethod() == "POST")
 	{

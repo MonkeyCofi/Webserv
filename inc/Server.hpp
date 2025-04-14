@@ -28,10 +28,9 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
-		str						root;
-		str						header;
 		int						file_fd;
 		ssize_t					total_length;
+		str						root, header, body;
 		bool					keep_alive, autoindex;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports;
@@ -46,6 +45,9 @@ class Server: public BlockOBJ
 		str				fileType(str file_name);
 		str				errorPage(str status);
 		str				ssizeToStr(ssize_t x);
+		bool			isDirectory(const std::string& path);
+		void			directoryResponse(Request *req, str path, std::stringstream &resp);
+		void			fileResponse(Request *req, str path, std::stringstream &resp, bool checking_index);
 		// unsigned int	fileSize(int fd);
 
 	public:
