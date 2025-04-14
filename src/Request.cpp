@@ -124,7 +124,7 @@ void Request::setRequestField(str &header_field, str &field_content)
 	if (header_field == "content-type")
 		this->contentType = field_content;
 	if (header_field == "content-length")
-		this->contentType = field_content;
+		this->contentLength = std::atoi(field_content.c_str());
 }
 
 Request	&Request::parseRequest(str& request)

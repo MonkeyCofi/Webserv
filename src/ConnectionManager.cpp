@@ -171,7 +171,7 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 void ConnectionManager::startConnections()
 {
 	int		res;
-	char	buffer[4096];
+	char	buffer[BUFFER_SIZE];
 	ssize_t	bytes;
 	Request	*req = NULL;
 	
@@ -201,9 +201,10 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
+				std::cout << "IN POLLIN\n";
 				reqs.at(i) = "";
-				memset(buffer, 0, 4096);
-				bytes = recv(sock_fds.at(i).fd, buffer, 4096, 0);
+				memset(buffer, 0, BUFFER_SIZE);
+				bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0);
 				reqs.at(i) = str(buffer);
 				if (bytes == 0)
 				{
@@ -216,8 +217,10 @@ void ConnectionManager::startConnections()
 					i--;
 					continue ;
 				}
+				// std::cout << buffer << "\n";
+				// std::cout << reqs.at(i);
 				req = new Request(reqs.at(i));
-				passRequestToServer(i, &req);
+				this->passRequestToServer(i, &req);
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{

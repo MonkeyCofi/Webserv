@@ -9,5 +9,29 @@
 		<p id="test">This file is read byte-by-byte to a buffer</p>
 		<p>This buffer is then sent to the client socket</p>
 		<h1>This marks the end of the file</h1>
+		<div class="post">
+			<h3>This Form uses the POST Method to send form data to the server</h3>
+			<form method="POST" action="/Users/pipolint/Desktop/webserv">
+				<label for="name">Name: </label>
+				<input type="text" name="name">
+				<label for="age">Age: </label>
+				<input type="text" name="age">
+				<input type="submit">
+			</form>
+		</div>
+		<div class="get">
+			<h3>This Form uses the GET method to ask for data from the server</h3>
+			<form method="GET" action="/Users/pipolint/Desktop/webserv/">
+				<label for="name">Name: </label>
+				<input type="text" name="name">
+				<label for="age">Age: </label>
+				<input type="text" name="age">
+				<input type="submit">
+			</form>
+		</div>
+		<form enctype="multipart/form-data" method="POST" action="">
+			<input type="file" name="image">
+			<input type="submit">
+		</form>
 	</body>
 </html>

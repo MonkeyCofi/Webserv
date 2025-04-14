@@ -33,6 +33,7 @@
 # include "Server.hpp"
 # include "Request.hpp"
 
+# define BUFFER_SIZE 8192
 typedef std::string str;
 
 class ConnectionManager

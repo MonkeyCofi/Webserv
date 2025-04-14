@@ -412,11 +412,16 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "POST")
 	{
-		
+		// the presence of Content-Length or Transfer-encoding headers indicate a message body is present in the request
+		if (req->getContentLen() == 0)
+			return ;
+		resp << "HTTP /1.1 200 OK\r\n\r\n";
+		resp << "<html><h1>POSTED</h1></html>\r\n";
+		this->header = resp.str();
 	}
 	else if (req->getMethod() == "DELETE")
 	{
-		
+		// 
 	}
 }
 
