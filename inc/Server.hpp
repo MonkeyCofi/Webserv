@@ -28,7 +28,7 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
-		int						file_fd;
+		int						file_fd, min_del_depth;
 		ssize_t					total_length;
 		str						root, header, body;
 		bool					keep_alive, autoindex;

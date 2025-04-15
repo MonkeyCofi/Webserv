@@ -12,6 +12,7 @@ Server::Server() : BlockOBJ()
 	index.push_back("index.html");
 	keep_alive = false;
 	autoindex = false;
+	min_del_depth = 0;
 	file_fd = -1;
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -36,6 +37,7 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	index.push_back("index.html");
 	keep_alive = false;
 	autoindex = false;
+	min_del_depth = 0;
 	file_fd = -1;
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -145,8 +147,6 @@ bool Server::handleDirective(std::queue<str> opts)
 	else if (opts.front() == "index" && opts.size() >= 2)
 	{
 		opts.pop();
-		if (opts.front().length() == 0 || opts.front().at(0) != '/')
-			return false;
 		while (!opts.empty())
 		{
 			if (opts.front() == "index.html")
@@ -195,6 +195,19 @@ bool Server::handleDirective(std::queue<str> opts)
 		if (opts.front() != "off" && opts.front() != "on")
 			return false;
 		autoindex = (opts.front() == "on");
+		opts.pop();
+	}
+	else if (opts.front() == "min_delete_depth" && opts.size() == 2)
+	{
+		opts.pop();
+		if (opts.front().length() > 10)
+			return false;
+		for (unsigned int i = 0; i < opts.front().length(); i++)
+		{
+			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
+				return false;
+		}
+		min_del_depth = std::stoi(opts.front());
 		opts.pop();
 	}
 	else
@@ -437,6 +450,7 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 void Server::handleRequest(Request *req)
 {
 	str					file;
+	int					count;
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
@@ -459,7 +473,13 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "DELETE")
 	{
-		
+		count = 0;
+		for (unsigned int i = 0; i < req->getFileURI(); i++)
+		// 	count += (req->getFileURI());
+		// if (count < min_del_depth)
+		// {
+		// 	handleError()
+		// }
 	}
 }
 
