@@ -9,6 +9,7 @@ Server::Server() : BlockOBJ()
 	body = "";
 	header = "";
 	root = "/";
+	index.push_back("index.html");
 	keep_alive = false;
 	autoindex = false;
 	file_fd = -1;
@@ -32,6 +33,7 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	body = "";
 	header = "";
 	root = "/";
+	index.push_back("index.html");
 	keep_alive = false;
 	autoindex = false;
 	file_fd = -1;
@@ -140,6 +142,31 @@ bool Server::handleDirective(std::queue<str> opts)
 			pos = root.find("%20", pos);
 		}
 	}
+	else if (opts.front() == "index" && opts.size() >= 2)
+	{
+		opts.pop();
+		if (opts.front().length() == 0 || opts.front().at(0) != '/')
+			return false;
+		while (!opts.empty())
+		{
+			if (opts.front() == "index.html")
+			{
+				opts.pop();
+				continue ;
+			}
+			index.push_back(opts.front());
+			if (index.back().at(index.back().length() - 1) == '/' || index.back().at(0) == '/')
+				return false;
+			pos = index.back().find("%20");
+			while (pos != str::npos)
+			{
+				index.back().replace(pos, 3, " ");
+				pos += 3;
+				pos = index.back().find("%20", pos);
+			}
+			opts.pop();
+		}
+	}
 	else if (opts.front() == "server_name" && opts.size() >= 2)
 	{
 		opts.pop();
@@ -153,7 +180,6 @@ bool Server::handleDirective(std::queue<str> opts)
 	}
 	else if (opts.front() == "error_page" && opts.size() >= 3)
 	{
-		std::cout << "HERE WE GO!\n";
 		opts.pop();
 		while (opts.size() > 1)
 		{
@@ -334,7 +360,7 @@ bool Server::isDirectory(const std::string& path)
 
 void Server::directoryResponse(str path, std::stringstream &resp)
 {
-	str				index, full_path, filename, body;
+	str				indexpath, full_path, filename, body;
     DIR				*dir;
 	bool			redir;
     struct dirent	*item;
@@ -346,17 +372,22 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 		redir = true;
 	}
 	full_path = root + path;
-	index = full_path + "index.html";
-	file_fd = open(index.c_str(), O_RDONLY);
-	if (file_fd > -1)
+	for (unsigned int i = 0; i < index.size(); i++)
 	{
-		fileResponse(path + "index.html", resp, true);
-		return ;
-	}
-	else if (!autoindex)
-	{
-		handleError("403", resp);
-		return ;
+		indexpath = full_path + index.at(i);
+		file_fd = open(indexpath.c_str(), O_RDONLY);
+		if (file_fd > -1)
+		{
+			fileResponse(path + index.at(i), resp, true);
+			return ;
+		}
+		else if (i != index.size() - 1)
+			continue ;
+		else if (!autoindex)
+		{
+			handleError("403", resp);
+			return ;
+		}
 	}
 	file_fd = -1;
 	dir = opendir(full_path.c_str());

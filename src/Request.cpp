@@ -87,6 +87,8 @@ bool is_digit(char c)
 
 bool Request::parseRequestLine(str &line)
 {
+	size_t	pos;
+
 	if (std::count(line.begin(), line.end(), ' ') != 2 || line.length() < 14)
 		return false;
 	if (line.find_first_of(" ") > 6)
@@ -106,6 +108,13 @@ bool Request::parseRequestLine(str &line)
 	this->file_URI = line.substr(0, line.find_first_of(" "));
 	if (file_URI.at(0) != '/' || this->file_URI.find_first_of("\t\r") != str::npos)
 		return false;
+	pos = this->file_URI.find("%20");
+	while (pos != str::npos)
+	{
+		this->file_URI.replace(pos, 3, " ");
+		pos += 3;
+		pos = this->file_URI.find("%20", pos);
+	}
 	line = line.substr(line.find_first_of(" ") + 1);
 	if (line != "HTTP/1.1\r")
 	{
