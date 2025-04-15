@@ -201,11 +201,17 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
+				ssize_t	r = 0;
 				std::cout << "IN POLLIN\n";
 				reqs.at(i) = "";
 				memset(buffer, 0, BUFFER_SIZE);
-				bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0);
-				reqs.at(i) = str(buffer);
+				// bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0);
+				while ((bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0)) > 0)
+				{
+					r += bytes;
+					reqs.at(i) += str(buffer);
+					memset(buffer, 0, BUFFER_SIZE);
+				}
 				if (bytes == 0)
 				{
 					close(sock_fds.at(i).fd);
@@ -217,8 +223,8 @@ void ConnectionManager::startConnections()
 					i--;
 					continue ;
 				}
-				// std::cout << buffer << "\n";
-				// std::cout << reqs.at(i);
+				std::cout << reqs.at(i) << "\n";
+				std::cout << "\033[32mRead " << r << "  bytes\033[0m\n";
 				req = new Request(reqs.at(i));
 				this->passRequestToServer(i, &req);
 			}
