@@ -31,6 +31,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 	if (!protocol)
 		throw std::runtime_error("e1");
 	std::vector<Server *>	servers = protocol->getServers();
+	this->header_complete = false;
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
 		for (unsigned int i = 0; i < (*it)->getIPs().size(); i++)
@@ -159,6 +160,11 @@ void ConnectionManager::printError(int revents)
 
 void ConnectionManager::passRequestToServer(int i, Request **req)
 {
+	if ((*req) == NULL)
+	{
+		std::cout << "Request is NULL\n";
+		return ;
+	}
 	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else
@@ -168,11 +174,61 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 	*req = NULL;
 }
 
+Request*	ConnectionManager::receiveRequest(int client_fd)
+{
+	char	buffer[BUFFER_SIZE + 1];
+	ssize_t	r;
+	ssize_t	bytes_read;
+
+	std::memset(buffer, 0, BUFFER_SIZE + 1);
+	r = 1;
+	while (r > 0)
+	{
+		if (buffer[0] != 0)
+			std::memset(buffer, 0, BUFFER_SIZE + 1);
+		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+		if (r < 0)
+		{
+			std::cerr << "Recv: -1\n";
+			return (NULL);
+		}
+		else if (r == 0)
+		{
+			std::cout << "Recv: 0\n";
+			close(client_fd);
+			return (NULL);
+		}
+			// fully read from client so close connection
+		bytes_read += r;
+		// append what was read to the request_header string
+		this->request_header.append(buffer, BUFFER_SIZE);
+		std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
+		if (this->request_header.find("\r\n\r\n") != std::string::npos)
+		{
+			std::cout << "Found end of header\n";
+			// the header has been fully received
+			this->header_complete = true;
+			return (new Request(this->request_header));	// now the header is fully parsed
+		}
+	}
+	return (NULL);
+}
+
+void	ConnectionManager::parseBody()
+{
+	std::ofstream	bodyFile;
+	// open a temporary file
+	bodyFile.open(".temp", std::ios::binary);
+	// read the body into the file
+	// if the size exceeds CLIENT_MAX_BODY_SIZE, return with an error and close the socket
+	// if the bytes read are less than 
+}
+
 void ConnectionManager::startConnections()
 {
 	int		res;
-	char	buffer[BUFFER_SIZE];
-	ssize_t	bytes;
+	// char	buffer[BUFFER_SIZE];
+	// ssize_t	bytes;
 	Request	*req = NULL;
 	
 	main_listeners = sock_fds.size();
@@ -201,31 +257,30 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				ssize_t	r = 0;
-				std::cout << "IN POLLIN\n";
-				reqs.at(i) = "";
-				memset(buffer, 0, BUFFER_SIZE);
+				// ssize_t	r = 0;
+				// std::cout << "IN POLLIN\n";
+				// reqs.at(i) = "";
+				// std::memset(buffer, 0, BUFFER_SIZE);
 				// bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0);
-				while ((bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0)) > 0)
-				{
-					r += bytes;
-					reqs.at(i) += str(buffer);
-					memset(buffer, 0, BUFFER_SIZE);
-				}
-				if (bytes == 0)
-				{
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					reqs.erase(reqs.begin() + i);
-					handlers.erase(handlers.begin() + i);
-					defaults.erase(defaults.begin() + i);
-					servers_per_ippp.erase(servers_per_ippp.begin() + i);
-					i--;
-					continue ;
-				}
-				std::cout << reqs.at(i) << "\n";
-				std::cout << "\033[32mRead " << r << "  bytes\033[0m\n";
-				req = new Request(reqs.at(i));
+				// if (bytes == 0)
+				// {
+				// 	close(sock_fds.at(i).fd);
+				// 	sock_fds.erase(sock_fds.begin() + i);
+				// 	reqs.erase(reqs.begin() + i);
+				// 	handlers.erase(handlers.begin() + i);
+				// 	defaults.erase(defaults.begin() + i);
+				// 	servers_per_ippp.erase(servers_per_ippp.begin() + i);
+				// 	i--;
+				// 	continue ;
+				// }
+				// reqs.at(i).append(buffer);
+				// std::cout << reqs.at(i) << "\n";
+				// std::cout << "\033[32mRead " << r << "  bytes\033[0m\n";
+				// req = new Request(this->reqs.at(i));
+				req = receiveRequest(sock_fds.at(i).fd);
+				// // header has been parsed; now go through body and store into disk
+				if (req && (req->getContentType() != "" || req->getContentLen() != 0))	// indicates that request contains body
+					parseBody();
 				this->passRequestToServer(i, &req);
 			}
 			if (sock_fds.at(i).revents & POLLOUT)

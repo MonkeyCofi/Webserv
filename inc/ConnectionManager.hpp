@@ -17,6 +17,7 @@
 # include <sys/socket.h>
 # include <arpa/inet.h>
 # include <iostream>
+# include <fstream>
 # include <exception>
 # include <algorithm>
 # include <cerrno>
@@ -33,7 +34,7 @@
 # include "Server.hpp"
 # include "Request.hpp"
 
-# define BUFFER_SIZE 8192
+# define BUFFER_SIZE 8192	// 8 kb
 typedef std::string str;
 
 class ConnectionManager
@@ -45,17 +46,22 @@ class ConnectionManager
 		std::vector<std::string>				reqs;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
+		std::string								request_header;
+		std::string								request_body;
+		bool									header_complete;
 
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
 	
-		int		setupSocket(str ip, str port);
-		void	addServerToMap(std::map<str, Server *>	&map, Server &server);
-		void	addSocket(str ip, str port);
-		void	newClient(int i, struct pollfd sock);
-		void	printError(int revents);
-		void	passRequestToServer(int i, Request **req);
+		int			setupSocket(str ip, str port);
+		void		addServerToMap(std::map<str, Server *>	&map, Server &server);
+		void		addSocket(str ip, str port);
+		void		newClient(int i, struct pollfd sock);
+		void		printError(int revents);
+		void		passRequestToServer(int i, Request **req);
+		Request*	receiveRequest(int client_fd);
+		void		parseBody();
 
 	public:
 		ConnectionManager(Http *protocol);
