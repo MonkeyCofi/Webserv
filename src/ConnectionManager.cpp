@@ -174,7 +174,7 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 	*req = NULL;
 }
 
-Request*	ConnectionManager::receiveRequest(int client_fd)
+Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 {
 	char	buffer[BUFFER_SIZE + 1];
 	ssize_t	r;
@@ -182,6 +182,7 @@ Request*	ConnectionManager::receiveRequest(int client_fd)
 
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
+	bytes_read = 0;
 	while (r > 0)
 	{
 		if (buffer[0] != 0)
@@ -194,21 +195,25 @@ Request*	ConnectionManager::receiveRequest(int client_fd)
 		}
 		else if (r == 0)
 		{
-			std::cout << "Recv: 0\n";
-			close(client_fd);
+			close(sock_fds.at(index).fd);
+			sock_fds.erase(sock_fds.begin() + index);
+			reqs.erase(reqs.begin() + index);
+			handlers.erase(handlers.begin() + index);
+			defaults.erase(defaults.begin() + index);
+			servers_per_ippp.erase(servers_per_ippp.begin() + index);
+			index--;
+			// std::cout << "Recv: 0\n";
+			// close(client_fd);
 			return (NULL);
 		}
-			// fully read from client so close connection
 		bytes_read += r;
-		// append what was read to the request_header string
-		this->request_header.append(buffer, BUFFER_SIZE);
+		this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
 		std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
-		if (this->request_header.find("\r\n\r\n") != std::string::npos)
+		if (this->request_header.find("\r\n\r\n") != std::string::npos)	// the header has been fully received
 		{
 			std::cout << "Found end of header\n";
-			// the header has been fully received
 			this->header_complete = true;
-			return (new Request(this->request_header));	// now the header is fully parsed
+			return (new Request(this->request_header));
 		}
 	}
 	return (NULL);
@@ -277,7 +282,7 @@ void ConnectionManager::startConnections()
 				// std::cout << reqs.at(i) << "\n";
 				// std::cout << "\033[32mRead " << r << "  bytes\033[0m\n";
 				// req = new Request(this->reqs.at(i));
-				req = receiveRequest(sock_fds.at(i).fd);
+				req = receiveRequest(sock_fds.at(i).fd, i);
 				// // header has been parsed; now go through body and store into disk
 				if (req && (req->getContentType() != "" || req->getContentLen() != 0))	// indicates that request contains body
 					parseBody();

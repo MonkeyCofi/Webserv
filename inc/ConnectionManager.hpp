@@ -60,7 +60,7 @@ class ConnectionManager
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 		void		passRequestToServer(int i, Request **req);
-		Request*	receiveRequest(int client_fd);
+		Request*	receiveRequest(int client_fd, unsigned int& index);
 		void		parseBody();
 
 	public:
