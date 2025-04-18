@@ -184,6 +184,7 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 	r = 1;
 	bytes_read = 0;
 	this->request_header = "";
+	this->request_body.open(TEMP_FILE, std::ios::binary);
 	while (r > 0)
 	{
 		if (buffer[0] != 0)
@@ -196,6 +197,7 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		}
 		else if (r == 0)
 		{
+			std::cout << "Recv returned 0\n";
 			close(sock_fds.at(index).fd);
 			sock_fds.erase(sock_fds.begin() + index);
 			reqs.erase(reqs.begin() + index);
@@ -206,27 +208,33 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 			return (new Request(this->request_header));
 		}
 		bytes_read += r;
-		this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
-		std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
-		if (this->request_header.find("\r\n\r\n") != std::string::npos)	// the header has been fully received
+		if (this->header_complete == false)	// header still not fully read
 		{
-			std::cout << "Found end of header\n";
-			this->header_complete = true;
+			this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
+			std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
+			if (this->request_header.find("\r\n\r\n") != std::string::npos)	// the header has been fully received
+			{
+				std::cout << "Found end of header\n";
+				this->header_complete = true;
+				unsigned int	body_pos = bytes_read - std::string(buffer).find("\r\n\r\n");
+				std::cout << "Pos: " << body_pos << "\n";
+				return (new Request(this->request_header));
+			}
+		}
+		else	// header has been fully received, now do body
+		{
 			return (new Request(this->request_header));
+			// wherever in the buffer the header ends; if there's a bit of the body, write it to the file
 		}
 	}
+	(void)index;
+	unlink(TEMP_FILE);
 	return (NULL);
 }
 
 void	ConnectionManager::parseBody()
 {
-	std::ofstream	bodyFile;
-	// open a temporary file in binary mode
-	bodyFile.open(".temp", std::ios::binary);
-	// get the position of 
-	// read the body into the file
-	// if the size exceeds CLIENT_MAX_BODY_SIZE, return with an error and close the socket
-	// if the bytes read are less than 
+
 }
 
 void ConnectionManager::startConnections()

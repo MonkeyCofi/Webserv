@@ -35,6 +35,7 @@
 # include "Request.hpp"
 
 # define BUFFER_SIZE 4096	// 4 kb
+# define TEMP_FILE "./.temp"
 typedef std::string str;
 
 class ConnectionManager
@@ -47,7 +48,7 @@ class ConnectionManager
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::string								request_header;
-		std::string								request_body;
+		std::ofstream							request_body;
 		bool									header_complete;
 
 		ConnectionManager();
