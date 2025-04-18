@@ -34,7 +34,7 @@
 # include "Server.hpp"
 # include "Request.hpp"
 
-# define BUFFER_SIZE 8192	// 8 kb
+# define BUFFER_SIZE 4096	// 4 kb
 typedef std::string str;
 
 class ConnectionManager
