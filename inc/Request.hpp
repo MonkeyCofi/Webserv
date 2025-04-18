@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/25 17:06:55 by ehammoud         ###   ########.fr       */
+/*   Updated: 2025/04/17 21:46:21 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Request
 		str		contentType;
 		bool	validRequest;
 		size_t	contentLength;
+		str		body_boundary;
 
 		static bool	is_digit(char c);
 		static void	changeToLower(char &c);

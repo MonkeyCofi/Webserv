@@ -183,6 +183,7 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
 	bytes_read = 0;
+	this->request_header = "";
 	while (r > 0)
 	{
 		if (buffer[0] != 0)
@@ -202,9 +203,7 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 			defaults.erase(defaults.begin() + index);
 			servers_per_ippp.erase(servers_per_ippp.begin() + index);
 			index--;
-			// std::cout << "Recv: 0\n";
-			// close(client_fd);
-			return (NULL);
+			return (new Request(this->request_header));
 		}
 		bytes_read += r;
 		this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
@@ -222,8 +221,9 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 void	ConnectionManager::parseBody()
 {
 	std::ofstream	bodyFile;
-	// open a temporary file
+	// open a temporary file in binary mode
 	bodyFile.open(".temp", std::ios::binary);
+	// get the position of 
 	// read the body into the file
 	// if the size exceeds CLIENT_MAX_BODY_SIZE, return with an error and close the socket
 	// if the bytes read are less than 
