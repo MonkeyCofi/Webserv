@@ -41,6 +41,12 @@ typedef std::string str;
 class ConnectionManager
 {
 	private:
+		typedef enum
+		{
+			HEADER,
+			BODY,
+			COMPLETE
+		}	recvState;
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
@@ -49,7 +55,7 @@ class ConnectionManager
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::string								request_header;
 		std::ofstream							request_body;
-		bool									header_complete;
+		recvState								state;
 
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);

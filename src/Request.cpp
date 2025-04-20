@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/25 18:03:45 by ehammoud         ###   ########.fr       */
+/*   Updated: 2025/04/19 16:44:01 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ Request::Request()
 	this->keepAlive = true;
 	this->validRequest = false;
 	this->status = "400";
+	this->body_boundary = "";
 }
 
 Request::~Request()
@@ -39,6 +40,7 @@ Request::Request(const Request& obj)
 	this->status = obj.status;
 	this->contentLength = obj.contentLength;
 	this->contentType = obj.contentType;
+	this->body_boundary = obj.body_boundary;
 }
 
 Request::Request(str request)
@@ -51,6 +53,7 @@ Request::Request(str request)
 	this->keepAlive = true;
 	this->validRequest = false;
 	this->status = "400";
+	this->body_boundary = "";
 	parseRequest(request);
 }
 
@@ -66,6 +69,7 @@ Request	&Request::operator=(const Request& obj)
 	this->status = obj.status;
 	this->contentLength = obj.contentLength;
 	this->contentType = obj.contentType;
+	this->body_boundary = obj.body_boundary;
 	return (*this);
 }
 
@@ -122,7 +126,12 @@ void Request::setRequestField(str &header_field, str &field_content)
 	if (header_field == "connection" && field_content == "close")
 		this->keepAlive = false;
 	if (header_field == "content-type")
+	{
 		this->contentType = field_content;
+		size_t	boundary_position = field_content.find("boundary=");
+		if (boundary_position != std::string::npos)
+			this->body_boundary = field_content.substr(boundary_position + 9);
+	}
 	if (header_field == "content-length")
 		this->contentLength = std::atoi(field_content.c_str());
 }

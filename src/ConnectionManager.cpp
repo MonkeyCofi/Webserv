@@ -31,7 +31,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 	if (!protocol)
 		throw std::runtime_error("e1");
 	std::vector<Server *>	servers = protocol->getServers();
-	this->header_complete = false;
+	this->state = HEADER;
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
 		for (unsigned int i = 0; i < (*it)->getIPs().size(); i++)
@@ -179,12 +179,17 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 	char	buffer[BUFFER_SIZE + 1];
 	ssize_t	r;
 	ssize_t	bytes_read;
+	Request	*req;
 
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
 	bytes_read = 0;
 	this->request_header = "";
-	this->request_body.open(TEMP_FILE, std::ios::binary);
+	if (this->request_body.is_open() == false)
+	{
+		std::cout << "Opening temp file\n";
+		this->request_body.open(TEMP_FILE, std::ios::binary);
+	}
 	while (r > 0)
 	{
 		if (buffer[0] != 0)
@@ -208,28 +213,55 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 			return (new Request(this->request_header));
 		}
 		bytes_read += r;
-		if (this->header_complete == false)	// header still not fully read
+		if (this->state == HEADER)	// header still not fully read
 		{
 			this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
-			std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
-			if (this->request_header.find("\r\n\r\n") != std::string::npos)	// the header has been fully received
+			// std::cout << "\033[33mRead " << bytes_read << " bytes\n";
+			// std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
+			// std::cout << "Header end Position: " << this->request_header.find("\r\n\r\n") << "\n";
+			// if (this->request_header.find("\r\n\r\n") != std::string::npos)	// the header has been fully received
+			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)	// the header has been fully received
 			{
 				std::cout << "Found end of header\n";
-				this->header_complete = true;
-				unsigned int	body_pos = bytes_read - std::string(buffer).find("\r\n\r\n");
-				std::cout << "Pos: " << body_pos << "\n";
-				return (new Request(this->request_header));
+				this->state = BODY;
+				req = new Request(this->request_header);
+				if (req->getContentLen() != 0)	// message body present
+				{
+					// check if a part of the message body is present in the buffer
+					std::cout << "Read: " << bytes_read << " Found position: " << std::string(buffer).find("\r\n\r\n") << "\n";
+					size_t	body_pos = std::string(buffer).find("\r\n\r\n") + 4;
+					// std::cout << "\033[31m" << &this->request_header[body_pos] << "\033[0m";
+					// std::cout << "Pos: " << body_pos << "\n";
+					// write body part thats still present in the buffer into the body_file
+					this->request_body.write(buffer + body_pos, std::string(buffer + body_pos).length());
+					if (this->request_body.good() == false)
+						std::cout << "Goodbit not set\n";
+					else
+						std::cout << "Goodbit is set\n";
+				}
+				// return (new Request(this->request_header));
 			}
 		}
-		else	// header has been fully received, now do body
+		if (this->state == BODY)	// header has been fully received, now do body
 		{
-			return (new Request(this->request_header));
+			std::cout << "Need to parse body\n";
+			if (bytes_read != (ssize_t)req->getContentLen())
+				r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+			std::cout << "\033[31m" << buffer << "\033[0m\n";
+			this->state = COMPLETE;
+			// return (new Request(this->request_header));
 			// wherever in the buffer the header ends; if there's a bit of the body, write it to the file
+		}
+		if (this->state == COMPLETE)	// request is fully parsed; server is ready to send response
+		{
+			std::cout << "Request has been fully received\n";
+			this->state = HEADER;
+			break ;
 		}
 	}
 	(void)index;
-	unlink(TEMP_FILE);
-	return (NULL);
+	// unlink(TEMP_FILE);
+	return (req);
 }
 
 void	ConnectionManager::parseBody()
@@ -249,7 +281,7 @@ void ConnectionManager::startConnections()
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
-		res = poll(&sock_fds[0], sock_fds.size(), 500);
+		res = poll(&sock_fds[0], sock_fds.size(), 1000);
 		if (res == 0)
 			continue ;
 		if (res < 0)
@@ -328,6 +360,8 @@ void ConnectionManager::startConnections()
 		}
 	}
 	std::cout << "Ending Server...\n";
+	this->request_body.close();
+	unlink(TEMP_FILE);
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
 	{
 		close(sock_fds.at(i).fd);
