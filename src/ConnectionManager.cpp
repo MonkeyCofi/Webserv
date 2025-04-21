@@ -179,12 +179,14 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 	char	buffer[BUFFER_SIZE + 1];
 	ssize_t	r;
 	ssize_t	bytes_read;
+	size_t	written = 0;
 	Request	*req;
 
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
 	bytes_read = 0;
 	this->request_header = "";
+	req = NULL;
 	if (this->request_body.is_open() == false)
 	{
 		std::cout << "Opening temp file\n";
@@ -216,39 +218,57 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		if (this->state == HEADER)	// header still not fully read
 		{
 			this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
-			// std::cout << "\033[33mRead " << bytes_read << " bytes\n";
-			// std::cout << "\033[32mHeader: " << this->request_header << "\033[0m\n";
-			// std::cout << "Header end Position: " << this->request_header.find("\r\n\r\n") << "\n";
-			// if (this->request_header.find("\r\n\r\n") != std::string::npos)	// the header has been fully received
+			std::cout << "\033[33mRead " << bytes_read << " bytes\n";
 			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)	// the header has been fully received
 			{
 				std::cout << "Found end of header\n";
-				this->state = BODY;
 				req = new Request(this->request_header);
+				std::cout << "\033[35m" << this->request_header << "\033[0m\n";
+				if (req->getContentLen() != 0)
+					this->state = BODY;
+				else
+					this->state = COMPLETE;
+				std::cout << "\033[31mContent-Length: " << req->getContentLen() << "\033[0m\n";
 				if (req->getContentLen() != 0)	// message body present
 				{
-					// check if a part of the message body is present in the buffer
-					std::cout << "Read: " << bytes_read << " Found position: " << std::string(buffer).find("\r\n\r\n") << "\n";
 					size_t	body_pos = std::string(buffer).find("\r\n\r\n") + 4;
-					// std::cout << "\033[31m" << &this->request_header[body_pos] << "\033[0m";
-					// std::cout << "Pos: " << body_pos << "\n";
-					// write body part thats still present in the buffer into the body_file
-					this->request_body.write(buffer + body_pos, std::string(buffer + body_pos).length());
-					if (this->request_body.good() == false)
-						std::cout << "Goodbit not set\n";
-					else
-						std::cout << "Goodbit is set\n";
+					written += std::string(buffer + body_pos).length();
+					std::cout << "Wrote " << std::string(buffer + body_pos).length() << " bytes\n";
+					std::cout << "\033[35m" << buffer + body_pos << "\033[0m\n";
+					this->request_body.write(buffer + body_pos, -1);
 				}
-				// return (new Request(this->request_header));
+				if (this->state == BODY)
+					continue ;
 			}
 		}
 		if (this->state == BODY)	// header has been fully received, now do body
 		{
-			std::cout << "Need to parse body\n";
-			if (bytes_read != (ssize_t)req->getContentLen())
-				r = recv(client_fd, buffer, BUFFER_SIZE, 0);
-			std::cout << "\033[31m" << buffer << "\033[0m\n";
-			this->state = COMPLETE;
+			written += r;
+			std::cout << "Writing to body file\n";
+			this->request_body.write(buffer, BUFFER_SIZE);
+			std::cout << "Written " << written << " bytes to file\n";
+			if (written == req->getContentLen())
+				this->state = COMPLETE;
+			// if (req->getContentLen() == 0)
+			// {
+			// 	this->state = HEADER;
+			// 	break ;
+			// }
+			// std::cout << "Need to parse body\n";
+			// size_t	u = 1;
+			// size_t	e = 0;
+			// char	b[BUFFER_SIZE + 1] = {0};
+			// while (e != req->getContentLen())
+			// {
+			// 	std::memset(b, 0, BUFFER_SIZE + 1);
+			// 	u = recv(client_fd, buffer, BUFFER_SIZE, 0);
+			// 	std::cout << "\033[31m" << buffer << "\033[0m\n";
+			// 	std::cout << "\033[34mread: " << e << " bytes\033[0m\n";
+			// 	this->request_body.write(buffer, BUFFER_SIZE);
+			// 	e += u;
+			// }
+			// std::cout << "Finished writing body to file\n";
+			// this->state = COMPLETE;
 			// return (new Request(this->request_header));
 			// wherever in the buffer the header ends; if there's a bit of the body, write it to the file
 		}
@@ -266,7 +286,8 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 
 void	ConnectionManager::parseBody()
 {
-
+	char	buffer[BUFFER_SIZE + 1] = {0};
+	(void)buffer;
 }
 
 void ConnectionManager::startConnections()
