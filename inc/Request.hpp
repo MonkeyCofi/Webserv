@@ -56,6 +56,7 @@ class Request
 		str		getMethod();
 		str		getStatus();
 		str		getHost();
+		str		getBoundary() const;
 
 		class	NoHostException
 		{

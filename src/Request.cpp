@@ -217,6 +217,11 @@ str Request::getContentType()
 	return contentType;
 }
 
+str	Request::getBoundary() const
+{
+	return (body_boundary);
+}
+
 size_t Request::getContentLen()
 {
 	return contentLength;
