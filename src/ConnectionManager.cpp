@@ -187,14 +187,19 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 	bytes_read = 0;
 	this->request_header = "";
 	req = NULL;
+
 	if (this->request_body.is_open() == false)
 	{
 		std::cout << "Opening temp file\n";
 		this->request_body.open(TEMP_FILE, std::ios::binary);
+		if (this->request_body.fail())
+			std::cerr << "\033[31mFailed to open temp file\033[0m\n";
+		else if (this->request_body.good())
+			std::cout << "Temp file has successfully been opened\n";
 	}
 	while (r > 0)
 	{
-		if (buffer[0] != 0)
+		if (std::string(buffer).empty() == false)
 			std::memset(buffer, 0, BUFFER_SIZE + 1);
 		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 		if (r < 0)
@@ -215,15 +220,15 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 			return (new Request(this->request_header));
 		}
 		bytes_read += r;
-		if (this->state == HEADER)	// header still not fully read
+		if (this->state == HEADER)
 		{
-			this->request_header.append(buffer, BUFFER_SIZE);	// append what was read to the request_header string
+			this->request_header.append(buffer, BUFFER_SIZE);
 			std::cout << "\033[33mRead " << bytes_read << " bytes\n";
-			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)	// the header has been fully received
+			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)
 			{
 				std::cout << "Found end of header\n";
 				req = new Request(this->request_header);
-				std::cout << "\033[35m" << this->request_header << "\033[0m\n";
+				// std::cout << "\033[35m" << this->request_header << "\033[0m\n";
 				if (req->getContentLen() != 0)
 					this->state = BODY;
 				else
@@ -233,19 +238,35 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 				{
 					size_t	body_pos = std::string(buffer).find("\r\n\r\n") + 4;
 					written += std::string(buffer + body_pos).length();
-					std::cout << "Wrote " << std::string(buffer + body_pos).length() << " bytes\n";
-					std::cout << "\033[35m" << buffer + body_pos << "\033[0m\n";
-					this->request_body.write(buffer + body_pos, -1);
+					// std::cout << "\033[35m" << buffer + body_pos << "\033[0m\n";
+					// this->request_body.write(buffer + body_pos, std::string::npos);
+					this->request_body.write(buffer + body_pos, std::string::npos);
+					if (this->request_body.bad())
+						std::cerr << "Writing from header part failed\n";
+					else if (this->request_body.good())
+						std::cout << "Writing in header part was a success\n";
+					else if (this->request_body.eof())
+						std::cerr << "EOF???\n";
+					else if (this->request_body.fail())
+						std::cerr << "Failed?????\n";
+					std::cout << "\033[32mWrote " << written << " bytes\033[0m\n";
+					if (written == req->getContentLen())
+						this->state = COMPLETE;
 				}
-				if (this->state == BODY)
-					continue ;
 			}
 		}
-		if (this->state == BODY)	// header has been fully received, now do body
+		else if (this->state == BODY)
 		{
 			written += r;
-			std::cout << "Writing to body file\n";
 			this->request_body.write(buffer, BUFFER_SIZE);
+			if (this->request_body.good())
+				std::cout << "\033[33mWrite is good\n\033[0m";
+			else if (this->request_body.bad())
+			{
+				if (this->request_body.fail())
+					std::cout << "Writing Failed\n";
+				std::cout << "\033[31mWrite is bad\n\033[0m";
+			}
 			std::cout << "Written " << written << " bytes to file\n";
 			if (written == req->getContentLen())
 				this->state = COMPLETE;
