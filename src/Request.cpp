@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/19 16:44:01 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/04/23 15:07:32 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,7 +134,6 @@ void Request::setRequestField(str &header_field, str &field_content)
 		if (this->body_boundary.empty() == false)
 			return ;
 		size_t	boundary_position = field_content.find("boundary=");
-		std::cout << "Boundary position: " << boundary_position << "\n";
 		if (boundary_position != std::string::npos)
 		{
 			this->body_boundary = field_content.substr(boundary_position + 9);
@@ -160,7 +159,6 @@ Request	&Request::parseRequest(str& request)
 	ignore = false;
 	while (std::getline(reqStream, line))
 	{
-		std::cout << "\033[31m" << line << "\033[0m\n";
 		if (line == "\r")
 			break ;
 		if (ignore)
@@ -172,7 +170,6 @@ Request	&Request::parseRequest(str& request)
 			return (*this);
 		std::for_each(line.begin(), line.end(), Request::changeToLower);
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
-		std::cout << "Header field: " << header_field << "\n";
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 		{
 			std::cout << "Leaving\n";

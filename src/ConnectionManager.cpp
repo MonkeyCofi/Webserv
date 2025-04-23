@@ -226,6 +226,8 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)
 			{
 				req = new Request(this->request_header);
+				if (req->getMethod() == "POST")
+					std::cout << "\033[36m" << this->request_header << "\033[0m\n";
 				if (req->getContentLen() != 0)
 					this->state = BODY;
 				else
@@ -251,8 +253,6 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		if (this->state == BODY)
 		{
 			std::string	body = buffer;
-			std::cout << "Body: " << body << "\n";
-			std::cout << "Boundary: " << req->getBoundary() << "\n";
 			// if (body.find(req->getBoundary()) != std::string::npos)
 			// {
 			// 	std::cout << "Erasing " << body.substr(body.find(req->getBoundary()), body.find("\r\n\r\n"));
@@ -262,35 +262,11 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 			this->request_body.write(buffer, BUFFER_SIZE);
 			// this->request_body.write(body.c_str(), body.length());
 			if (this->request_body.bad())
-			{
 				std::cerr << "\033[31mFailed\033[0m\n";
-			}
 			written += r;
 			std::cout << "Written " << written << " bytes to file\n";
 			if (written == req->getContentLen())
 				this->state = COMPLETE;
-			// if (req->getContentLen() == 0)
-			// {
-			// 	this->state = HEADER;
-			// 	break ;
-			// }
-			// std::cout << "Need to parse body\n";
-			// size_t	u = 1;
-			// size_t	e = 0;
-			// char	b[BUFFER_SIZE + 1] = {0};
-			// while (e != req->getContentLen())
-			// {
-			// 	std::memset(b, 0, BUFFER_SIZE + 1);
-			// 	u = recv(client_fd, buffer, BUFFER_SIZE, 0);
-			// 	std::cout << "\033[31m" << buffer << "\033[0m\n";
-			// 	std::cout << "\033[34mread: " << e << " bytes\033[0m\n";
-			// 	this->request_body.write(buffer, BUFFER_SIZE);
-			// 	e += u;
-			// }
-			// std::cout << "Finished writing body to file\n";
-			// this->state = COMPLETE;
-			// return (new Request(this->request_header));
-			// wherever in the buffer the header ends; if there's a bit of the body, write it to the file
 		}
 		if (this->state == COMPLETE)	// request is fully parsed; server is ready to send response
 		{
@@ -300,7 +276,6 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		}
 	}
 	(void)index;
-	// unlink(TEMP_FILE);
 	return (req);
 }
 
