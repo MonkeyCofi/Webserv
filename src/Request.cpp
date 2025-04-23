@@ -124,9 +124,6 @@ void Request::setRequestField(str &header_field, str &field_content)
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")
-	{
-		
-	}
 		this->keepAlive = false;
 	if (header_field == "content-type")
 	{
@@ -157,8 +154,11 @@ Request	&Request::parseRequest(str& request)
 	if (!parseRequestLine(line))
 		return (*this);
 	ignore = false;
+	int i = 0;
 	while (std::getline(reqStream, line))
 	{
+		std::cout << "\033[31m" << line << "\033[0m\n";
+		// std::cout << ++i << "\n";
 		if (line == "\r")
 			break ;
 		if (ignore)
@@ -170,11 +170,10 @@ Request	&Request::parseRequest(str& request)
 			return (*this);
 		std::for_each(line.begin(), line.end(), Request::changeToLower);
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
+		std::cout << "\033[36mField: " << header_field << "\033[0m\n";
+		(void)i;
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
-		{
-			std::cout << "Leaving\n";
 			return (*this);
-		}
 		line = line.substr(line.find_first_not_of(" \t\r", line.find(":") + 1));
 		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
 		{
@@ -182,7 +181,10 @@ Request	&Request::parseRequest(str& request)
 				break;
 		}
 		if (lnsp < line.length() - 1)
+		{
 			ignore = true;
+			std::cout << "\033[31mIgnoring " << header_field << " and " << line << "\033[0m\n";
+		}
 		field_value = line.substr(0, lnsp + 1);
 		if (field_value.find_first_not_of("0123456789") != str::npos && header_field == "content-length")
 			return (*this);
