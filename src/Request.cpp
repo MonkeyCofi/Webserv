@@ -124,13 +124,22 @@ void Request::setRequestField(str &header_field, str &field_content)
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")
+	{
+		
+	}
 		this->keepAlive = false;
 	if (header_field == "content-type")
 	{
 		this->contentType = field_content;
+		if (this->body_boundary.empty() == false)
+			return ;
 		size_t	boundary_position = field_content.find("boundary=");
+		std::cout << "Boundary position: " << boundary_position << "\n";
 		if (boundary_position != std::string::npos)
+		{
 			this->body_boundary = field_content.substr(boundary_position + 9);
+			std::cout << "B: " << this->body_boundary << "\n";
+		}
 	}
 	if (header_field == "content-length")
 		this->contentLength = std::atoi(field_content.c_str());
@@ -151,6 +160,7 @@ Request	&Request::parseRequest(str& request)
 	ignore = false;
 	while (std::getline(reqStream, line))
 	{
+		std::cout << "\033[31m" << line << "\033[0m\n";
 		if (line == "\r")
 			break ;
 		if (ignore)
@@ -162,8 +172,12 @@ Request	&Request::parseRequest(str& request)
 			return (*this);
 		std::for_each(line.begin(), line.end(), Request::changeToLower);
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
+		std::cout << "Header field: " << header_field << "\n";
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
+		{
+			std::cout << "Leaving\n";
 			return (*this);
+		}
 		line = line.substr(line.find_first_not_of(" \t\r", line.find(":") + 1));
 		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
 		{

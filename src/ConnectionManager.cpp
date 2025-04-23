@@ -251,15 +251,16 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		if (this->state == BODY)
 		{
 			std::string	body = buffer;
+			std::cout << "Body: " << body << "\n";
 			std::cout << "Boundary: " << req->getBoundary() << "\n";
-			if (body.find(req->getBoundary()) != std::string::npos)
-			{
-				std::cout << "Erasing " << body.substr(body.find(req->getBoundary()), body.find("\r\n\r\n"));
-				body.erase(body.find(req->getBoundary()), body.find("\r\n\r\n"));
-				std::cout << "\033[31m" << body << "\033[0m\n";
-			}
-			// this->request_body.write(buffer, BUFFER_SIZE);
-			this->request_body.write(body.c_str(), body.length());
+			// if (body.find(req->getBoundary()) != std::string::npos)
+			// {
+			// 	std::cout << "Erasing " << body.substr(body.find(req->getBoundary()), body.find("\r\n\r\n"));
+			// 	body.erase(body.find(req->getBoundary()), body.find("\r\n\r\n"));
+			// 	std::cout << "\033[31m" << body << "\033[0m\n";
+			// }
+			this->request_body.write(buffer, BUFFER_SIZE);
+			// this->request_body.write(body.c_str(), body.length());
 			if (this->request_body.bad())
 			{
 				std::cerr << "\033[31mFailed\033[0m\n";
