@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/23 15:07:32 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/04/24 14:17:28 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -157,8 +157,6 @@ Request	&Request::parseRequest(str& request)
 	int i = 0;
 	while (std::getline(reqStream, line))
 	{
-		std::cout << "\033[31m" << line << "\033[0m\n";
-		// std::cout << ++i << "\n";
 		if (line == "\r")
 			break ;
 		if (ignore)
@@ -168,9 +166,11 @@ Request	&Request::parseRequest(str& request)
 		}
 		if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
 			return (*this);
-		std::for_each(line.begin(), line.end(), Request::changeToLower);
+		if (line.find("Content-Type") != std::string::npos)
+			std::for_each(line.begin(), line.begin() + std::string("Content-Type").length(), Request::changeToLower);
+		else
+			std::for_each(line.begin(), line.end(), Request::changeToLower);
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
-		std::cout << "\033[36mField: " << header_field << "\033[0m\n";
 		(void)i;
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
@@ -181,10 +181,7 @@ Request	&Request::parseRequest(str& request)
 				break;
 		}
 		if (lnsp < line.length() - 1)
-		{
 			ignore = true;
-			std::cout << "\033[31mIgnoring " << header_field << " and " << line << "\033[0m\n";
-		}
 		field_value = line.substr(0, lnsp + 1);
 		if (field_value.find_first_not_of("0123456789") != str::npos && header_field == "content-length")
 			return (*this);

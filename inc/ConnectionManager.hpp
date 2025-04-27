@@ -54,7 +54,7 @@ class ConnectionManager
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::string								request_header;
-		std::ofstream							request_body;
+		std::fstream							request_body;
 		recvState								state;
 
 		ConnectionManager();
@@ -68,7 +68,8 @@ class ConnectionManager
 		void		printError(int revents);
 		void		passRequestToServer(int i, Request **req);
 		Request*	receiveRequest(int client_fd, unsigned int& index);
-		void		parseBody();
+		void		parseBody(Request* req);
+		void		closeSocket(unsigned int& index);
 
 	public:
 		ConnectionManager(Http *protocol);

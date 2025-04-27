@@ -174,6 +174,17 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 	*req = NULL;
 }
 
+void	ConnectionManager::closeSocket(unsigned int& index)
+{
+	close(sock_fds.at(index).fd);
+	sock_fds.erase(sock_fds.begin() + index);
+	reqs.erase(reqs.begin() + index);
+	handlers.erase(handlers.begin() + index);
+	defaults.erase(defaults.begin() + index);
+	servers_per_ippp.erase(servers_per_ippp.begin() + index);
+	index--;
+}
+
 Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 {
 	char	buffer[BUFFER_SIZE + 1];
@@ -181,17 +192,17 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 	ssize_t	bytes_read;
 	size_t	written = 0;
 	Request	*req;
+	int		to_skip = 0;
 
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
 	bytes_read = 0;
 	this->request_header = "";
 	req = NULL;
-
 	if (this->request_body.is_open() == false)
 	{
 		std::cout << "Opening temp file\n";
-		this->request_body.open(TEMP_FILE, std::ios::binary);
+		this->request_body.open(TEMP_FILE, std::ios::out | std::ios::binary);
 		if (this->request_body.fail())
 			std::cerr << "\033[31mFailed to open temp file\033[0m\n";
 		else if (this->request_body.good())
@@ -205,44 +216,44 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		if (r < 0)
 		{
 			std::cerr << "Recv: -1\n";
-			return (NULL);
+			perror("Why");
+			closeSocket(index);
+			break ;
+			// return (NULL);
+			// return (req);
 		}
 		else if (r == 0)
 		{
 			std::cout << "Recv returned 0\n";
-			close(sock_fds.at(index).fd);
-			sock_fds.erase(sock_fds.begin() + index);
-			reqs.erase(reqs.begin() + index);
-			handlers.erase(handlers.begin() + index);
-			defaults.erase(defaults.begin() + index);
-			servers_per_ippp.erase(servers_per_ippp.begin() + index);
-			index--;
-			return (new Request(this->request_header));
+			// closeSocket(index);
+			req = new Request(this->request_header);
+			std::cout << this->request_header << "\n";
+			this->state = COMPLETE;
+			// return (new Request(this->request_header));
 		}
 		bytes_read += r;
 		if (this->state == HEADER)
 		{
-			this->request_header.append(buffer, BUFFER_SIZE);
+			this->request_header.append(buffer, r);
 			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)
 			{
 				req = new Request(this->request_header);
-				if (req->getMethod() == "POST")
-					std::cout << "\033[36m" << this->request_header << "\033[0m\n";
 				if (req->getContentLen() != 0)
 					this->state = BODY;
 				else
 					this->state = COMPLETE;
-				if (req->getContentLen() != 0)	// message body present
+				if (req->getContentLen() != 0 && this->state == BODY)	// message body present
 				{
 					size_t	body_pos = std::string(buffer).find("\r\n\r\n") + 4;
-					if (!*(buffer + body_pos))
-					{
-						std::cout << "Nothing to write\n";
-						continue ;
-					}
+					std::string	body = buffer + body_pos;
+					std::cout << "\033[36m" << body << "\033[0m\n";
 					written += std::string(buffer + body_pos).length();
-					std::string test = std::string(buffer + body_pos).substr(0, std::string::npos);
-					this->request_body.write(test.c_str(), test.length());
+					std::cout << body.c_str() << "\n";
+					this->request_body.write(body.c_str(), body.length());
+					if (this->request_body.fail())
+						std::cout << "\033[31mFailed\033[0m\n";
+					else if (this->request_body.good())
+						std::cout << "Good\n";
 					if (written == req->getContentLen())
 						this->state = COMPLETE;
 					if (this->state == BODY)
@@ -252,44 +263,65 @@ Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
 		}
 		if (this->state == BODY)
 		{
-			std::string	body = buffer;
-			// if (body.find(req->getBoundary()) != std::string::npos)
-			// {
-			// 	std::cout << "Erasing " << body.substr(body.find(req->getBoundary()), body.find("\r\n\r\n"));
-			// 	body.erase(body.find(req->getBoundary()), body.find("\r\n\r\n"));
-			// 	std::cout << "\033[31m" << body << "\033[0m\n";
-			// }
-			this->request_body.write(buffer, BUFFER_SIZE);
-			// this->request_body.write(body.c_str(), body.length());
-			if (this->request_body.bad())
-				std::cerr << "\033[31mFailed\033[0m\n";
+			this->request_body.write(buffer, r);
+			if (this->request_body.fail())
+				std::cout << "\033[31mFailed\033[0m\n";
 			written += r;
-			std::cout << "Written " << written << " bytes to file\n";
-			if (written == req->getContentLen())
+			if (req && written == req->getContentLen())
 				this->state = COMPLETE;
 		}
 		if (this->state == COMPLETE)	// request is fully parsed; server is ready to send response
 		{
 			std::cout << "Request has been fully received\n";
+			if (req->getBoundary() != "")	// message body present
+			{
+				std::cout << "There is a body\n";
+				std::cout << this->request_header << "\n";
+				parseBody(req);
+			}
+			else
+			{
+				if (req->getMethod() == "POST")
+					std::cout << this->request_header << "\n";
+				std::cout << "There is no body boundary\n";
+			}
 			this->state = HEADER;
 			break ;
 		}
 	}
 	(void)index;
+	(void)to_skip;
+	this->request_body.close();
 	return (req);
 }
 
-void	ConnectionManager::parseBody()
+void	ConnectionManager::parseBody(Request* req)
 {
-	char	buffer[BUFFER_SIZE + 1] = {0};
-	(void)buffer;
+	if (!req)	{std::cout << "returning\n"; return ;}
+	std::ifstream				inStream;
+	const std::string			endBoundary(req->getBoundary() + "--");
+	std::string					line;
+
+	std::cout << "in here\n";
+	inStream.open(TEMP_FILE, std::ios::binary);
+	while (std::getline(this->request_body, line))
+	{
+		if (line.find("filename=") != std::string::npos)
+		{
+			// open the file
+			std::string	fileName = line.substr(line.find("filename=") + std::strlen("filename="), std::string::npos);
+			std::cout << "Opneing " << fileName << "\n";
+			std::ofstream	file;
+			file.open(std::string("." + fileName).c_str(), std::ios::binary);
+			if (file.fail())
+				std::cout << "Failed to open\n";
+		}
+	}
 }
 
 void ConnectionManager::startConnections()
 {
 	int		res;
-	// char	buffer[BUFFER_SIZE];
-	// ssize_t	bytes;
 	Request	*req = NULL;
 	
 	main_listeners = sock_fds.size();
@@ -297,7 +329,7 @@ void ConnectionManager::startConnections()
 	signal(SIGINT, sigint_handle);
 	while (g_quit != true)
 	{
-		res = poll(&sock_fds[0], sock_fds.size(), 1000);
+		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
 			continue ;
 		if (res < 0)
@@ -318,60 +350,26 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				// ssize_t	r = 0;
-				// std::cout << "IN POLLIN\n";
-				// reqs.at(i) = "";
-				// std::memset(buffer, 0, BUFFER_SIZE);
-				// bytes = recv(sock_fds.at(i).fd, buffer, BUFFER_SIZE, 0);
-				// if (bytes == 0)
-				// {
-				// 	close(sock_fds.at(i).fd);
-				// 	sock_fds.erase(sock_fds.begin() + i);
-				// 	reqs.erase(reqs.begin() + i);
-				// 	handlers.erase(handlers.begin() + i);
-				// 	defaults.erase(defaults.begin() + i);
-				// 	servers_per_ippp.erase(servers_per_ippp.begin() + i);
-				// 	i--;
-				// 	continue ;
-				// }
-				// reqs.at(i).append(buffer);
-				// std::cout << reqs.at(i) << "\n";
-				// std::cout << "\033[32mRead " << r << "  bytes\033[0m\n";
-				// req = new Request(this->reqs.at(i));
 				req = receiveRequest(sock_fds.at(i).fd, i);
-				// // header has been parsed; now go through body and store into disk
-				if (req && (req->getContentType() != "" || req->getContentLen() != 0))	// indicates that request contains body
-					parseBody();
-				this->passRequestToServer(i, &req);
+				if (req)
+					this->passRequestToServer(i, &req);
+				else
+					continue ;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
+				req = NULL;
 				if (handlers.at(i))
 				{
+					std::cout << "Responding to request\n";
 					if (handlers.at(i)->respond(sock_fds.at(i).fd))
-					{
-						close(sock_fds.at(i).fd);
-						sock_fds.erase(sock_fds.begin() + i);
-						reqs.erase(reqs.begin() + i);
-						handlers.erase(handlers.begin() + i);
-						defaults.erase(defaults.begin() + i);
-						servers_per_ippp.erase(servers_per_ippp.begin() + i);
-						i--;
-					}
+						closeSocket(i);
 				}
-				else
-					continue;
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
 				printError(sock_fds.at(i).revents);
-				close(sock_fds.at(i).fd);
-				sock_fds.erase(sock_fds.begin() + i);
-				reqs.erase(reqs.begin() + i);
-				handlers.erase(handlers.begin() + i);
-				defaults.erase(defaults.begin() + i);
-				servers_per_ippp.erase(servers_per_ippp.begin() + i);
-				i--;
+				closeSocket(i);
 			}
 		}
 	}

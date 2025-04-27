@@ -14,3 +14,9 @@ p
 {
 	color: red;
 }
+
+.form-box
+{
+	display: flex;
+	flex-direction: column;
+}

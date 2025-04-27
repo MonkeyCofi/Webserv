@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/17 21:46:21 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/04/26 12:53:59 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <iostream>
 # include <fcntl.h>
 # include <algorithm>
+# include <vector>
 # include <sstream>
 
 typedef std::string str;
@@ -23,15 +24,15 @@ typedef std::string str;
 class Request
 {
 	private:
-		str		host;
-		str		method;
-		str		status;
-		str		file_URI;
-		bool	keepAlive;
-		str		contentType;
-		bool	validRequest;
-		size_t	contentLength;
-		str		body_boundary;
+		str					host;
+		str					method;
+		str					status;
+		str					file_URI;
+		bool				keepAlive;
+		str					contentType;
+		bool				validRequest;
+		size_t				contentLength;
+		str					body_boundary;
 
 		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
@@ -47,6 +48,8 @@ class Request
 		Request		&operator=(const Request& obj);
 
 		Request	&parseRequest(str& request);
+
+		std::vector<str>	fileNames;
 
 		bool	shouldKeepAlive();
 		bool	isValidRequest();
