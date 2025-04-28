@@ -43,10 +43,17 @@ class ConnectionManager
 	private:
 		typedef enum
 		{
+			INCOMPLETE,
+			FINISH
+		}	State;
+
+		typedef enum
+		{
 			HEADER,
 			BODY,
 			COMPLETE
 		}	recvState;
+
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
@@ -56,23 +63,26 @@ class ConnectionManager
 		std::string								request_header;
 		std::fstream							request_body;
 		recvState								state;
-
+		
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
-	
+		
+		State		receiveRequest(int client_fd, Request* req, unsigned int& index);
 		int			setupSocket(str ip, str port);
 		void		addServerToMap(std::map<str, Server *>	&map, Server &server);
 		void		addSocket(str ip, str port);
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 		void		passRequestToServer(int i, Request **req);
-		Request*	receiveRequest(int client_fd, unsigned int& index);
+		// Request*	receiveRequest(int client_fd, unsigned int& index);
 		void		parseBody(Request* req);
 		void		closeSocket(unsigned int& index);
+		// void		parseBody(Request* req);
 
 	public:
 		ConnectionManager(Http *protocol);
+
 
 		void	startConnections();
 

@@ -23,6 +23,9 @@ Request::Request()
 	this->validRequest = false;
 	this->status = "400";
 	this->body_boundary = "";
+	this->headerReceived = false;
+	this->fullyReceived = false;
+	this->has_body = false;
 }
 
 Request::~Request()
@@ -41,19 +44,27 @@ Request::Request(const Request& obj)
 	this->contentLength = obj.contentLength;
 	this->contentType = obj.contentType;
 	this->body_boundary = obj.body_boundary;
+	this->fullyReceived = obj.fullyReceived;
+	this->headerReceived = obj.headerReceived;
+	this->request = obj.request;
+	this->has_body = obj.has_body;
 }
 
 Request::Request(str request)
 {
-	this->method = "";
-	this->file_URI = "";
-	this->host = "";
-	this->contentLength = 0;
-	this->contentType = "";
-	this->keepAlive = true;
-	this->validRequest = false;
-	this->status = "400";
-	this->body_boundary = "";
+	*this = Request();
+	// this->method = "";
+	// this->file_URI = "";
+	// this->host = "";
+	// this->contentLength = 0;
+	// this->contentType = "";
+	// this->keepAlive = true;
+	// this->validRequest = false;
+	// this->status = "400";
+	// this->body_boundary = "";
+	// this->headerReceived = false;
+	// this->fullyReceived = false;
+	// this->has_body = false;
 	parseRequest(request);
 }
 
@@ -70,12 +81,20 @@ Request	&Request::operator=(const Request& obj)
 	this->contentLength = obj.contentLength;
 	this->contentType = obj.contentType;
 	this->body_boundary = obj.body_boundary;
+	this->headerReceived = obj.headerReceived;
+	this->fullyReceived = obj.fullyReceived;
+	this->has_body = false;
 	return (*this);
 }
 
-const char*	Request::NoHostException::what()
+const char*	Request::NoHostException::what() const throw()
 {
 	return ("Request doesn't contain Host header");
+}
+
+void	Request::pushRequest(std::string& req)
+{
+	request.push_back(req);
 }
 
 void Request::changeToLower(char &c)
@@ -197,9 +216,24 @@ bool Request::isValidRequest()
 	return validRequest;
 }
 
+bool	Request::isFullyReceived() const
+{
+	return fullyReceived;
+}
+
 str Request::getStatus()
 {
 	return status;
+}
+
+void	Request::setFullyReceived(const bool status)
+{
+	this->fullyReceived = status;
+}
+
+void	Request::setHeaderReceived(const bool status)
+{
+	this->headerReceived = status;
 }
 
 str Request::getFileURI()
@@ -235,4 +269,13 @@ str	Request::getBoundary() const
 size_t Request::getContentLen()
 {
 	return contentLength;
+}
+
+str	Request::getRequest() const
+{
+	str	r;
+
+	for (unsigned int i = 0; i < request.size(); i++)
+		r.append(request.at(i));
+	return (r);
 }

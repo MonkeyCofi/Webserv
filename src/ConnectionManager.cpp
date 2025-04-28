@@ -185,115 +185,157 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
-Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
+ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index)
 {
 	char	buffer[BUFFER_SIZE + 1];
 	ssize_t	r;
 	ssize_t	bytes_read;
-	size_t	written = 0;
-	Request	*req;
-	int		to_skip = 0;
+	std::string	_request;
 
+	if (req == NULL)
+	{
+		std::cerr << "No Request\n";
+		throw std::exception();
+	}
+	else
+		std::cout << "Request lies in address " << req << "\n";
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
 	bytes_read = 0;
-	this->request_header = "";
-	req = NULL;
-	if (this->request_body.is_open() == false)
-	{
-		std::cout << "Opening temp file\n";
-		this->request_body.open(TEMP_FILE, std::ios::out | std::ios::binary);
-		if (this->request_body.fail())
-			std::cerr << "\033[31mFailed to open temp file\033[0m\n";
-		else if (this->request_body.good())
-			std::cout << "Temp file has successfully been opened\n";
-	}
 	while (r > 0)
 	{
 		if (std::string(buffer).empty() == false)
 			std::memset(buffer, 0, BUFFER_SIZE + 1);
 		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
-		if (r < 0)
+		if (!r)	//client closed the conneciton
 		{
-			std::cerr << "Recv: -1\n";
-			perror("Why");
 			closeSocket(index);
-			break ;
-			// return (NULL);
-			// return (req);
+			std::cout << "Returning FINISH because recv returned 0\n";
+			return (FINISH);
 		}
-		else if (r == 0)
+		else if (r > 0)	// recv received data
 		{
-			std::cout << "Recv returned 0\n";
-			// closeSocket(index);
-			req = new Request(this->request_header);
-			std::cout << this->request_header << "\n";
-			this->state = COMPLETE;
-			// return (new Request(this->request_header));
-		}
-		bytes_read += r;
-		if (this->state == HEADER)
-		{
-			this->request_header.append(buffer, r);
-			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)
+			_request = buffer;
+			if (_request.find("\r\n\r\n") != std::string::npos)	// the request header has fully been received
 			{
-				req = new Request(this->request_header);
-				if (req->getContentLen() != 0)
-					this->state = BODY;
-				else
-					this->state = COMPLETE;
-				if (req->getContentLen() != 0 && this->state == BODY)	// message body present
-				{
-					size_t	body_pos = std::string(buffer).find("\r\n\r\n") + 4;
-					std::string	body = buffer + body_pos;
-					std::cout << "\033[36m" << body << "\033[0m\n";
-					written += std::string(buffer + body_pos).length();
-					std::cout << body.c_str() << "\n";
-					this->request_body.write(body.c_str(), body.length());
-					if (this->request_body.fail())
-						std::cout << "\033[31mFailed\033[0m\n";
-					else if (this->request_body.good())
-						std::cout << "Good\n";
-					if (written == req->getContentLen())
-						this->state = COMPLETE;
-					if (this->state == BODY)
-						continue ;
-				}
+				// once the request header has been fully received
+				req->setHeaderReceived(true);	// set header received to true
+				str	rq = req->getRequest();
+				req->parseRequest(rq);
 			}
-		}
-		if (this->state == BODY)
-		{
-			this->request_body.write(buffer, r);
-			if (this->request_body.fail())
-				std::cout << "\033[31mFailed\033[0m\n";
-			written += r;
-			if (req && written == req->getContentLen())
-				this->state = COMPLETE;
-		}
-		if (this->state == COMPLETE)	// request is fully parsed; server is ready to send response
-		{
-			std::cout << "Request has been fully received\n";
-			if (req->getBoundary() != "")	// message body present
-			{
-				std::cout << "There is a body\n";
-				std::cout << this->request_header << "\n";
-				parseBody(req);
-			}
-			else
-			{
-				if (req->getMethod() == "POST")
-					std::cout << this->request_header << "\n";
-				std::cout << "There is no body boundary\n";
-			}
-			this->state = HEADER;
-			break ;
+			req->pushRequest(_request);
 		}
 	}
 	(void)index;
-	(void)to_skip;
-	this->request_body.close();
-	return (req);
+	return (FINISH);
 }
+
+// Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
+// {
+// 	char	buffer[BUFFER_SIZE + 1];
+// 	ssize_t	r;
+// 	ssize_t	bytes_read;
+// 	size_t	written = 0;
+// 	Request	*req;
+
+// 	std::memset(buffer, 0, BUFFER_SIZE + 1);
+// 	r = 1;
+// 	bytes_read = 0;
+// 	this->request_header = "";
+// 	req = NULL;
+// 	if (this->request_body.is_open() == false)
+// 	{
+// 		std::cout << "Opening temp file\n";
+// 		this->request_body.open(TEMP_FILE, std::ios::out | std::ios::binary);
+// 		if (this->request_body.fail())
+// 			std::cerr << "\033[31mFailed to open temp file\033[0m\n";
+// 		else if (this->request_body.good())
+// 			std::cout << "Temp file has successfully been opened\n";
+// 	}
+// 	while (r > 0)
+// 	{
+// 		if (std::string(buffer).empty() == false)
+// 			std::memset(buffer, 0, BUFFER_SIZE + 1);
+// 		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+// 		if (r < 0)	// either there is no more data to read, or error happened on recv
+// 		{
+// 			std::cerr << "Recv: -1\n";
+// 			perror("Why");
+// 			closeSocket(index);
+// 			break ;
+// 		}
+// 		else if (r == 0)	// client closed the connection
+// 		{
+// 			std::cout << "Recv returned 0\n";
+// 			closeSocket(index);
+// 			req = new Request(this->request_header);
+// 			std::cout << this->request_header << "\n";
+// 			this->state = COMPLETE;
+// 			// return (new Request(this->request_header));
+// 		}
+// 		bytes_read += r;
+// 		if (this->state == HEADER)
+// 		{
+// 			this->request_header.append(buffer, r);
+// 			if (std::string(buffer).find("\r\n\r\n") != std::string::npos)
+// 			{
+// 				req = new Request(this->request_header);
+// 				if (req->getContentLen() != 0)
+// 					this->state = BODY;
+// 				else
+// 					this->state = COMPLETE;
+// 				if (req->getContentLen() != 0 && this->state == BODY)	// message body present
+// 				{
+// 					size_t	body_pos = std::string(buffer).find("\r\n\r\n") + 4;
+// 					std::string	body = buffer + body_pos;
+// 					std::cout << "\033[36m" << body << "\033[0m\n";
+// 					written += std::string(buffer + body_pos).length();
+// 					std::cout << body.c_str() << "\n";
+// 					this->request_body.write(body.c_str(), body.length());
+// 					if (this->request_body.fail())
+// 						std::cout << "\033[31mFailed\033[0m\n";
+// 					else if (this->request_body.good())
+// 						std::cout << "Good\n";
+// 					if (written == req->getContentLen())
+// 						this->state = COMPLETE;
+// 					if (this->state == BODY)
+// 						continue ;
+// 				}
+// 			}
+// 		}
+// 		if (this->state == BODY)
+// 		{
+// 			this->request_body.write(buffer, r);
+// 			if (this->request_body.fail())
+// 				std::cout << "\033[31mFailed\033[0m\n";
+// 			written += r;
+// 			if (req && written == req->getContentLen())
+// 				this->state = COMPLETE;
+// 		}
+// 		if (this->state == COMPLETE)	// request is fully parsed; server is ready to send response
+// 		{
+// 			std::cout << "Request has been fully received\n";
+// 			if (req->getBoundary() != "")	// message body present
+// 			{
+// 				std::cout << "There is a body\n";
+// 				std::cout << this->request_header << "\n";
+// 				parseBody(req);
+// 			}
+// 			else
+// 			{
+// 				if (req->getMethod() == "POST")
+// 					std::cout << this->request_header << "\n";
+// 				std::cout << "There is no body boundary\n";
+// 			}
+// 			this->state = HEADER;
+// 			break ;
+// 		}
+// 	}
+// 	(void)index;
+// 	(void)to_skip;
+// 	this->request_body.close();
+// 	return (req);
+// }
 
 void	ConnectionManager::parseBody(Request* req)
 {
@@ -319,10 +361,88 @@ void	ConnectionManager::parseBody(Request* req)
 	}
 }
 
+// void ConnectionManager::startConnections()
+// {
+// 	int		res;
+// 	std::vector<Request *>	requests;
+// 	Request	*req = NULL;
+	
+// 	main_listeners = sock_fds.size();
+// 	signal(SIGPIPE, SIG_IGN);
+// 	signal(SIGINT, sigint_handle);
+// 	while (g_quit != true)
+// 	{
+// 		res = poll(&sock_fds[0], sock_fds.size(), 500);
+// 		if (res == 0)
+// 			continue ;
+// 		if (res < 0)
+// 		{
+// 			if (g_quit)
+// 				break ;
+// 			perror("Poll");
+// 			throw std::runtime_error("unexpected error in poll function");
+// 		}
+// 		for (unsigned int i = 0; i < main_listeners; i++)
+// 		{
+// 			if (sock_fds.at(i).revents & POLLIN)
+// 			{
+// 				newClient(i, sock_fds.at(i));
+// 				requests.push_back(NULL);	// push back a NULL pointer to requests vector when a client is created
+// 			}
+// 		}
+// 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
+// 		{
+// 			if (sock_fds.at(i).revents == 0)
+// 				continue ;
+// 			if (sock_fds.at(i).revents & POLLIN)
+// 			{
+// 				std::cout << "num: " << main_listeners - i << "\n";
+// 				requests.at(main_listeners - i) = receiveRequest(sock_fds.at(i).fd, i);
+// 				if (requests.at(main_listeners - i)->isFullyReceived() == true)
+// 					this->passRequestToServer(i, &req);
+// 				// req = receiveRequest(sock_fds.at(i).fd, i);
+// 				// if (req)
+// 				// 	this->passRequestToServer(i, &req);
+// 				// else
+// 				// 	continue ;
+// 			}
+// 			if (sock_fds.at(i).revents & POLLOUT)
+// 			{
+// 				req = NULL;
+// 				if (handlers.at(i))
+// 				{
+// 					std::cout << "Responding to request\n";
+// 					if (handlers.at(i)->respond(sock_fds.at(i).fd))
+// 						closeSocket(i);
+// 				}
+// 			}
+// 			if (sock_fds.at(i).revents & POLLHUP)
+// 			{
+// 				printError(sock_fds.at(i).revents);
+// 				closeSocket(i);
+// 			}
+// 		}
+// 	}
+// 	std::cout << "Ending Server...\n";
+// 	this->request_body.close();
+// 	unlink(TEMP_FILE);
+// 	for (unsigned int i = 0; i < sock_fds.size(); i++)
+// 	{
+// 		close(sock_fds.at(i).fd);
+// 		sock_fds.pop_back();
+// 		reqs.pop_back();
+// 		handlers.pop_back();
+// 		defaults.pop_back();
+// 		servers_per_ippp.pop_back();
+// 	}
+// 	std::cout << "Server closed!\n";
+// 	signal(SIGINT, SIG_DFL);
+// 	signal(SIGPIPE, SIG_DFL);
+// }
 void ConnectionManager::startConnections()
 {
-	int		res;
-	Request	*req = NULL;
+	int						res;
+	std::vector<Request *>	requests;
 	
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -342,7 +462,10 @@ void ConnectionManager::startConnections()
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			if (sock_fds.at(i).revents & POLLIN)
+			{
 				newClient(i, sock_fds.at(i));
+				requests.push_back(NULL);	// push back a NULL pointer to requests vector when a client is created
+			}
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
@@ -350,20 +473,22 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				req = receiveRequest(sock_fds.at(i).fd, i);
-				if (req)
-					this->passRequestToServer(i, &req);
-				else
-					continue ;
+				// if the requests.at(main_listeners - i ) is NULL, then create a default request
+				if (requests.at(main_listeners - i) == NULL)
+					requests.at(main_listeners - i) = new Request();
+				if (receiveRequest(sock_fds.at(i).fd, requests.at(main_listeners - i), i) == FINISH)	// request has been fully received
+					this->passRequestToServer(i, &requests.at(main_listeners - i));
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				req = NULL;
 				if (handlers.at(i))
 				{
 					std::cout << "Responding to request\n";
 					if (handlers.at(i)->respond(sock_fds.at(i).fd))
+					{
+						requests.erase(requests.begin() + (main_listeners - i));
 						closeSocket(i);
+					}
 				}
 			}
 			if (sock_fds.at(i).revents & POLLHUP)

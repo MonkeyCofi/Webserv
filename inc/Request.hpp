@@ -28,31 +28,39 @@ class Request
 		str					method;
 		str					status;
 		str					file_URI;
+		bool				has_body;
 		bool				keepAlive;
 		str					contentType;
 		bool				validRequest;
 		size_t				contentLength;
 		str					body_boundary;
+		bool				fullyReceived;
+		bool				headerReceived;
 
 		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, str &field_conent);
 
-		Request();
+		std::vector<std::string>	request;
+
 		Request(const Request& obj);
 
 	public:
+		Request();
 		Request(str request);
 		~Request();
 		Request		&operator=(const Request& obj);
 
 		Request	&parseRequest(str& request);
+		void	pushRequest(std::string& req);
 
 		std::vector<str>	fileNames;
 
 		bool	shouldKeepAlive();
 		bool	isValidRequest();
+		bool	isFullyReceived() const;
+		bool	getHeaderReceived() const;
 		str		getFileURI();
 		str		getContentType();
 		size_t	getContentLen();
@@ -60,10 +68,14 @@ class Request
 		str		getStatus();
 		str		getHost();
 		str		getBoundary() const;
+		str		getRequest() const;
 
-		class	NoHostException
+		void	setFullyReceived(const bool status);
+		void	setHeaderReceived(const bool status);
+
+		class	NoHostException: public std::exception
 		{
-			const char*	what();
+			const char*	what() const throw();
 		};
 };
 
