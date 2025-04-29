@@ -41,6 +41,7 @@ typedef std::string str;
 class ConnectionManager
 {
 	private:
+		static unsigned int	num;
 		typedef enum
 		{
 			INCOMPLETE,

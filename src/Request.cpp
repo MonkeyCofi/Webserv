@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/24 14:17:28 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/04/29 10:46:34 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -216,7 +216,7 @@ bool Request::isValidRequest()
 	return validRequest;
 }
 
-bool	Request::isFullyReceived() const
+bool	Request::getFullyReceived() const
 {
 	return fullyReceived;
 }
@@ -224,6 +224,21 @@ bool	Request::isFullyReceived() const
 str Request::getStatus()
 {
 	return status;
+}
+
+bool Request::getHasBody() const
+{
+	return has_body;
+}
+
+bool	Request::getHeaderReceived() const
+{
+	return headerReceived;
+}
+
+std::fstream	Request::getBodyFile() const
+{
+	return (bodyFile);
 }
 
 void	Request::setFullyReceived(const bool status)
@@ -234,6 +249,11 @@ void	Request::setFullyReceived(const bool status)
 void	Request::setHeaderReceived(const bool status)
 {
 	this->headerReceived = status;
+}
+
+void	Request::setHasBody(const bool status)
+{
+	this->has_body = status;
 }
 
 str Request::getFileURI()

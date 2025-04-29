@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/26 12:53:59 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/04/29 10:46:17 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ class Request
 		str					body_boundary;
 		bool				fullyReceived;
 		bool				headerReceived;
+		std::fstream		bodyFile;
 
 		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
@@ -57,18 +58,24 @@ class Request
 
 		std::vector<str>	fileNames;
 
-		bool	shouldKeepAlive();
-		bool	isValidRequest();
-		bool	isFullyReceived() const;
-		bool	getHeaderReceived() const;
-		str		getFileURI();
-		str		getContentType();
-		size_t	getContentLen();
-		str		getMethod();
-		str		getStatus();
-		str		getHost();
-		str		getBoundary() const;
-		str		getRequest() const;
+		bool			shouldKeepAlive();
+		bool			isValidRequest();
+		void			setHasBody(const bool status);
+		
+		// getters
+		bool			getFullyReceived() const;
+		bool			getHasBody() const;
+		bool			getHeaderReceived() const;
+		str				getFileURI();
+		str				getContentType();
+		size_t			getContentLen();
+		str				getMethod();
+		str				getStatus();
+		str				getHost();
+		str				getBoundary() const;
+		str				getRequest() const;
+		std::fstream	getBodyFile() const;
+		// getters
 
 		void	setFullyReceived(const bool status);
 		void	setHeaderReceived(const bool status);

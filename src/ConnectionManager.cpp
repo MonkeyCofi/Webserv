@@ -160,11 +160,6 @@ void ConnectionManager::printError(int revents)
 
 void ConnectionManager::passRequestToServer(int i, Request **req)
 {
-	if ((*req) == NULL)
-	{
-		std::cout << "Request is NULL\n";
-		return ;
-	}
 	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else
@@ -185,11 +180,16 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
+str	ft_itoa(unsigned int num)
+{
+	
+}
+
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index)
 {
 	char	buffer[BUFFER_SIZE + 1];
 	ssize_t	r;
-	ssize_t	bytes_read;
+	// ssize_t	bytes_read;
 	std::string	_request;
 
 	if (req == NULL)
@@ -201,29 +201,49 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "Request lies in address " << req << "\n";
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
-	bytes_read = 0;
+	// bytes_read = 0;
 	while (r > 0)
 	{
 		if (std::string(buffer).empty() == false)
 			std::memset(buffer, 0, BUFFER_SIZE + 1);
 		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
-		if (!r)	//client closed the conneciton
+		if (r < 0)
+		{
+			closeSocket(index);
+			return (INCOMPLETE);
+		}
+		else if (!r)	//client closed the conneciton
 		{
 			closeSocket(index);
 			std::cout << "Returning FINISH because recv returned 0\n";
-			return (FINISH);
+			return ((req->getHeaderReceived() == true) ? FINISH : INCOMPLETE);
 		}
-		else if (r > 0)	// recv received data
+		else	// recv received data
 		{
 			_request = buffer;
+			req->pushRequest(_request);
 			if (_request.find("\r\n\r\n") != std::string::npos)	// the request header has fully been received
 			{
-				// once the request header has been fully received
-				req->setHeaderReceived(true);	// set header received to true
-				str	rq = req->getRequest();
-				req->parseRequest(rq);
+				if (req->getHasBody() == true)
+				{
+					std::fstream*	file = &req->getBodyFile();
+					if (file->is_open() == false)
+					{
+						str	filename = TEMP_FILE + std::itoa
+					}
+				}
+				else
+				{
+					// once the request header has been fully received
+					req->setHeaderReceived(true);	// set header received to true
+					str	rq = req->getRequest();
+					req->parseRequest(rq);	// parse the header of the request
+					if (req->getContentLen() != 0)
+						req->setHasBody(true);
+					else
+						return (FINISH);	// this means no body, therefore request is fully received
+				}
 			}
-			req->pushRequest(_request);
 		}
 	}
 	(void)index;
@@ -442,6 +462,7 @@ void	ConnectionManager::parseBody(Request* req)
 void ConnectionManager::startConnections()
 {
 	int						res;
+	State					state = INCOMPLETE;
 	std::vector<Request *>	requests;
 	
 	main_listeners = sock_fds.size();
@@ -464,6 +485,7 @@ void ConnectionManager::startConnections()
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				newClient(i, sock_fds.at(i));
+				std::cout << "Pushing a new request and a client\n";
 				requests.push_back(NULL);	// push back a NULL pointer to requests vector when a client is created
 			}
 		}
@@ -476,16 +498,17 @@ void ConnectionManager::startConnections()
 				// if the requests.at(main_listeners - i ) is NULL, then create a default request
 				if (requests.at(main_listeners - i) == NULL)
 					requests.at(main_listeners - i) = new Request();
-				if (receiveRequest(sock_fds.at(i).fd, requests.at(main_listeners - i), i) == FINISH)	// request has been fully received
+				if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(main_listeners - i), i)) == FINISH)	// request has been fully received
 					this->passRequestToServer(i, &requests.at(main_listeners - i));
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				if (handlers.at(i))
+				if (handlers.at(i) && state == FINISH)
 				{
 					std::cout << "Responding to request\n";
 					if (handlers.at(i)->respond(sock_fds.at(i).fd))
 					{
+						std::cout << "Removing request from vector\n";
 						requests.erase(requests.begin() + (main_listeners - i));
 						closeSocket(i);
 					}
