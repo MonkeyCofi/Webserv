@@ -18,6 +18,7 @@
 # include <algorithm>
 # include <vector>
 # include <sstream>
+# include <fstream>
 
 typedef std::string str;
 
@@ -74,7 +75,7 @@ class Request
 		str				getHost();
 		str				getBoundary() const;
 		str				getRequest() const;
-		std::fstream	getBodyFile() const;
+		std::fstream&	getBodyFile();
 		// getters
 
 		void	setFullyReceived(const bool status);

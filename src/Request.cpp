@@ -236,9 +236,9 @@ bool	Request::getHeaderReceived() const
 	return headerReceived;
 }
 
-std::fstream	Request::getBodyFile() const
+std::fstream&	Request::getBodyFile()
 {
-	return (bodyFile);
+	return (this->bodyFile);
 }
 
 void	Request::setFullyReceived(const bool status)

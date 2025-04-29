@@ -180,16 +180,10 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
-str	ft_itoa(unsigned int num)
-{
-	
-}
-
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index)
 {
 	char	buffer[BUFFER_SIZE + 1];
 	ssize_t	r;
-	// ssize_t	bytes_read;
 	std::string	_request;
 
 	if (req == NULL)
@@ -201,7 +195,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "Request lies in address " << req << "\n";
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
-	// bytes_read = 0;
 	while (r > 0)
 	{
 		if (std::string(buffer).empty() == false)
@@ -209,7 +202,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 		if (r < 0)
 		{
-			closeSocket(index);
+			// closeSocket(index);
+			std::cout << "\033[31mRecv returning -1\033[0m\n";
 			return (INCOMPLETE);
 		}
 		else if (!r)	//client closed the conneciton
@@ -226,10 +220,21 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			{
 				if (req->getHasBody() == true)
 				{
-					std::fstream*	file = &req->getBodyFile();
-					if (file->is_open() == false)
+					std::fstream&	file = req->getBodyFile();
+					if (file.is_open() == false)	// open temp file for reading message body
 					{
-						str	filename = TEMP_FILE + std::itoa
+						str	filename = TEMP_FILE + static_cast<char>(this->number % 10);
+						file.open(filename, std::ios::binary);
+						if (file.fail())
+							throw (std::runtime_error("Couldn't open temp file\n"));
+					}
+					file.write(buffer, r);
+					if (file.bad())
+						throw(std::runtime_error("Couldn't write data to temp file\n"));
+					std::string	buffer_str = buffer;
+					if (buffer_str.find(req->getBoundary() + "--") != std::string::npos)	// found the end of the request body
+					{
+						return (FINISH);
 					}
 				}
 				else
