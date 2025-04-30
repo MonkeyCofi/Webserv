@@ -12,6 +12,7 @@
 
 #include "ConnectionManager.hpp"
 
+unsigned int	ConnectionManager::number = 0;
 bool	g_quit = false;
 
 void sigint_handle(int signal)
@@ -221,12 +222,19 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				if (req->getHasBody() == true)
 				{
 					std::fstream&	file = req->getBodyFile();
+					std::cout << "Has body\n";
 					if (file.is_open() == false)	// open temp file for reading message body
 					{
-						str	filename = TEMP_FILE + static_cast<char>(this->number % 10);
-						file.open(filename, std::ios::binary);
+						str	filename = TEMP_FILE;
+						filename += static_cast<char>(ConnectionManager::number++ % 10);
+						file.open(filename.c_str(), std::ios::binary);
 						if (file.fail())
+						{
+							perror("Open");
 							throw (std::runtime_error("Couldn't open temp file\n"));
+						}
+						else if (file.good())
+							std::cout << "Successfully opened temp file for body\n";
 					}
 					file.write(buffer, r);
 					if (file.bad())
@@ -234,6 +242,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					std::string	buffer_str = buffer;
 					if (buffer_str.find(req->getBoundary() + "--") != std::string::npos)	// found the end of the request body
 					{
+						req->setFullyReceived(true);
 						return (FINISH);
 					}
 				}
@@ -246,7 +255,10 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					if (req->getContentLen() != 0)
 						req->setHasBody(true);
 					else
+					{
+						req->setFullyReceived(true);
 						return (FINISH);	// this means no body, therefore request is fully received
+					}
 				}
 			}
 		}
@@ -468,11 +480,13 @@ void ConnectionManager::startConnections()
 {
 	int						res;
 	State					state = INCOMPLETE;
-	std::vector<Request *>	requests;
+	// std::vector<Request *>	requests;
+	std::map<int, Request *>	requests;
 	
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, sigint_handle);
+	std::cout << "Server has " << main_listeners << " listeners\n";
 	while (g_quit != true)
 	{
 		res = poll(&sock_fds[0], sock_fds.size(), 500);
@@ -491,20 +505,27 @@ void ConnectionManager::startConnections()
 			{
 				newClient(i, sock_fds.at(i));
 				std::cout << "Pushing a new request and a client\n";
-				requests.push_back(NULL);	// push back a NULL pointer to requests vector when a client is created
+				requests[sock_fds.at(i).fd] = NULL;
+				// requests.push_back(NULL);	// push back a NULL pointer to requests vector when a client is created
 			}
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
+			unsigned int test = main_listeners - i;
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				// if the requests.at(main_listeners - i ) is NULL, then create a default request
-				if (requests.at(main_listeners - i) == NULL)
-					requests.at(main_listeners - i) = new Request();
-				if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(main_listeners - i), i)) == FINISH)	// request has been fully received
-					this->passRequestToServer(i, &requests.at(main_listeners - i));
+				std::cout << "test: " << test << "\n";
+				std::cout << "Size of request: " << requests.size() << "\n";
+				// if the requests.at(test ) is NULL, then create a default request
+				// if (requests.at(test) == NULL)
+				// 	requests.at(test) = new Request();
+				if (requests[sock_fds.at(i).fd] == NULL)
+					requests[sock_fds.at(i).fd] = new Request();
+				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i)) == FINISH)	// request has been fully received
+					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
+					// this->passRequestToServer(i, &requests.at(test));
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
@@ -514,7 +535,8 @@ void ConnectionManager::startConnections()
 					if (handlers.at(i)->respond(sock_fds.at(i).fd))
 					{
 						std::cout << "Removing request from vector\n";
-						requests.erase(requests.begin() + (main_listeners - i));
+						requests.erase(sock_fds.at(i).fd);
+						// requests.erase(requests.begin() + (test));
 						closeSocket(i);
 					}
 				}
