@@ -69,7 +69,7 @@ class ConnectionManager
 		ConnectionManager(const ConnectionManager &obj);
 		ConnectionManager	&operator=(const ConnectionManager &obj);
 		
-		State		receiveRequest(int client_fd, Request* req, unsigned int& index);
+		State		receiveRequest(int client_fd, Request* req, unsigned int& index, State& state);
 		int			setupSocket(str ip, str port);
 		void		addServerToMap(std::map<str, Server *>	&map, Server &server);
 		void		addSocket(str ip, str port);
@@ -77,9 +77,9 @@ class ConnectionManager
 		void		printError(int revents);
 		void		passRequestToServer(int i, Request **req);
 		// Request*	receiveRequest(int client_fd, unsigned int& index);
-		void		parseBody(Request* req);
 		void		closeSocket(unsigned int& index);
-		// void		parseBody(Request* req);
+
+		void		openTempFile(Request* req, std::fstream& file);
 
 	public:
 		ConnectionManager(Http *protocol);
