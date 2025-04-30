@@ -196,8 +196,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "Request lies in address " << req << "\n";
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = 1;
-	while (r > 0)
-	{
+	// while (r > 0)
+	// {
 		if (std::string(buffer).empty() == false)
 			std::memset(buffer, 0, BUFFER_SIZE + 1);
 		r = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -226,8 +226,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					if (file.is_open() == false)	// open temp file for reading message body
 					{
 						str	filename = TEMP_FILE;
-						filename += static_cast<char>(ConnectionManager::number++ % 10);
-						file.open(filename.c_str(), std::ios::binary);
+						filename += static_cast<char>((ConnectionManager::number++ % 10) + '0');
+						std::cout << "Trying to open with filename " << filename << "\n";
+						file.open(filename.c_str(), std::ios::binary | std::ios::out);
 						if (file.fail())
 						{
 							perror("Open");
@@ -248,23 +249,25 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				}
 				else
 				{
-					// once the request header has been fully received
 					req->setHeaderReceived(true);	// set header received to true
 					str	rq = req->getRequest();
 					req->parseRequest(rq);	// parse the header of the request
 					if (req->getContentLen() != 0)
+					{
+						std::cout << "There is a body\n";
 						req->setHasBody(true);
+					}
 					else
 					{
 						req->setFullyReceived(true);
+						std::cout << "There is no body\n";
 						return (FINISH);	// this means no body, therefore request is fully received
 					}
 				}
 			}
 		}
-	}
-	(void)index;
-	return (FINISH);
+	// }
+	return (INCOMPLETE);
 }
 
 // Request*	ConnectionManager::receiveRequest(int client_fd, unsigned int& index)
@@ -478,9 +481,8 @@ void	ConnectionManager::parseBody(Request* req)
 // }
 void ConnectionManager::startConnections()
 {
-	int						res;
-	State					state = INCOMPLETE;
-	// std::vector<Request *>	requests;
+	int							res;
+	State						state = INCOMPLETE;
 	std::map<int, Request *>	requests;
 	
 	main_listeners = sock_fds.size();
@@ -506,26 +508,18 @@ void ConnectionManager::startConnections()
 				newClient(i, sock_fds.at(i));
 				std::cout << "Pushing a new request and a client\n";
 				requests[sock_fds.at(i).fd] = NULL;
-				// requests.push_back(NULL);	// push back a NULL pointer to requests vector when a client is created
 			}
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
-			unsigned int test = main_listeners - i;
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				std::cout << "test: " << test << "\n";
-				std::cout << "Size of request: " << requests.size() << "\n";
-				// if the requests.at(test ) is NULL, then create a default request
-				// if (requests.at(test) == NULL)
-				// 	requests.at(test) = new Request();
 				if (requests[sock_fds.at(i).fd] == NULL)
 					requests[sock_fds.at(i).fd] = new Request();
 				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i)) == FINISH)	// request has been fully received
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
-					// this->passRequestToServer(i, &requests.at(test));
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
