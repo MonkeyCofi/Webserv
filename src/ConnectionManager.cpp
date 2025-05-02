@@ -173,17 +173,17 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 void	ConnectionManager::closeSocket(unsigned int& index)
 {
 	close(sock_fds.at(index).fd);
+	std::cout << "\033[31mClosing fd " << sock_fds.at(index).fd << "\033[0m\n";
 	sock_fds.erase(sock_fds.begin() + index);
 	reqs.erase(reqs.begin() + index);
 	handlers.erase(handlers.begin() + index);
 	defaults.erase(defaults.begin() + index);
 	servers_per_ippp.erase(servers_per_ippp.begin() + index);
-	index--;
+	// index--;
 }
 
 void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 {
-	std::fstream&	file = req->getBodyFile();
 	if (file.is_open() == false)	// open temp file for reading message body
 	{
 		str	filename = TEMP_FILE;
@@ -196,8 +196,14 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 			throw (std::runtime_error("Couldn't open temp file\n"));
 		}
 		else if (file.good())
+		{
 			std::cout << "Successfully opened " << filename << "\n";
+			return ;
+		}
 	}
+	std::cout << "Temp file is already opened\n";
+	(void)req;
+
 }
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
@@ -206,6 +212,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	ssize_t	r;
 	std::string	_request;
 
+	if (req->getHeaderReceived() == true)
+		std::cout << "Receiving outside header\n";
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r <= 0)
@@ -214,47 +222,50 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
 		return (INCOMPLETE);
 	}
-	else	// recv received data
+	_request = buffer;
+	std::cout << "\033[36m" << _request << "\033[0m\n";
+	req->pushRequest(_request);
+	if (_request.find("\r\n\r\n") != std::string::npos)	// the request header has fully been received
 	{
-		_request = buffer;
-		req->pushRequest(_request);
-		if (_request.find("\r\n\r\n") != std::string::npos)	// the request header has fully been received
+		if (req->getHeaderReceived() == true && req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
 		{
-			if (req->getHeaderReceived() == true && req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
+			std::cout << "Header has been fully received and there is a body present\n";
+			std::fstream&	file = req->getBodyFile();
+			openTempFile(req, file);
+			file.write(buffer, r);
+			if (file.bad())
+				throw(std::runtime_error("Couldn't write data to temp file\n"));
+			std::string	buffer_str = buffer;
+			std::cout << "\033[31mBoundary: " << req->getBoundary() << "\033[0m\n";
+			if (buffer_str.find(req->getBoundary() + "--") != std::string::npos)	// found the end of the request body
 			{
-				std::fstream&	file = req->getBodyFile();
-				openTempFile(req, file);
 				file.write(buffer, r);
-				if (file.bad())
-					throw(std::runtime_error("Couldn't write data to temp file\n"));
-				std::string	buffer_str = buffer;
-				if (buffer_str.find(req->getBoundary() + "--") != std::string::npos)	// found the end of the request body
-				{
-					std::cout << "The body has been fully received\n";
-					req->setFullyReceived(true);
-					return (FINISH);
-				}
+				std::cout << "\033[31m" << buffer_str << "\033[0m\n";
+				std::cout << "The body has been fully received\n";
+				req->setFullyReceived(true);
+				return (FINISH);
+			}
+		}
+		else
+		{
+			req->setHeaderReceived(true);	// set header received to true
+			str	rq = req->getRequest();
+			req->parseRequest(rq);	// parse the header of the request
+			if (req->getContentLen() != 0)
+			{
+				std::cout << "There is a body\n";
+				req->setHasBody(true);
 			}
 			else
 			{
-				req->setHeaderReceived(true);	// set header received to true
-				str	rq = req->getRequest();
-				req->parseRequest(rq);	// parse the header of the request
-				if (req->getContentLen() != 0)
-				{
-					std::cout << "There is a body\n";
-					req->setHasBody(true);
-				}
-				else
-				{
-					req->setFullyReceived(true);
-					std::cout << "There is no body\n";
-					return (FINISH);	// this means no body, therefore request is fully received
-				}
+				req->setFullyReceived(true);
+				std::cout << "There is no body\n";
+				return (FINISH);	// this means no body, therefore request is fully received
 			}
 		}
 	}
 	std::cout << "Request hasn't been fully received\n";
+	(void)state;
 	return (INCOMPLETE);
 }
 
@@ -272,10 +283,7 @@ void ConnectionManager::startConnections()
 	{
 		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
-		{
-			std::cout << "Server is waiting for input\n";
 			continue ;
-		}
 		if (res < 0)
 		{
 			if (g_quit)
@@ -288,7 +296,7 @@ void ConnectionManager::startConnections()
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				newClient(i, sock_fds.at(i));
-				std::cout << "Pushing a new request and a client\n";
+				std::cout << "Pushing a client\n";
 				continue ;
 			}
 		}
@@ -298,6 +306,7 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
+				std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
 				if (requests[sock_fds.at(i).fd] == NULL)
 					requests[sock_fds.at(i).fd] = new Request();
 				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i, state)) == FINISH)	// request has been fully received
@@ -311,7 +320,8 @@ void ConnectionManager::startConnections()
 					std::cout << "Responding to request\n";
 					if (handlers.at(i)->respond(sock_fds.at(i).fd))
 					{
-						std::cout << "Removing request from map\n";
+						std::cout << "\033[31mRemoving request from map\033[0m\n";
+						delete requests[(sock_fds.at(i).fd)];
 						requests.erase(sock_fds.at(i).fd);
 						// requests.erase(requests.begin() + (test));
 						closeSocket(i);
