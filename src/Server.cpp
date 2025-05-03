@@ -427,11 +427,12 @@ void Server::handleRequest(Request *req)
 	}
 }
 
+# define BUFFER_SIZE 2
 bool Server::respond(int client_fd)
 {
 	str		tmp;
 	ssize_t	bytes, sb;
-	char	buffer[4096];
+	char	buffer[BUFFER_SIZE];
 
 	if (header == "")
 		return true;
@@ -440,7 +441,7 @@ bool Server::respond(int client_fd)
 	header = "";
 	if (file_fd != -1)
 	{
-		while ((bytes = read(file_fd, buffer, 4096)) > 0)
+		while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
 		{
 			tmp = ssizeToStr(bytes) + "\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)

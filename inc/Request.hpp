@@ -20,6 +20,15 @@
 # include <sstream>
 # include <fstream>
 
+# define RED "\033[31m"
+# define GREEN "\033[32m"
+# define YELLOW "\033[33m"
+# define BLUE "\033[34m"
+# define MAGENTA "\033[35m"
+# define CYAN "\033[36m"
+# define RESET "\033[0m"
+# define NL "\033[0m\n"
+
 typedef std::string str;
 
 class Request
@@ -38,21 +47,23 @@ class Request
 		bool				fullyReceived;
 		bool				headerReceived;
 		std::fstream		bodyFile;
-
+		
 		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, str &field_conent);
-
+		
 		std::vector<std::string>	request;
-
+		
 		Request(const Request& obj);
-
 	public:
 		Request();
 		Request(str request);
 		~Request();
 		Request		&operator=(const Request& obj);
+
+		size_t				bytesReceived;
+		str					body_boundaryEnd;
 
 		Request	&parseRequest(str& request);
 		void	pushRequest(std::string& req);

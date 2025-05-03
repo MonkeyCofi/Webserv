@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CONNECTIONMANAGERS_HPP
-# define CONNECTIONMANAGERS_HPP
+#ifndef CONNECTIONMANAGER_HPP
+# define CONNECTIONMANAGER_HPP
 
 # include <netdb.h>
 # include <sys/socket.h>
@@ -34,8 +34,21 @@
 # include "Server.hpp"
 # include "Request.hpp"
 
-# define BUFFER_SIZE 4096	// 4 kb
+// # define BUFFER_SIZE 4096	// 4 kb
+# define BUFFER_SIZE 2	// 4 kb
 # define TEMP_FILE "./.temp"
+
+/* Colors */
+# define RED "\033[31m"
+# define GREEN "\033[32m"
+# define YELLOW "\033[33m"
+# define BLUE "\033[34m"
+# define MAGENTA "\033[35m"
+# define CYAN "\033[36m"
+# define RESET "\033[0m"
+# define NL "\033[0m\n"
+/* Colors */
+
 typedef std::string str;
 
 class ConnectionManager

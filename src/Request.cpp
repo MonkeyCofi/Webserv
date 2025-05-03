@@ -23,9 +23,11 @@ Request::Request()
 	this->validRequest = false;
 	this->status = "400";
 	this->body_boundary = "";
+	this->body_boundaryEnd = "";
 	this->headerReceived = false;
 	this->fullyReceived = false;
 	this->has_body = false;
+	this->bytesReceived = 0;
 }
 
 Request::~Request()
@@ -140,6 +142,7 @@ bool Request::parseRequestLine(str &line)
 
 void Request::setRequestField(str &header_field, str &field_content)
 {
+	// std::cout << MAGENTA << "Header field being parsed: " << header_field << NL;
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")
@@ -153,6 +156,7 @@ void Request::setRequestField(str &header_field, str &field_content)
 		if (boundary_position != std::string::npos)
 		{
 			this->body_boundary = field_content.substr(boundary_position + 9);
+			this->body_boundaryEnd = body_boundary + "--";
 			std::cout << "B: " << this->body_boundary << "\n";
 		}
 	}
@@ -181,6 +185,7 @@ Request	&Request::parseRequest(str& request)
 		if (ignore)
 		{
 			ignore = false;
+			std::cout << "Ignoring " << line << "\n";
 			continue;
 		}
 		if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
@@ -193,14 +198,16 @@ Request	&Request::parseRequest(str& request)
 		(void)i;
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
+		// std::cout << "line before: " << line << "\n"; 
 		line = line.substr(line.find_first_not_of(" \t\r", line.find(":") + 1));
+		// std::cout << "line now: " << line << "\n";
 		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
 		{
 			if (line[lnsp] != ' ' && line[lnsp] != '\t' && line[lnsp] != '\r')
 				break;
 		}
-		if (lnsp < line.length() - 1)
-			ignore = true;
+		// if (lnsp < line.length() - 1)
+		// 	ignore = true;
 		field_value = line.substr(0, lnsp + 1);
 		if (field_value.find_first_not_of("0123456789") != str::npos && header_field == "content-length")
 			return (*this);
