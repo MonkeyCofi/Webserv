@@ -427,7 +427,6 @@ void Server::handleRequest(Request *req)
 	}
 }
 
-# define BUFFER_SIZE 2
 bool Server::respond(int client_fd)
 {
 	str		tmp;

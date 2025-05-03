@@ -30,12 +30,12 @@
 # include <cstring>
 # include <map>
 # include <cstdio>
+# include "BlockOBJ.hpp"
 # include "Http.hpp"
 # include "Server.hpp"
 # include "Request.hpp"
 
 // # define BUFFER_SIZE 4096	// 4 kb
-# define BUFFER_SIZE 2	// 4 kb
 # define TEMP_FILE "./.temp"
 
 /* Colors */
