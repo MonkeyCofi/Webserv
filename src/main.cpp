@@ -8,9 +8,12 @@
 
 int main(int ac, char **av)
 {
+	bool	defaultConf = false;
 	signal(SIGPIPE, SIG_IGN);
 	unlink("localhost");
-	if (ac != 2)
+	if (ac == 1)
+		defaultConf = true;
+	else if (ac != 2)
 	{
 		std::cerr << "Error\nInvalid number of arguments!\nUsage: ./webserv <configuration_file.conf>\n";
 		return (1);
@@ -19,8 +22,9 @@ int main(int ac, char **av)
 	try
 	{
 		ConfigParser conf;
-		str		tmp = av[1];
-		eng = conf.parse(tmp);
+		// str		tmp = av[1];
+		str	tmp = (defaultConf == false ? av[1] : "");
+		eng = conf.parse(tmp, defaultConf);
 		if (!eng)
 			throw std::runtime_error("failed to boot up server");
 		std::cout << "Server Ready!\n";

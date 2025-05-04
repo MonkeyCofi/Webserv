@@ -162,17 +162,19 @@ bool ConfigParser::parseLine(str &line)
 	return true;
 }
 
-Engine *ConfigParser::parse(str &fn)
+Engine *ConfigParser::parse(str &fn, bool defaultConf)
 {
-	if (!validFilename(fn))
+	if (!defaultConf && !validFilename(fn))
 		throw FilenameError("Invalid file name!");
 
 	str						line, cpy;
 	int						i = 0;
 	std::ifstream 			file;
 	std::vector <Server *>	servers;
-
-	file.open(fn.c_str());
+	if (defaultConf == true)
+		file.open("config/block_test.conf");
+	else
+		file.open(fn.c_str());
 	if (!file)
 		throw InvalidFileError("Could not open file!");
 

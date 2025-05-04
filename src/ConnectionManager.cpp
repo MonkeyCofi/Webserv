@@ -139,7 +139,7 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 		return ;
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
-	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
+	// fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
 	client.events = POLLIN | POLLOUT;
 	client.revents = 0;
 	sock_fds.push_back(client);
@@ -213,12 +213,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	std::string		_request;
 	std::fstream&	file = req->getBodyFile();
 
-	if (req->getBoundary().empty() == false)
-	{
-		std::cout << "End boundary: " << req->body_boundaryEnd << "\n";
-	}
-	if (req->getHeaderReceived() == true)
-		std::cout << "Receiving outside header\n";
 	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r <= 0)
@@ -227,39 +221,32 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
 		return (INCOMPLETE);
 	}
-	std::cout << CYAN << r << " bytes have been received" << NL;
-	if (req->getHasBody() == true)
-	{
-		req->bytesReceived += r;
-		std::cout << YELLOW << "Remaining bytes: " << req->getContentLen() - req->bytesReceived << NL;
-	}
+	std::cout << CYAN << r << " bytes have been received from recv call" << NL;
+	if (req->getHasBody())
+		std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
 	_request = buffer;
 	req->pushRequest(_request);
 	if (req->getRequest().find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false)	// the buffer contains the end of the request header
 	{
-		str	rq = req->getRequest();
-		std::cout << "Parsing header\n";
-		req->parseRequest(rq);
-		if (req->getContentLen() != 0)
-		{
-			req->setHasBody(true);
-			std::cout << MAGENTA << "Content length: " << req->getContentLen() << NL;
-		}
-		else
-		{
-			req->setHeaderReceived(true);
-			return (FINISH);
-		}
-		req->setHeaderReceived(true);
 		std::cout << MAGENTA << "Found end of header" << NL;
+		str	rq = req->getRequest();
+		req->parseRequest(rq);
+		req->setHeaderReceived(true);
+		if (req->getContentLen() != 0)
+		req->setHasBody(true);
+		else
+		return (FINISH);
+		// write the body's bytes onto the temp file
 		if (req->getHeaderReceived() == true && req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
 		{
-			std::cout << "Header has been fully received and there is a body present\n";
+			std::vector<unsigned char>	byte_buffer;
 			openTempFile(req, file);
 			str	body = rq.substr(rq.find("\r\n\r\n") + 4, r);
-			std::cout << YELLOW << "body: " << body << NL;
+			std::cout << YELLOW << body << NL;
+			std::cout << CYAN << "Body length: " << body.length() << NL;
+			req->bytesReceived += body.length();
 			file.write(body.c_str(), body.length());
-			if (file.bad())
+			if (file.bad() || file.fail())
 				throw(std::runtime_error("Couldn't write data to temp file\n"));
 			if (body.find(req->body_boundaryEnd) != str::npos)
 				return (FINISH);
@@ -270,34 +257,31 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		if (req->getHasBody())
 		{
 			str	buf = buffer;
+			std::cout << YELLOW << buf << NL;
 			std::cout << "Writing\n";
-			file.write(buffer, r);
-			if (file.bad())
+			req->bytesReceived += buf.length();
+			file.write(buf.c_str(), buf.length());
+			if (file.bad() || file.fail())
 				throw (std::runtime_error("Write error"));
 			if (buf.find(req->body_boundaryEnd) != std::string::npos)
 			{
 				std::cout << "Found ending boundary\n";
+				file.close();
 				return (FINISH);
 			}
 			std::cout << "received " << req->bytesReceived << " bytes so far\n";
 			std::cout << "Wrote " << r << " bytes to the file\n";
-			if (req->getContentLen() - req->bytesReceived < BUFFER_SIZE)
-			{
-				std::memset(buffer, 0, BUFFER_SIZE + 1);
-				r = recv(client_fd, buffer, req->getContentLen() - req->bytesReceived, 0);
-				std::cout << RED << buffer << NL;
-				file.write(buffer, r);
-				req->bytesReceived += r;
-				if (req->bytesReceived == req->getContentLen())
-					return (FINISH);
-			}
 			return (INCOMPLETE);
 		}
 	}
 	std::cout << "Request hasn't been fully received\n";
 	(void)state;
 	if (req->bytesReceived >= req->getContentLen())
+	{
+		if (file.is_open())
+			file.close();
 		return (FINISH);
+	}
 	return (INCOMPLETE);
 }
 
@@ -349,6 +333,7 @@ void ConnectionManager::startConnections()
 				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i, state)) == FINISH)	// request has been fully received
 				{
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
+					std::cout << MAGENTA << requests[sock_fds.at(i).fd]->getRequest() << NL;
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
 				continue ;
