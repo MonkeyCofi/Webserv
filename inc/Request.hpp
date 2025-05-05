@@ -64,6 +64,7 @@ class Request
 
 		size_t				bytesReceived;
 		str					body_boundaryEnd;
+		str					tempFileName;
 
 		Request	&parseRequest(str& request);
 		void	pushRequest(std::string& req);

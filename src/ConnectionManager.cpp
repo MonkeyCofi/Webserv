@@ -189,6 +189,7 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 	{
 		str	filename = TEMP_FILE;
 		filename += static_cast<char>((ConnectionManager::number++ % 10) + '0');
+		req->tempFileName = filename;
 		std::cout << "Trying to open with filename " << filename << "\n";
 		file.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
 		if (file.fail())
@@ -206,6 +207,46 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 	(void)req;
 }
 
+void	ConnectionManager::parseBodyFile(Request* req)
+{
+	std::fstream	tempFile;
+	str				line;
+	bool			newBound = false;
+	bool			writeFile = false;
+
+	tempFile.open(req->tempFileName, std::ios::in | std::ios::binary);
+	while (std::getline(tempFile, line))
+	{
+		if (line.find(req->getBoundary()) != str::npos)
+		{
+			newBound ^= true;
+			// if (newBound)
+			// 	newBound = false;
+			continue ;
+		}
+		else if (writeFile)
+		{
+
+		}
+		if (line.find("filename=") != str::npos)
+		{
+			// str	filename = 
+			// create new file that stores the binary data of the file
+			std::ofstream	binFile(line.substr(line.find("filename=\"") + std::strlen("filename=\""), str::npos), std::ios::binary | std::ios::out);
+			if (binFile.bad())
+				throw (std::runtime_error("Couldn't open file to store data"));
+			while (std::getline(tempFile, line))
+			{
+				if (line.find(req->getBoundary()))
+					break;
+				binFile.write(&line[0], line.length());
+			}
+			// writeFile = true;
+		}
+	}
+	(void)newBound;
+}
+
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	char			buffer[BUFFER_SIZE + 1];
@@ -213,7 +254,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	std::string		_request;
 	std::fstream&	file = req->getBodyFile();
 
-	std::memset(buffer, 0, BUFFER_SIZE + 1);
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r <= 0)
 	{
@@ -221,9 +261,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
 		return (INCOMPLETE);
 	}
-	std::cout << CYAN << r << " bytes have been received from recv call" << NL;
-	if (req->getHasBody())
-		std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
+	buffer[r] = '\0';
+	// if (req->getHasBody())
+	// 	std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
 	_request = buffer;
 	req->pushRequest(_request);
 	if (req->getRequest().find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false)	// the buffer contains the end of the request header
@@ -233,23 +273,31 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		req->parseRequest(rq);
 		req->setHeaderReceived(true);
 		if (req->getContentLen() != 0)
-		req->setHasBody(true);
+			req->setHasBody(true);
 		else
-		return (FINISH);
+			return (FINISH);
 		// write the body's bytes onto the temp file
 		if (req->getHeaderReceived() == true && req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
 		{
-			std::vector<unsigned char>	byte_buffer;
+			size_t	endPos;
 			openTempFile(req, file);
-			str	body = rq.substr(rq.find("\r\n\r\n") + 4, r);
-			std::cout << YELLOW << body << NL;
-			std::cout << CYAN << "Body length: " << body.length() << NL;
-			req->bytesReceived += body.length();
+			endPos = (rq.find("\r\n\r\n") != str::npos ? rq.find("\r\n\r\n") + 4 : str::npos);
+			std::cout << CYAN << "Position of header end: " << endPos << NL;
+			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
+			{
+				std::cout << RED << "There is a body but it is not present in request" << NL;
+				return (INCOMPLETE);
+			}
+			str	body = rq.substr(endPos, r);
+			req->bytesReceived += r - endPos;
 			file.write(body.c_str(), body.length());
 			if (file.bad() || file.fail())
 				throw(std::runtime_error("Couldn't write data to temp file\n"));
 			if (body.find(req->body_boundaryEnd) != str::npos)
+			{
+				parseBodyFile(req);
 				return (FINISH);
+			}
 		}
 	}
 	else
@@ -257,31 +305,23 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		if (req->getHasBody())
 		{
 			str	buf = buffer;
-			std::cout << YELLOW << buf << NL;
-			std::cout << "Writing\n";
-			req->bytesReceived += buf.length();
-			file.write(buf.c_str(), buf.length());
-			if (file.bad() || file.fail())
-				throw (std::runtime_error("Write error"));
-			if (buf.find(req->body_boundaryEnd) != std::string::npos)
+			req->bytesReceived += r;
+			file.write(buffer, r);
+			if (buf.find(req->body_boundaryEnd) != std::string::npos || req->bytesReceived == req->getContentLen())
 			{
 				std::cout << "Found ending boundary\n";
+				std::cout << CYAN << "Content len: " << req->getContentLen() << " Received the full content length's worth of bytes: " << req->bytesReceived << NL;
+				std::cout << RED << buf << NL;
 				file.close();
+				parseBodyFile(req);
 				return (FINISH);
 			}
 			std::cout << "received " << req->bytesReceived << " bytes so far\n";
-			std::cout << "Wrote " << r << " bytes to the file\n";
 			return (INCOMPLETE);
 		}
 	}
 	std::cout << "Request hasn't been fully received\n";
 	(void)state;
-	if (req->bytesReceived >= req->getContentLen())
-	{
-		if (file.is_open())
-			file.close();
-		return (FINISH);
-	}
 	return (INCOMPLETE);
 }
 
@@ -333,7 +373,7 @@ void ConnectionManager::startConnections()
 				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i, state)) == FINISH)	// request has been fully received
 				{
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
-					std::cout << MAGENTA << requests[sock_fds.at(i).fd]->getRequest() << NL;
+					// std::cout << MAGENTA << requests[sock_fds.at(i).fd]->getRequest() << NL;
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
 				continue ;

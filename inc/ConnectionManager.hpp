@@ -47,6 +47,7 @@
 # define CYAN "\033[36m"
 # define RESET "\033[0m"
 # define NL "\033[0m\n"
+# define FLUSH "\033[0m" << std::endl;
 /* Colors */
 
 typedef std::string str;
@@ -93,6 +94,8 @@ class ConnectionManager
 		void		closeSocket(unsigned int& index);
 
 		void		openTempFile(Request* req, std::fstream& file);
+
+		void		parseBodyFile(Request* req);
 
 	public:
 		ConnectionManager(Http *protocol);

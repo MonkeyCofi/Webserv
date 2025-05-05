@@ -28,6 +28,7 @@ Request::Request()
 	this->fullyReceived = false;
 	this->has_body = false;
 	this->bytesReceived = 0;
+	this->tempFileName = "";
 }
 
 Request::~Request()
@@ -50,6 +51,8 @@ Request::Request(const Request& obj)
 	this->headerReceived = obj.headerReceived;
 	this->request = obj.request;
 	this->has_body = obj.has_body;
+	this->bytesReceived = obj.bytesReceived;
+	this->tempFileName = obj.tempFileName;
 }
 
 Request::Request(str request)
