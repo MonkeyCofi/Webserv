@@ -405,7 +405,12 @@ void Server::handleRequest(Request *req)
 	else if (req->getMethod() == "GET")
 	{
 		file = req->getFileURI();
-		if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
+		if (req->getFileURI().find("cgi") != str::npos)
+		{
+			Cgi	cgi;
+			cgi.setupEnvAndRun(req);
+		}
+		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(req, file, resp);
 		else
 			fileResponse(req, file, resp, false);

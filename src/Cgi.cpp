@@ -54,8 +54,9 @@ Cgi &Cgi::operator=(const Cgi& copy)
     return (*this);
 }
 
-void    Cgi::setupEnv(Request* req)
+void    Cgi::setupEnvAndRun(Request* req)
 {
+    std::cout << CYAN << "Setting up cgi environment\n";
     this->path_info = req->getFileURI();
     // this->query_string = // the query string will be the full path of the cgi script (i believe)
     this->method = req->getMethod();
@@ -67,13 +68,20 @@ void    Cgi::setupEnv(Request* req)
     env["CONTENT_TYPE"] = this->content_type;
     env["HOST"] = this->host;
     env["CONTENT_LENGTH"] = req->getContentLen();
+    runCGI();
 }
 
-char*   Cgi::envToChar()
+char**   Cgi::envToChar()
 {
-    char**  c_env = new Char*[env.size() + 1];
-    env[env.size()] = 0;
-    return (c_env);
+    std::vector<str>    env;
+    std::vector<char*>  envp;
+    
+    env.push_back("PATH_INFO=" + this->path_info);
+    env.push_back("METHOD=" + this->method);
+    env.push_back("CONTENT_TYPE=" + this->content_type);
+    env.push_back("CONTENT_LENGTH=" + this->content_length);
+    env.push_back("HOST=" + this->host);
+    for ()
 }
 
 void    Cgi::runCGI()
@@ -84,6 +92,12 @@ void    Cgi::runCGI()
     char** e = envToChar();
     if (cgi_fd == 0)    // child process
     {
-        execve() // execute the cgi script, passing the 
+        std::cout << "In child process\n";
+        // execve() // execute the cgi script, passing the 
     }
+    for (int i = 0; e[i]; i++)
+    {
+        std::cout << e[i] << "\n";
+    }
+    std::cout << "In parent process\n";
 }

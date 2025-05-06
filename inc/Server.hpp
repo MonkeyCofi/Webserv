@@ -20,6 +20,7 @@
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"
+# include "Cgi.hpp"
 
 typedef std::string str;
 
