@@ -3,18 +3,31 @@
 
 # include <iostream>
 # include <map>
+# include "Request.hpp"
+# include <unistd.h>
 
-class cgi
+class Cgi
 {
 private:
+	str	cgiFileName;
 	std::map<std::string, std::string>	env;
-public:
-	cgi();
-	~cgi();
-	cgi();
-	~cgi();
+	str	path_info;
+	str	query_string;
+	str	content_type;
+	str	content_length;
+	str	method;
+	str	host;
+	int	pipe_fds[2];
+	pid_t	cgi_fd;
+public:	
+	Cgi();
+	~Cgi();
+	Cgi(const Cgi& copy);
+	Cgi	&operator=(const Cgi& copy);
 
-	void	setupEnv();
+	void	setupEnv(Request* req);
+	void	runCGI();
+	char**   envToChar();
 };
 
 #endif

@@ -34,6 +34,7 @@
 # include "Http.hpp"
 # include "Server.hpp"
 # include "Request.hpp"
+# include "Cgi.hpp"
 
 // # define BUFFER_SIZE 4096	// 4 kb
 # define TEMP_FILE "./.temp"
