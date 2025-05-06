@@ -213,11 +213,14 @@ void	ConnectionManager::parseBodyFile(Request* req)
 	str				line;
 	bool			newBound = false;
 	bool			writeFile = false;
+	std::ofstream	binFile;
+	ssize_t			written = 0;
 
-	tempFile.open(req->tempFileName, std::ios::in | std::ios::binary);
+	tempFile.open(req->tempFileName.c_str(), std::ios::in | std::ios::binary);
 	while (std::getline(tempFile, line))
 	{
-		if (line.find(req->getBoundary()) != str::npos)
+		// std::cout << RED << "Line: " << line << NL;
+		if (line.find(req->getBoundary()) != str::npos && writeFile == false)
 		{
 			newBound ^= true;
 			// if (newBound)
@@ -226,22 +229,33 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		}
 		else if (writeFile)
 		{
-
+			if (line.find("Content-Type") != str::npos)
+				continue ;
+			if (line.find(req->getBoundary()) != str::npos)
+			{
+				std::cout << "Size: " << binFile.tellp() << NL;
+				std::cout << "Wrote: " << written << NL;
+				binFile.close();
+				writeFile = false;
+			}
+			else
+			{
+				std::cout << "writing\n";
+				binFile.write(&line[0], line.length());
+				written += line.length();
+			}
 		}
 		if (line.find("filename=") != str::npos)
 		{
 			// str	filename = 
 			// create new file that stores the binary data of the file
-			std::ofstream	binFile(line.substr(line.find("filename=\"") + std::strlen("filename=\""), str::npos), std::ios::binary | std::ios::out);
+			// std::ofstream	binFile(line.substr(line.find("filename=\"") + std::strlen("filename=\""), str::npos), std::ios::binary | std::ios::out);
+			str				file = line.substr(line.find("filename=\"") + std::strlen("filename=\""), str::npos);
+			file.erase(file.begin() + file.find_last_of('\"'), file.end());
+			binFile.open(file.c_str(), std::ios::binary | std::ios::out);
 			if (binFile.bad())
-				throw (std::runtime_error("Couldn't open file to store data"));
-			while (std::getline(tempFile, line))
-			{
-				if (line.find(req->getBoundary()))
-					break;
-				binFile.write(&line[0], line.length());
-			}
-			// writeFile = true;
+				throw std::runtime_error("Couldn't open upload file");
+			writeFile = true;
 		}
 	}
 	(void)newBound;
@@ -289,8 +303,10 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				return (INCOMPLETE);
 			}
 			str	body = rq.substr(endPos, r);
+			std::cout << YELLOW << "r - endPos: " << r - endPos << " endpos: " << endPos << NL;
 			req->bytesReceived += r - endPos;
-			file.write(body.c_str(), body.length());
+			// req->bytesReceived += body.length();
+			file.write(&body[0], body.length());
 			if (file.bad() || file.fail())
 				throw(std::runtime_error("Couldn't write data to temp file\n"));
 			if (body.find(req->body_boundaryEnd) != str::npos)
@@ -306,12 +322,13 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		{
 			str	buf = buffer;
 			req->bytesReceived += r;
-			file.write(buffer, r);
+			file.write(&buffer[0], r);
 			if (buf.find(req->body_boundaryEnd) != std::string::npos || req->bytesReceived == req->getContentLen())
 			{
 				std::cout << "Found ending boundary\n";
 				std::cout << CYAN << "Content len: " << req->getContentLen() << " Received the full content length's worth of bytes: " << req->bytesReceived << NL;
 				std::cout << RED << buf << NL;
+				std::cout << YELLOW << "File size: " << file.tellp() << NL;
 				file.close();
 				parseBodyFile(req);
 				return (FINISH);
