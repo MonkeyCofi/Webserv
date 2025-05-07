@@ -46,7 +46,7 @@ class ConfigParser
 		ConfigParser();
 		~ConfigParser();
 
-		Engine	*parse(str &fn);		
+		Engine	*parse(str &fn, bool defaultConf);		
 
 		class FilenameError: public std::exception
 		{

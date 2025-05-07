@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ehammoud <ehammoud@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/25 18:03:45 by ehammoud         ###   ########.fr       */
+/*   Updated: 2025/04/29 10:46:34 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,13 @@ Request::Request()
 	this->keepAlive = true;
 	this->validRequest = false;
 	this->status = "400";
+	this->body_boundary = "";
+	this->body_boundaryEnd = "";
+	this->headerReceived = false;
+	this->fullyReceived = false;
+	this->has_body = false;
+	this->bytesReceived = 0;
+	this->tempFileName = "";
 }
 
 Request::~Request()
@@ -39,18 +46,30 @@ Request::Request(const Request& obj)
 	this->status = obj.status;
 	this->contentLength = obj.contentLength;
 	this->contentType = obj.contentType;
+	this->body_boundary = obj.body_boundary;
+	this->fullyReceived = obj.fullyReceived;
+	this->headerReceived = obj.headerReceived;
+	this->request = obj.request;
+	this->has_body = obj.has_body;
+	this->bytesReceived = obj.bytesReceived;
+	this->tempFileName = obj.tempFileName;
 }
 
 Request::Request(str request)
 {
-	this->method = "";
-	this->file_URI = "";
-	this->host = "";
-	this->contentLength = 0;
-	this->contentType = "";
-	this->keepAlive = true;
-	this->validRequest = false;
-	this->status = "400";
+	*this = Request();
+	// this->method = "";
+	// this->file_URI = "";
+	// this->host = "";
+	// this->contentLength = 0;
+	// this->contentType = "";
+	// this->keepAlive = true;
+	// this->validRequest = false;
+	// this->status = "400";
+	// this->body_boundary = "";
+	// this->headerReceived = false;
+	// this->fullyReceived = false;
+	// this->has_body = false;
 	parseRequest(request);
 }
 
@@ -66,12 +85,21 @@ Request	&Request::operator=(const Request& obj)
 	this->status = obj.status;
 	this->contentLength = obj.contentLength;
 	this->contentType = obj.contentType;
+	this->body_boundary = obj.body_boundary;
+	this->headerReceived = obj.headerReceived;
+	this->fullyReceived = obj.fullyReceived;
+	this->has_body = false;
 	return (*this);
 }
 
-const char*	Request::NoHostException::what()
+const char*	Request::NoHostException::what() const throw()
 {
 	return ("Request doesn't contain Host header");
+}
+
+void	Request::pushRequest(std::string& req)
+{
+	request.push_back(req);
 }
 
 void Request::changeToLower(char &c)
@@ -126,14 +154,26 @@ bool Request::parseRequestLine(str &line)
 
 void Request::setRequestField(str &header_field, str &field_content)
 {
+	// std::cout << MAGENTA << "Header field being parsed: " << header_field << NL;
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")
 		this->keepAlive = false;
 	if (header_field == "content-type")
+	{
 		this->contentType = field_content;
+		if (this->body_boundary.empty() == false)
+			return ;
+		size_t	boundary_position = field_content.find("boundary=");
+		if (boundary_position != std::string::npos)
+		{
+			this->body_boundary = field_content.substr(boundary_position + 9);
+			this->body_boundaryEnd = body_boundary + "--";
+			std::cout << "B: " << this->body_boundary << "\n";
+		}
+	}
 	if (header_field == "content-length")
-		this->contentType = field_content;
+		this->contentLength = std::atoi(field_content.c_str());
 }
 
 Request	&Request::parseRequest(str& request)
@@ -149,6 +189,7 @@ Request	&Request::parseRequest(str& request)
 	if (!parseRequestLine(line))
 		return (*this);
 	ignore = false;
+	int i = 0;
 	while (std::getline(reqStream, line))
 	{
 		if (line == "\r")
@@ -156,22 +197,29 @@ Request	&Request::parseRequest(str& request)
 		if (ignore)
 		{
 			ignore = false;
+			std::cout << "Ignoring " << line << "\n";
 			continue;
 		}
 		if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
 			return (*this);
-		std::for_each(line.begin(), line.end(), Request::changeToLower);
+		if (line.find("Content-Type") != std::string::npos)
+			std::for_each(line.begin(), line.begin() + std::string("Content-Type").length(), Request::changeToLower);
+		else
+			std::for_each(line.begin(), line.end(), Request::changeToLower);
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
+		(void)i;
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
+		// std::cout << "line before: " << line << "\n"; 
 		line = line.substr(line.find_first_not_of(" \t\r", line.find(":") + 1));
+		// std::cout << "line now: " << line << "\n";
 		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
 		{
 			if (line[lnsp] != ' ' && line[lnsp] != '\t' && line[lnsp] != '\r')
 				break;
 		}
-		if (lnsp < line.length() - 1)
-			ignore = true;
+		// if (lnsp < line.length() - 1)
+		// 	ignore = true;
 		field_value = line.substr(0, lnsp + 1);
 		if (field_value.find_first_not_of("0123456789") != str::npos && header_field == "content-length")
 			return (*this);
@@ -187,9 +235,44 @@ bool Request::isValidRequest()
 	return validRequest;
 }
 
+bool	Request::getFullyReceived() const
+{
+	return fullyReceived;
+}
+
 str Request::getStatus()
 {
 	return status;
+}
+
+bool Request::getHasBody() const
+{
+	return has_body;
+}
+
+bool	Request::getHeaderReceived() const
+{
+	return headerReceived;
+}
+
+std::fstream&	Request::getBodyFile()
+{
+	return (this->bodyFile);
+}
+
+void	Request::setFullyReceived(const bool status)
+{
+	this->fullyReceived = status;
+}
+
+void	Request::setHeaderReceived(const bool status)
+{
+	this->headerReceived = status;
+}
+
+void	Request::setHasBody(const bool status)
+{
+	this->has_body = status;
 }
 
 str Request::getFileURI()
@@ -217,7 +300,21 @@ str Request::getContentType()
 	return contentType;
 }
 
+str	Request::getBoundary() const
+{
+	return (body_boundary);
+}
+
 size_t Request::getContentLen()
 {
 	return contentLength;
+}
+
+str	Request::getRequest() const
+{
+	str	r;
+
+	for (unsigned int i = 0; i < request.size(); i++)
+		r.append(request.at(i));
+	return (r);
 }
