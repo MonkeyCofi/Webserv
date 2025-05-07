@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Cgi.hpp"
 
 const str	Server::default_ip = "127.0.0.1";
 const str	Server::default_port = "80";
@@ -289,6 +290,11 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	header = resp.str();
 }
 
+str	Server::getRoot() const
+{
+	return (this->root);
+}
+
 // void Server::getInfo(str &path)
 // {
 //     struct stat s;
@@ -408,7 +414,7 @@ void Server::handleRequest(Request *req)
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi;
-			cgi.setupEnvAndRun(req);
+			cgi.setupEnvAndRun(req, this);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(req, file, resp);

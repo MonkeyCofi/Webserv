@@ -3,8 +3,9 @@
 
 # include <iostream>
 # include <map>
-# include "Request.hpp"
 # include <unistd.h>
+# include <sys/wait.h>
+# include "Server.hpp"
 
 class Cgi
 {
@@ -25,7 +26,7 @@ class Cgi
 		Cgi(const Cgi& copy);
 		Cgi	&operator=(const Cgi& copy);
 
-		void		setupEnvAndRun(Request* req);
+		void		setupEnvAndRun(Request* req, Server* serv);
 		void		runCGI();
 		char**   	envToChar();
 };

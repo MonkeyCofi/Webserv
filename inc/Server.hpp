@@ -20,7 +20,6 @@
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"
-# include "Cgi.hpp"
 
 typedef std::string str;
 
@@ -62,6 +61,7 @@ class Server: public BlockOBJ
 		str						getPort(int index);
 		str						getIP(int index);
 		str						getType();
+		str						getRoot() const;
 		void					setDefault();
 		Socket*					init_listeners();
 		std::vector<str>		getNames();
