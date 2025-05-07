@@ -203,7 +203,11 @@ void ConnectionManager::startConnections()
 			{
 				reqs.at(i) = "";
 				memset(buffer, 0, 4096);
-				bytes = recv(sock_fds.at(i).fd, buffer, 4096, 0);
+				while ((bytes = recv(sock_fds.at(i).fd, buffer, 4096, 0)) > 0)
+				{
+					reqs.at(i) += str(buffer);
+					memset(buffer, 0, 4096);
+				}
 				reqs.at(i) = str(buffer);
 				if (bytes == 0)
 				{
@@ -216,6 +220,9 @@ void ConnectionManager::startConnections()
 					i--;
 					continue ;
 				}
+				std::cout << "=================\n";
+				std::cout << reqs.at(i) << "\n";
+				std::cout << "=================\n";
 				req = new Request(reqs.at(i));
 				passRequestToServer(i, &req);
 			}

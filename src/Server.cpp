@@ -450,7 +450,7 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 void Server::handleRequest(Request *req)
 {
 	str					file;
-	int					count;
+	// int					count;
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
@@ -473,8 +473,8 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "DELETE")
 	{
-		count = 0;
-		for (unsigned int i = 0; i < req->getFileURI(); i++)
+		// count = 0;
+		// for (unsigned int i = 0; i < req->getFileURI(); i++)
 		// 	count += (req->getFileURI());
 		// if (count < min_del_depth)
 		// {

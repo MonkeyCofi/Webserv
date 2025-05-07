@@ -1,1 +1,2 @@
-echo -en 'GET / HTTP/1.1\r\nHost: none\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8000
+echo -en 'GET / HTTP/1.1\r\nHost: none\r\nConnection: Keep-Alive\r\n\r\n' | nc 127.0.0.1 8000
+echo -en 'POST / HTTP/1.1\r\nHost: none\r\nConnection: Keep-Alive\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nEmad & Pierce' | nc 127.0.0.1 8000
