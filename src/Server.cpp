@@ -474,7 +474,7 @@ void Server::handleRequest(Request *req)
 			cgi.setupEnvAndRun(req, this);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
-			directoryResponse(req, file, resp);
+			directoryResponse(file, resp);
 		else
 			fileResponse(file, resp, false);
 	}

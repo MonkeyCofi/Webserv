@@ -11,7 +11,8 @@ class Cgi
 {
 	private:
 		str	cgiFileName;
-		std::map<std::string, std::string>	env;
+		std::vector<str>	env;
+		// std::map<std::string, std::string>	env;
 		str	path_info;
 		str	query_string;
 		str	content_type;
