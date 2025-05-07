@@ -30,25 +30,24 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 			opts.pop();
 		}
 	}
-	else if (opts.front() == "error_page" && opts.size() > 2)
-	{
-		opts.pop();
-		while (opts.size() > 1)
-		{
-			if (opts.front().length() == 0)
-				return false;
-			if (opts.size() > 1)
-			{
-				for (unsigned int i = 0; i < opts.front().length(); i++)
-				{
-					if (opts.front()[i] < '0' || opts.front()[i] > '9')
-						return false;
-				}
-			}
-			error_pages[opts.front()] = opts.back();
-			opts.pop();
-		}
-	}
+	// else if (opts.front() == "error_page" && opts.size() > 2)
+	// {
+	// 	opts.pop();
+	// 	while (opts.size() > 1)
+	// 	{
+	// 		if (opts.front().length() != 3)
+	// 			return false;
+	// 		if (opts.back().at(0) != '/' || opts.back().length() < 2)
+	// 			return false;
+	// 		for (unsigned int i = 0; i < 3; i++)
+	// 		{
+	// 			if (opts.front()[i] < '0' || opts.front()[i] > '9')
+	// 				return false;
+	// 		}
+	// 		error_pages[opts.front()] = opts.back();
+	// 		opts.pop();
+	// 	}
+	// }
 	else if (opts.front() == "client_max_body_size" && opts.size() == 2)
 	{
 		opts.pop();

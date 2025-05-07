@@ -10,14 +10,17 @@ Server::Server() : BlockOBJ()
 	body = "";
 	header = "";
 	root = "/";
+	index.push_back("index.html");
 	keep_alive = false;
 	autoindex = false;
+	min_del_depth = 0;
 	file_fd = -1;
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
 	http_codes["202"] = "Accepted";
 	http_codes["204"] = "No Content";
 	http_codes["301"] = "Redirect";
+	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
@@ -32,8 +35,10 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	body = "";
 	header = "";
 	root = "/";
+	index.push_back("index.html");
 	keep_alive = false;
 	autoindex = false;
+	min_del_depth = 0;
 	file_fd = -1;
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -113,7 +118,8 @@ bool Server::handleAddress(str address)
 
 bool Server::handleDirective(std::queue<str> opts)
 {
-	bool			parent_ret;
+	bool	parent_ret;
+	size_t	pos;
 
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
@@ -131,6 +137,36 @@ bool Server::handleDirective(std::queue<str> opts)
 		root = opts.front();
 		if (root.at(root.length() - 1) == '/')
 			root = root.substr(0, root.length() - 1);
+		pos = root.find("%20");
+		while (pos != str::npos)
+		{
+			root.replace(pos, 3, " ");
+			pos += 3;
+			pos = root.find("%20", pos);
+		}
+	}
+	else if (opts.front() == "index" && opts.size() >= 2)
+	{
+		opts.pop();
+		while (!opts.empty())
+		{
+			if (opts.front() == "index.html")
+			{
+				opts.pop();
+				continue ;
+			}
+			index.push_back(opts.front());
+			if (index.back().at(index.back().length() - 1) == '/' || index.back().at(0) == '/')
+				return false;
+			pos = index.back().find("%20");
+			while (pos != str::npos)
+			{
+				index.back().replace(pos, 3, " ");
+				pos += 3;
+				pos = index.back().find("%20", pos);
+			}
+			opts.pop();
+		}
 	}
 	else if (opts.front() == "server_name" && opts.size() >= 2)
 	{
@@ -160,6 +196,19 @@ bool Server::handleDirective(std::queue<str> opts)
 		if (opts.front() != "off" && opts.front() != "on")
 			return false;
 		autoindex = (opts.front() == "on");
+		opts.pop();
+	}
+	else if (opts.front() == "min_delete_depth" && opts.size() == 2)
+	{
+		opts.pop();
+		if (opts.front().length() > 10)
+			return false;
+		for (unsigned int i = 0; i < opts.front().length(); i++)
+		{
+			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
+				return false;
+		}
+		min_del_depth = std::stoi(opts.front());
 		opts.pop();
 	}
 	else
@@ -328,30 +377,36 @@ bool Server::isDirectory(const std::string& path)
 	return false;
 }
 
-void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
+void Server::directoryResponse(str path, std::stringstream &resp)
 {
-	str				index, full_path, filename, body;
+	str				indexpath, full_path, filename, body;
     DIR				*dir;
 	bool			redir;
     struct dirent	*item;
 
+	redir = false;
 	if (path.at(path.length() - 1) != '/')
 	{
 		path += "/";
 		redir = true;
 	}
 	full_path = root + path;
-	index = full_path + "index.html";
-	file_fd = open(index.c_str(), O_RDONLY);
-	if (file_fd > -1)
+	for (unsigned int i = 0; i < index.size(); i++)
 	{
-		fileResponse(req, path + "index.html", resp, true);
-		return ;
-	}
-	else if (!autoindex)
-	{
-		handleError("403", resp);
-		return ;
+		indexpath = full_path + index.at(i);
+		file_fd = open(indexpath.c_str(), O_RDONLY);
+		if (file_fd > -1)
+		{
+			fileResponse(path + index.at(i), resp, true);
+			return ;
+		}
+		else if (i != index.size() - 1)
+			continue ;
+		else if (!autoindex)
+		{
+			handleError("403", resp);
+			return ;
+		}
 	}
 	file_fd = -1;
 	dir = opendir(full_path.c_str());
@@ -380,26 +435,28 @@ void Server::directoryResponse(Request *req, str path, std::stringstream &resp)
 	header = resp.str() + body;
 }
 
-void Server::fileResponse(Request *req, str path, std::stringstream &resp, bool checking_index)
+void Server::fileResponse(str path, std::stringstream &resp, bool checking_index)
 {
-	(void)req;
-	path = root + path;
 	if (!checking_index)
+	{
+		path = root + path;
 		file_fd = open(path.c_str(), O_RDONLY);
+	}
 	if (file_fd == -1)
 	{
 		if (!checking_index)
 			handleError("404", resp);
 		return ;
 	}
-	resp << "HTTP/1.1 200 OK\r\nContent-Type: " << fileType(path) << "\r\n";
-	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << "\r\n\r\n";
+	resp << "HTTP/1.1 " << (checking_index && path != "/index.html" ? "302 Found" : "200 OK") << "\r\nContent-Type: " << fileType(path) << "\r\n";
+	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << (checking_index && path != "/index.html" ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
 	header = resp.str();
 }
 
 void Server::handleRequest(Request *req)
 {
 	str					file;
+	// int					count;
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
@@ -419,7 +476,7 @@ void Server::handleRequest(Request *req)
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(req, file, resp);
 		else
-			fileResponse(req, file, resp, false);
+			fileResponse(file, resp, false);
 	}
 	else if (req->getMethod() == "POST")
 	{
@@ -434,7 +491,13 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "DELETE")
 	{
-		// 
+		// count = 0;
+		// for (unsigned int i = 0; i < req->getFileURI(); i++)
+		// 	count += (req->getFileURI());
+		// if (count < min_del_depth)
+		// {
+		// 	handleError()
+		// }
 	}
 }
 

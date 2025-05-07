@@ -136,7 +136,10 @@ bool ConfigParser::handleNext(str &word)
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
-					blocks.top()->handleDirective(parsed_opts);
+				{
+					if (!blocks.top()->handleDirective(parsed_opts))
+						return false;
+				}
 			}
 			while (parsed_opts.size() > 0)
 				parsed_opts.pop();
