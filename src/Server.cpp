@@ -471,7 +471,7 @@ void Server::handleRequest(Request *req)
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi;
-			cgi.setupEnvAndRun(req, this);
+			cgi.setupEnvAndRun(req, resp, this);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);

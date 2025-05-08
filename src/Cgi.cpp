@@ -53,35 +53,36 @@ Cgi &Cgi::operator=(const Cgi& copy)
     return (*this);
 }
 
-void    Cgi::setupEnvAndRun(Request* req, Server* serv)
+void    Cgi::setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv)
 {
-    std::cout << "Root for server: " << serv->getRoot() << "\n";
-    std::cout << CYAN << "Setting up cgi environment\n";
-    // this->path_info = serv->getRoot() + req->getFileURI();
-    // this->path_info = this->path_info.substr(0, this->path_info.find_first_of('?'));
+    this->path_info = "PATH_INFO=" + str(serv->getRoot() + req->getFileURI());
+    this->path_info = path_info.substr(0, path_info.find_first_of('?'));
+    this->query_string = "QUERY_STRING=" + req->getFileURI().substr(req->getFileURI().find_first_of('?'), str::npos);
+    this->method = "METHOD=" + req->getMethod();
+    this->content_type = "CONTENT_TYPE=" + req->getContentType();
+    this->host = "HTTP_HOST=" + req->getHost();
+    this->content_length = "CONTENT_LENGTH=";   // incomplete
 
-    // this->path_info = str(serv->getRoot() + req->getFileURI()).substr(0, this->path_info.find_first_of('?'));
-    // this->query_string = req->getFileURI().substr(req->getFileURI().find_first_of('?'), str::npos);
-    // this->method = req->getMethod();
-    // this->content_type = req->getContentType();
-    // this->host = req->getHost();
-    // this->content_length = req->getContentLen();
-    this->env.push_back(str(serv->getRoot() + req->getFileURI()).substr(0, this->path_info.find_first_of('?')));
-    this->env.push_back(req->getFileURI().substr(req->getFileURI().find_first_of('?'), str::npos));
-    this->env.push_back(req->getMethod());
-    this->env.push_back(req->getContentType());
-    this->env.push_back(req->getHost());
-    this->env.push_back("Lol");
-    // this->env.push_back(req->getContentLen());
-    runCGI();
+    this->env.push_back(path_info);
+    this->env.push_back(query_string);
+    this->env.push_back(method);
+    this->env.push_back(content_type);
+    this->env.push_back(host);
+    this->env.push_back(content_length);
+    runCGI(resp);
 }
 
 char**   Cgi::envToChar()
 {
-    return (&this->env[0]);
+    char**  envp = new char*[env.size() + 1];
+    size_t  i = 0;
+    for (; i < this->env.size(); i++)
+        envp[i] = const_cast<char *>(this->env[i].c_str());
+    envp[i] = NULL;
+    return (envp);
 }
 
-void    Cgi::runCGI()
+void    Cgi::runCGI(std::stringstream& resp)
 {
     int status;
     int old_out = dup(STDOUT_FILENO);
@@ -90,14 +91,14 @@ void    Cgi::runCGI()
     this->cgi_fd = fork();
     if (cgi_fd == 0)    // child process
     {
-        str script_path = this->path_info;
-        const char *const argv[2] = {script_path.c_str(), NULL};
-        std::cout << "Trying to execute " << script_path.c_str() << "\n";
+        str script_path = this->path_info.substr(this->path_info.find("PATH_INFO=") + std::strlen("PATH_INFO="), str::npos);
+        const char* cmd = "/usr/bin/python3";
+        const char *const argv[3] = {cmd, script_path.c_str(), NULL};
         char* const* envp = envToChar();
-        for (int i = 0; envp[i]; i++)
-            std::cout << YELLOW << envp[i] << NL;
-        std::cout << "In child process\n";
-        if (execve("/bin/python3", const_cast<char **>(argv), envp))
+        close(pipe_fds[READ]);
+        dup2(STDOUT_FILENO, pipe_fds[WRITE]);
+        close(pipe_fds[WRITE]);
+        if (execve(cmd, const_cast<char **>(argv), envp))
         {
             perror("Why");
             delete (envp);
@@ -107,13 +108,17 @@ void    Cgi::runCGI()
     else
     {
         wait(&status);
-        dup2(pipe_fds[0], STDOUT_FILENO);
-        std::cout.flush();
+        if (WIFEXITED(status))
+            std::cout << "Child process exited with status: " << WEXITSTATUS(status) << "\n";
+        else
+            std::cout << "Child process did not exit\n";
+        close(pipe_fds[WRITE]);
+        dup2(pipe_fds[READ], STDOUT_FILENO);
+        close(pipe_fds[READ]);
+        resp << std::cout;
         dup2(old_out, STDOUT_FILENO);
-        // for (int i = 0; e[i]; i++)
-        // {
-        //     std::cout << e[i] << "\n";
-        // }
-        // std::cout << "In parent process\n";
+        std::cout << CYAN "resp: " << resp.str() << NL;
     }
+    (void)resp;
+    (void)old_out;
 }

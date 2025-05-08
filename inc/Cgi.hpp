@@ -7,6 +7,9 @@
 # include <sys/wait.h>
 # include "Server.hpp"
 
+# define READ 0
+# define WRITE 1
+
 class Cgi
 {
 	private:
@@ -27,8 +30,8 @@ class Cgi
 		Cgi(const Cgi& copy);
 		Cgi	&operator=(const Cgi& copy);
 
-		void		setupEnvAndRun(Request* req, Server* serv);
-		void		runCGI();
+		void		setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv);
+		void		runCGI(std::stringstream& resp);
 		char**   	envToChar();
 };
 
