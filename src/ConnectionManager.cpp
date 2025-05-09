@@ -273,14 +273,14 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	{
 		closeSocket(index);
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
-		return (INCOMPLETE);
+		return (state);
 	}
 	buffer[r] = '\0';
 	// if (req->getHasBody())
 	// 	std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
-	_request = buffer;
+	_request = str(buffer);
 	req->pushRequest(_request);
-	if (req->getRequest().find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false)	// the buffer contains the end of the request header
+	if (req->getHeaderReceived() == false && _request.find("\r\n\r\n") != str::npos)	// the buffer contains the end of the request header
 	{
 		std::cout << MAGENTA << "Found end of header" << NL;
 		str	rq = req->getRequest();
@@ -393,7 +393,6 @@ void ConnectionManager::startConnections()
 					// std::cout << MAGENTA << requests[sock_fds.at(i).fd]->getRequest() << NL;
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
-				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
@@ -408,7 +407,6 @@ void ConnectionManager::startConnections()
 						// requests.erase(requests.begin() + (test));
 						closeSocket(i);
 					}
-					continue ;
 				}
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
