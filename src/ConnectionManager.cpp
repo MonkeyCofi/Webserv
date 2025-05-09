@@ -285,6 +285,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << MAGENTA << "Found end of header" << NL;
 		str	rq = req->getRequest();
 		req->parseRequest(rq);
+		std::cout << req->getRequest();
 		req->setHeaderReceived(true);
 		if (req->getContentLen() != 0)
 			req->setHasBody(true);
@@ -357,7 +358,7 @@ void ConnectionManager::startConnections()
 		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
 		{
-			std::cout << "No FD event occuring\n";
+			std::cout << "No FD event occurring\n";
 			continue ;
 		}
 		if (res < 0)
@@ -390,10 +391,8 @@ void ConnectionManager::startConnections()
 				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i, state)) == FINISH)	// request has been fully received
 				{
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
-					// std::cout << MAGENTA << requests[sock_fds.at(i).fd]->getRequest() << NL;
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
-				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
@@ -408,8 +407,8 @@ void ConnectionManager::startConnections()
 						// requests.erase(requests.begin() + (test));
 						closeSocket(i);
 					}
-					continue ;
 				}
+				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
@@ -420,7 +419,6 @@ void ConnectionManager::startConnections()
 	}
 	std::cout << "Ending Server...\n";
 	this->request_body.close();
-	unlink(TEMP_FILE);
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
 	{
 		close(sock_fds.at(i).fd);

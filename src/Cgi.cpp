@@ -85,7 +85,6 @@ char**   Cgi::envToChar()
 void    Cgi::runCGI(std::stringstream& resp)
 {
     int status;
-    int old_out = dup(STDOUT_FILENO);
     if (pipe(this->pipe_fds) == -1)
         throw (std::runtime_error("Couldn't open pipes for CGI"));
     this->cgi_fd = fork();
@@ -96,7 +95,7 @@ void    Cgi::runCGI(std::stringstream& resp)
         const char *const argv[3] = {cmd, script_path.c_str(), NULL};
         char* const* envp = envToChar();
         close(pipe_fds[READ]);
-        dup2(STDOUT_FILENO, pipe_fds[WRITE]);
+        dup2(pipe_fds[WRITE], STDOUT_FILENO);
         close(pipe_fds[WRITE]);
         if (execve(cmd, const_cast<char **>(argv), envp))
         {
@@ -107,18 +106,21 @@ void    Cgi::runCGI(std::stringstream& resp)
     }
     else
     {
-        wait(&status);
+        close(pipe_fds[WRITE]);
+        char b[BUFFER_SIZE] = {0};
+        ssize_t r = 1;
+        int response = open("./.cgi-response", O_RDWR | O_CREAT);
+        fcntl(response, F_SETFL, fcntl(response, F_GETFL) | O_NONBLOCK);
+        fcntl(response, F_SETFD, fcntl(response, F_GETFD) | FD_CLOEXEC);
+        while (r)
+            r = read(pipe_fds[READ], b, BUFFER_SIZE);
+        write(response, b, r);
+        close(response);
+        waitpid(cgi_fd, &status, 0);
         if (WIFEXITED(status))
             std::cout << "Child process exited with status: " << WEXITSTATUS(status) << "\n";
         else
             std::cout << "Child process did not exit\n";
-        close(pipe_fds[WRITE]);
-        dup2(pipe_fds[READ], STDOUT_FILENO);
-        close(pipe_fds[READ]);
-        resp << std::cout;
-        dup2(old_out, STDOUT_FILENO);
-        std::cout << CYAN "resp: " << resp.str() << NL;
     }
     (void)resp;
-    (void)old_out;
 }
