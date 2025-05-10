@@ -220,14 +220,15 @@ void	ConnectionManager::parseBodyFile(Request* req)
 	while (std::getline(tempFile, line))
 	{
 		// std::cout << RED << "Line: " << line << NL;
-		if (line.find(req->getBoundary()) != str::npos && writeFile == false)
-		{
-			newBound ^= true;
-			// if (newBound)
-			// 	newBound = false;
-			continue ;
-		}
-		else if (writeFile)
+		// if (line.find(req->getBoundary()) != str::npos && writeFile == false)
+		// {
+		// 	newBound ^= true;
+		// 	// if (newBound)
+		// 	// 	newBound = false;
+		// 	continue ;
+		// }
+		// else if (writeFile)
+		if (writeFile)
 		{
 			if (line.find("Content-Type") != str::npos)
 				continue ;

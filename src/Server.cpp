@@ -470,8 +470,10 @@ void Server::handleRequest(Request *req)
 		file = req->getFileURI();
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
-			Cgi	cgi;
+			Cgi	cgi(req->getFileURI(), this);
 			cgi.setupEnvAndRun(req, resp, this);
+			header = resp.str();
+			std::cout << RED << header << NL;
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);

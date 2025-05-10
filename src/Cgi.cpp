@@ -10,11 +10,14 @@
     the stdin and stdout of the CGI program
     * write the request body into stdin
     * the stdout will be the response of the cgi
+    * by default, request.cgi_fd is instantiated to -1
+    * if a script is gonna be executed, set cgi_fd to that child process's fd
+    * when in POLLIN event, if cgi_fd for this request is not -1, it means there is a currently executing cgi script
 */
 
 Cgi::Cgi()
 {
-    this->cgiFileName = "";
+    this->cgiPath = "";
     this->path_info = "";
     this->query_string = "";
     this->content_type = "";
@@ -37,9 +40,25 @@ Cgi::Cgi(const Cgi& copy)
     this->operator=(copy);
 }
 
+Cgi::Cgi(const str script_path, Server* server)
+{
+    this->cgiPath = server->getRoot() + script_path;
+    this->cgiPath = this->cgiPath.substr(0, this->cgiPath.find_first_of('?'));
+    this->scriptName = this->cgiPath.substr(this->cgiPath.find_last_of('/') + 1);
+    this->path_info = "";
+    this->query_string = "";
+    this->content_type = "";
+    this->content_length = "";
+    this->method = "";
+    this->host = "";
+    this->pipe_fds[0] = -1;
+    this->pipe_fds[1] = -1;
+    this->cgi_fd = -1;
+}
+
 Cgi &Cgi::operator=(const Cgi& copy)
 {
-    this->cgiFileName = copy.cgiFileName;
+    this->cgiPath = copy.cgiPath;
     this->env = copy.env;
     this->path_info = copy.path_info;
     this->query_string = copy.query_string;
@@ -69,6 +88,7 @@ void    Cgi::setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv)
     this->env.push_back(content_type);
     this->env.push_back(host);
     this->env.push_back(content_length);
+    this->env.push_back("SCRIPT_NAME=" + this->scriptName);
     runCGI(resp);
 }
 
@@ -82,8 +102,33 @@ char**   Cgi::envToChar()
     return (envp);
 }
 
+bool    Cgi::validScriptAccess() const
+{
+    std::cout << CYAN << "Script path: " << this->cgiPath << NL;
+    std::cout << YELLOW << "Script name: " << this->scriptName << NL;
+    if (access(this->cgiPath.c_str(), F_OK) == 0)    // the file is found
+    {
+        std::cout << "Script file is found\n";
+        if (access(this->cgiPath.c_str(), X_OK | R_OK) == 0)// check if the file has execution rights
+        {
+            std::cout << "Script file is readable and executable\n";
+            return (true);
+        }
+    }
+    std::cerr << RED"Script file is inaccessible" << NL;
+    return (false);
+}
+
 void    Cgi::runCGI(std::stringstream& resp)
 {
+    // if the script is inaccessible, return an error page
+    if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
+    {
+        resp << "HTTP/1.1 404 Not Found\r\n";
+        resp << "Content-Length: 83\r\n";
+        resp << "\r\n\r\n";
+        resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
+    }
     int status;
     if (pipe(this->pipe_fds) == -1)
         throw (std::runtime_error("Couldn't open pipes for CGI"));
@@ -91,7 +136,7 @@ void    Cgi::runCGI(std::stringstream& resp)
     if (cgi_fd == 0)    // child process
     {
         str script_path = this->path_info.substr(this->path_info.find("PATH_INFO=") + std::strlen("PATH_INFO="), str::npos);
-        const char* cmd = "/usr/bin/python3";
+        const char* cmd = "/usr/bin/php";
         const char *const argv[3] = {cmd, script_path.c_str(), NULL};
         char* const* envp = envToChar();
         close(pipe_fds[READ]);
@@ -113,14 +158,27 @@ void    Cgi::runCGI(std::stringstream& resp)
         fcntl(response, F_SETFL, fcntl(response, F_GETFL) | O_NONBLOCK);
         fcntl(response, F_SETFD, fcntl(response, F_GETFD) | FD_CLOEXEC);
         while (r)
+        {
             r = read(pipe_fds[READ], b, BUFFER_SIZE);
-        write(response, b, r);
+            if (write(response, b, r) == -1)
+                std::cerr << RED"Write error" << NL;
+                // error;
+        }
         close(response);
         waitpid(cgi_fd, &status, 0);
         if (WIFEXITED(status))
-            std::cout << "Child process exited with status: " << WEXITSTATUS(status) << "\n";
+            std::cout << YELLOW << "Successfully executed script" << NL;
         else
             std::cout << "Child process did not exit\n";
+        std::ifstream test_stream;
+        test_stream.open("./.cgi-response", std::ios::in | std::ios::binary);
+        str line;
+        while (std::getline(test_stream, line))
+        {
+            std::cout << "line: " << line << "\n";
+            resp << line;
+        }
+        std::cout << YELLOW << resp.str() << NL;
     }
     (void)resp;
 }
