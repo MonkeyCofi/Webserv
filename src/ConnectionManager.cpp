@@ -221,12 +221,22 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		// match it against the Content-Type in the next line for extra security
 		if (line.find("Content-Disposition: ") != str::npos)
 		{
-			if (line.find("filename=\"") != str::npos)
+			std::cout << "Found content disposition\n";
+			size_t	fileNamePos = line.find("filename=\"");
+			if (fileNamePos != str::npos)
 			{
-				str name = line.substr(line.find("filename=\"", line.find_last_of("\"")));
-				
-				str file_extension = line.substr(line.find_last_of('.'), str::npos);
-				std::cout << "Filename: " << name << " Extension: " << file_extension << "\n";
+				size_t	endDblquotePos = line.find_last_of('\"');
+				std::cout << "Found filename\n";
+				str name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
+				if (*(name.end() - 1) == '\"')
+				{
+					std::cout << "There is a double quote at the end of the filename\n";
+					name.erase(name.end() - 1);
+				}
+				std::cout << "Filename: " << name << "\n";
+				size_t	dotPos = line.find_last_of('.');
+				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
+				std::cout << "Extension: " << file_extension << "\n";
 			}
 		}
 	}
