@@ -472,8 +472,8 @@ void Server::handleRequest(Request *req)
 		{
 			Cgi	cgi(req->getFileURI(), this);
 			cgi.setupEnvAndRun(req, resp, this);
-			header = resp.str();
-			std::cout << RED << header << NL;
+			// header = resp.str();
+			// std::cout << RED << header << NL;
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);
@@ -507,10 +507,11 @@ bool Server::respond(int client_fd)
 {
 	str		tmp;
 	ssize_t	bytes, sb;
-	char	buffer[BUFFER_SIZE];
+	char	buffer[BUFFER_SIZE] = {0};
 
 	if (header == "")
 		return true;
+	std::cout << CYAN"header: " << header << NL;
 	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
 		return false;
 	header = "";
@@ -521,6 +522,7 @@ bool Server::respond(int client_fd)
 			tmp = ssizeToStr(bytes) + "\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
 				return false;
+			std::cout << YELLOW << "sending: " << buffer << NL;
 			if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
 				return false;
 			if (send(client_fd, "\r\n", 2, 0) <= 0)
@@ -567,4 +569,20 @@ bool Server::operator ==(Server &server2)
 		}
 	}
 	return same_name && same_ipport;
+}
+
+// new functions
+void	Server::setHeader(str header_)
+{
+	this->header = header_;
+}
+
+void	Server::setBody(str body_)
+{
+	this->body.append(body_);
+}
+
+void	Server::setFileFD(int fd_)
+{
+	this->file_fd = fd_;
 }

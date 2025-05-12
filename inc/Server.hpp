@@ -69,6 +69,10 @@ class Server: public BlockOBJ
 		std::vector<str>		getPorts();
 		std::vector<Location *>	getLocations();
 
+		void	setHeader(str header_);
+		void	setBody(str body_);
+		void	setFileFD(int fd_);
+
 		bool					respond(int client_fd);
 
 		const Server	&operator =(const Server &copy);

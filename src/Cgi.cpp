@@ -89,7 +89,7 @@ void    Cgi::setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv)
     this->env.push_back(host);
     this->env.push_back(content_length);
     this->env.push_back("SCRIPT_NAME=" + this->scriptName);
-    runCGI(resp);
+    runCGI(resp, serv);
 }
 
 char**   Cgi::envToChar()
@@ -119,7 +119,7 @@ bool    Cgi::validScriptAccess() const
     return (false);
 }
 
-void    Cgi::runCGI(std::stringstream& resp)
+void    Cgi::runCGI(std::stringstream& resp, Server* server)
 {
     // if the script is inaccessible, return an error page
     if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
@@ -146,7 +146,8 @@ void    Cgi::runCGI(std::stringstream& resp)
         {
             perror("Why");
             delete (envp);
-            throw (std::runtime_error("Cant't execute CGI script")); // execute the cgi script, passing the script path as the argument
+            std::cerr << "Can't execute CGI script\n";
+            exit(EXIT_FAILURE);
         }
     }
     else
@@ -172,13 +173,24 @@ void    Cgi::runCGI(std::stringstream& resp)
             std::cout << "Child process did not exit\n";
         std::ifstream test_stream;
         test_stream.open("./.cgi-response", std::ios::in | std::ios::binary);
+        int response_fd = open("./.cgi-response", O_RDONLY);
+        if (response_fd == -1)
+            throw (std::runtime_error("Can't open CGI response FD"));
+        server->setFileFD(response_fd);
         str line;
         while (std::getline(test_stream, line))
         {
-            std::cout << "line: " << line << "\n";
-            resp << line;
+            if (line.find("HTTP/1.1") != str::npos)
+            {
+                std::cout << RED << line << NL;
+                server->setHeader(line);
+            }
+            else
+            {
+                std::cout << RED << line << NL;
+                server->setBody(line);
+            }
         }
-        std::cout << YELLOW << resp.str() << NL;
     }
     (void)resp;
 }

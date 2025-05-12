@@ -7,10 +7,10 @@ if (!$script_name) {
 }
 
 
-$content_length = strlen($script_name) + 84;
+$content_length = strlen($script_name) + 86;
 // Output HTTP headers
 echo "HTTP/1.1 200 OK\r\n";
 echo "Content-Length: ${content_length}\r\n";
-echo "Content-Type: text/plain\r\n\r\n";
+echo "Content-Type: text/html\r\n\r\n";
 echo "<html><center><h1>Request received. Script $script_name executed successfully</h1></center></html>";
 ?>

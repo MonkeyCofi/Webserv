@@ -1,5 +1,5 @@
 HTTP/1.1 200 OK
-Content-Length: 93
-Content-Type: text/plain
+Content-Length: 95
+Content-Type: text/html
 
-<html><center><h1>Request received. Script scphp.php executed successfully</h1></center></html>
+<html><center><h1>Request received. Script scphp.php executed successfully</h1></center></html>>
