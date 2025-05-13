@@ -17,6 +17,7 @@
 # include <sstream>
 # include <sys/socket.h>
 # include <map>
+# include <string>
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"

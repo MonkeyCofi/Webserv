@@ -208,7 +208,8 @@ bool Server::handleDirective(std::queue<str> opts)
 			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
 				return false;
 		}
-		min_del_depth = std::stoi(opts.front());
+		// min_del_depth = std::stoi(opts.front());
+		min_del_depth = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
 	else
@@ -522,7 +523,7 @@ bool Server::respond(int client_fd)
 			tmp = ssizeToStr(bytes) + "\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
 				return false;
-			std::cout << YELLOW << "sending: " << buffer << NL;
+			// std::cout << YELLOW << "sending: " << buffer << NL;
 			if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
 				return false;
 			if (send(client_fd, "\r\n", 2, 0) <= 0)

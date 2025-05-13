@@ -207,6 +207,11 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 	(void)req;
 }
 
+// void	ConnectionManager::peruseFileContent(std::ifstream& inFile, const str creation_filename)
+// {
+
+// }
+
 void	ConnectionManager::parseBodyFile(Request* req)
 {
 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
@@ -228,15 +233,15 @@ void	ConnectionManager::parseBodyFile(Request* req)
 				size_t	endDblquotePos = line.find_last_of('\"');
 				std::cout << "Found filename\n";
 				str name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
-				if (*(name.end() - 1) == '\"')
-				{
-					std::cout << "There is a double quote at the end of the filename\n";
-					name.erase(name.end() - 1);
-				}
+				// for (size_t i = 0; name[i]; i++)
+				// 	std::cout << i << ": " << name[i] << " ascii: " << static_cast<int>(name[i]) << "\n";
+				if (name.find("\"\r") != str::npos)
+					name.erase(name.find("\"\r"));
 				std::cout << "Filename: " << name << "\n";
 				size_t	dotPos = line.find_last_of('.');
 				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
 				std::cout << "Extension: " << file_extension << "\n";
+				// peruseFileContent(tempFile);
 			}
 		}
 	}
@@ -323,25 +328,23 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		else
 			return (FINISH);
 		// write the body's bytes onto the temp file
-		if (req->getHeaderReceived() == true && req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
+		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
 		{
 			size_t	endPos;
 			openTempFile(req, file);
 			endPos = (rq.find("\r\n\r\n") != str::npos ? rq.find("\r\n\r\n") + 4 : str::npos);
-			std::cout << CYAN << "Position of header end: " << endPos << NL;
 			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
 			{
 				std::cout << RED << "There is a body but it is not present in request" << NL;
 				return (INCOMPLETE);
 			}
-			str	body = rq.substr(endPos, r);
 			std::cout << YELLOW << "r - endPos: " << r - endPos << " endpos: " << endPos << NL;
 			req->bytesReceived += r - endPos;
 			// req->bytesReceived += body.length();
 			file.write(&buffer[endPos], r - endPos);
 			if (file.bad() || file.fail())
 				throw(std::runtime_error("Couldn't write data to temp file\n"));
-			if (body.find(req->body_boundaryEnd) != str::npos || req->bytesReceived == req->getContentLen())
+			if (req->bytesReceived == req->getContentLen())
 			{
 				parseBodyFile(req);
 				return (FINISH);
@@ -353,9 +356,11 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		if (req->getHasBody())
 		{
 			str	buf = buffer;
+			// std::cout << RED << "In else: " << r << NL;
 			req->bytesReceived += r;
 			file.write(&buffer[0], r);
-			if (buf.find(req->body_boundaryEnd) != std::string::npos || req->bytesReceived == req->getContentLen())
+			// if (buf.find(req->body_boundaryEnd) != std::string::npos || req->bytesReceived == req->getContentLen())
+			if (req->bytesReceived == req->getContentLen())
 			{
 				std::cout << "Found ending boundary\n";
 				std::cout << CYAN << "Content len: " << req->getContentLen() << " Received the full content length's worth of bytes: " << req->bytesReceived << NL;
@@ -424,6 +429,7 @@ void ConnectionManager::startConnections()
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
+				continue;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
