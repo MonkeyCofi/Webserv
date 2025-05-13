@@ -212,21 +212,197 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 	
 // }
 
+ssize_t	searchArrays(char *a, ssize_t aa, char *b, ssize_t bb, str boundary)
+{
+	ssize_t length = (ssize_t)boundary.length();
+	char *arr = new char[2 * length];
+
+	std::cout << aa << " - " << bb << " - " << length << " - " << boundary << "\n";
+	for (ssize_t i = 0; i < aa; i++)
+	{
+		ssize_t j = i;
+		while (a[j] == boundary [j - i] && j - i < length && j < aa)
+			j++;
+		if (j - i >= length)
+			return i;
+	}
+	if (!b)
+		return -1;
+	for (ssize_t i = 0; i < bb; i++)
+	{
+		ssize_t j = i;
+		std::cout << j << "\n";
+		while (b[j] == boundary.at(j - i) && j - i < length && j < bb)
+			j++;
+		if (j - i >= length)
+			return i + aa;
+	}
+	for (ssize_t i = aa - length; i < aa; i++)
+		arr[i - (aa - length)] = a[i];
+	for (ssize_t i = 0; i < length; i++)
+		arr[i + length] = b[i];
+	for (ssize_t i = 0; i < 2 * length; i++)
+	{
+		ssize_t j = i;
+		while (arr[j] == boundary[j - i] && j - i < length && j < 2 * length)
+			j++;
+		if (j - i >= length)
+		{
+			if (i < length)
+				return (aa - (length - i));
+			else
+				return (aa + (i - length));
+		}
+	}
+	return -1;
+}
+
+// void	ConnectionManager::parseBodyFile(Request* req)
+// {
+// 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
+// 	std::ifstream	tempFile;	// read from the temp file
+// 	std::ofstream	newFile;
+// 	str				line;
+// 	bool			sheet;
+// 	char			*buffer1, *buffer2, *tmp;
+// 	// int				alt;
+// 	ssize_t			b1, b2;
+// 	str				name = "";
+
+// 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
+// 	std::cout << YELLOW << "In function to parse body file" << NL;
+// 	sheet = true;
+// 	buffer1 = new char[BUFFER_SIZE];
+// 	buffer2 = new char[BUFFER_SIZE];
+// 	while (sheet) {
+// 		while (std::getline(tempFile, line))
+// 		{
+// 			// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
+// 			// match it against the Content-Type in the next line for extra security
+// 			if (line.find("Content-Type: ") != str::npos)
+// 			{
+// 				std::getline(tempFile, line);
+// 				break ;
+// 			}
+// 			if (line.find("Content-Disposition: ") != str::npos)
+// 			{
+// 				std::cout << "Found content disposition\n";
+// 				size_t	fileNamePos = line.find("filename=\"");
+// 				if (fileNamePos != str::npos)
+// 				{
+// 					size_t	endDblquotePos = line.find_last_of('\"');
+// 					std::cout << "Found filename\n";
+// 					name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
+// 					if (name.find("\"\r") != str::npos)
+// 						name.erase(name.find("\"\r"));
+// 					std::cout << "Filename: " << name << "\n";
+// 					size_t	dotPos = line.find_last_of('.');
+// 					str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
+// 					std::cout << "Extension: " << file_extension << "\n";
+// 					newFile.open(name.c_str(), std::ios::binary | std::ios::out);
+// 					// peruseFileContent(tempFile);
+// 				}
+// 			}
+// 		}
+// 		ssize_t store = -1;
+// 		if (newFile.is_open())
+// 		{
+// 			ssize_t	total = 0, r = 0;
+// 			for (ssize_t i = 0; 1; i++)
+// 			{
+// 				if (i == 0)
+// 				{
+// 					tempFile.read(&buffer1[0], BUFFER_SIZE);
+// 					r = tempFile.gcount();
+// 					b1 = r;
+// 					total += r;
+// 					if (r == 0)
+// 					{
+// 						sheet = false;
+// 						break;
+// 					}
+// 					if (r < BUFFER_SIZE)
+// 					{
+// 						store = searchArrays(buffer1, b1, NULL, -1, req->getBoundary());
+// 						if (store >= 0)
+// 						{
+// 							newFile.write(&buffer1[0], store);
+// 							sheet = false;
+// 							break;
+// 						}
+// 					}
+// 				}
+// 				tempFile.read(&buffer2[0], BUFFER_SIZE);
+// 				r = tempFile.gcount();
+// 				b2 = r;
+// 				total += r;
+// 				if (r == 0)
+// 				{
+// 					store = searchArrays(buffer1, b1, NULL, -1, req->getBoundary());
+// 					if (store >= 0)
+// 					{
+// 						newFile.write(&buffer1[0], store);
+// 						sheet = false;
+// 						break;
+// 					}
+// 				}
+// 				store = searchArrays(buffer1, b1, buffer2, b2, req->getBoundary());
+// 				if (store < b1 && store != -1)
+// 				{
+// 					newFile.write(&buffer1[0], store);
+// 					sheet = false;
+// 					break;
+// 				}
+// 				else if (store != -1)
+// 				{
+// 					store -= b1;
+// 					newFile.write(&buffer2[0], store);
+// 					sheet = false;
+// 					break;
+// 				}
+// 				if (i == 0)
+// 					newFile.write(&buffer1[0], b1);
+// 				newFile.write(&buffer2[0], b2);
+// 				tmp = buffer1;
+// 				buffer1 = buffer2;
+// 				buffer2 = tmp;
+// 				b1 = b2;
+// 			}
+// 			std::cout << "Wrote " << total << " bytes\n";
+// 			newFile.close();
+// 		}
+// 		else
+// 			break;
+// 	}
+// 	delete[] buffer1;
+// 	delete[] buffer2;
+// 	// alt = 0;
+// 	// while (1) {
+// 	// 	if (!alt)
+// 	// 	{
+// 	// 		if (!tempFile.read(buffer1, BUFFER_SIZE))
+// 	// 			break ;
+// 	// 	}
+// 	// 	else 
+// 	// 	{
+// 	// 		if (!tempFile.read(buffer2, BUFFER_SIZE))
+// 	// 			break ;
+
+// 	// 	}
+// 	// 	bytes = tempFile.gcount();
+// 	// }
+// }
+
 void	ConnectionManager::parseBodyFile(Request* req)
 {
 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
 	std::ifstream	tempFile;	// read from the temp file
 	std::ofstream	newFile;
 	str				line;
-	// char			buffer1[BUFFER_SIZE];
-	// char			buffer2[BUFFER_SIZE];
-	// char			*tmp;
-	// int				alt;
-	// ssize_t			bytes;
 	str				name = "";
+	bool			reading_content = false;
 
 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
-	std::cout << YELLOW << "In function to parse body file" << NL;
 	while (std::getline(tempFile, line))
 	{
 		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
@@ -234,7 +410,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		if (line.find("Content-Type: ") != str::npos)
 		{
 			std::getline(tempFile, line);
-			break ;
+			reading_content = true;
 		}
 		if (line.find("Content-Disposition: ") != str::npos)
 		{
@@ -252,93 +428,30 @@ void	ConnectionManager::parseBodyFile(Request* req)
 				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
 				std::cout << "Extension: " << file_extension << "\n";
 				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
-				// peruseFileContent(tempFile);
 			}
 		}
-	}
-	if (newFile.is_open())
-	{
-		size_t	total = 0, r = 0;
-		std::vector<char>	buf(BUFFER_SIZE);
-		while (1)
+		if (reading_content == true)
 		{
-			tempFile.read(&buf[0], BUFFER_SIZE);
-			r = tempFile.gcount();
-			if (r == 0)
-				break ;
-			total += r;
-			// buf[r] = 0;
-			newFile.write(&buf[0], r);
+			if (newFile.is_open() == false)
+				throw (std::runtime_error("Couldn't open file to write"));
+			std::vector<char>	buffer(BUFFER_SIZE + 1);
+			size_t				r;
+			size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
+			while (1)
+			{
+				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
+				r = tempFile.gcount();
+				if (r == 0)
+					break ;
+				total += r;
+				buffer[r] = 0;
+				newFile.write(&buffer[0], r);
+				buffer.clear();
+			}
+			newFile.close();
 		}
-		std::cout << "Wrote " << total << " bytes\n";
-		newFile.close();
 	}
-	// alt = 0;
-	// while (1) {
-	// 	if (!alt)
-	// 	{
-	// 		if (!tempFile.read(buffer1, BUFFER_SIZE))
-	// 			break ;
-	// 	}
-	// 	else 
-	// 	{
-	// 		if (!tempFile.read(buffer2, BUFFER_SIZE))
-	// 			break ;
-
-	// 	}
-	// 	bytes = tempFile.gcount();
-	// }
 }
-
-// void	ConnectionManager::parseBodyFile(Request* req)
-// {
-// 	std::fstream	tempFile;
-// 	str				line;
-// 	char			buffer[BUFFER_SIZE + 1];
-// 	bool			newBound = false, writeFile = false;
-// 	ssize_t			written = 0, bytes;
-
-// 	int temp_fd = open(req->tempFileName.c_str(), O_RDONLY);	// read temp file
-// 	if (temp_fd == -1)
-// 		std::cerr << "Emad loves men\n";
-// 	int write_fd = open("pierce.jpg", O_CREAT | O_WRONLY, 0644);	// read write file
-// 	if (write_fd == -1)
-// 		std::cerr << "Emad loves men\n";
-	
-// 	// if (line.find("filename=") != str::npos)
-// 	// 	{
-// 	// 		str				file = line.substr(line.find("filename=\"") + std::strlen("filename=\""), str::npos);
-// 	// 		file.erase(file.begin() + file.find_last_of('\"'), file.end());
-// 	// 		binFile.open(file.c_str(), std::ios::binary | std::ios::out);
-// 	// 		if (binFile.bad())
-// 	// 			throw std::runtime_error("Couldn't open upload file");
-// 	// 		writeFile = true;
-// 	// 	}
-// 	// 	if (writeFile)
-// 	// 	{}
-// 	// tempFile.open(req->tempFileName.c_str(), std::ios::in | std::ios::binary);
-// 	while ((bytes = read(temp_fd, buffer, BUFFER_SIZE)) > 0)
-// 	{
-// 		buffer[bytes] = '\0';
-// 		line = str(buffer);
-// 		if (line.find(req->getBoundary()) != str::npos)
-// 		{
-// 			std::cout << "Size: " << binFile.tellp() << NL;
-// 			std::cout << "Wrote: " << written << NL;
-// 			binFile.close();
-// 			writeFile = false;
-// 		}
-// 		else
-// 		{
-// 			std::cout << "writing\n";
-// 			binFile.write(&buffer[0], bytes);
-// 			written += bytes;
-// 			// written += line.length();
-// 		}
-		
-// 	}
-// 	(void)newBound;
-// }
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
@@ -352,16 +465,29 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	{
 		closeSocket(index);
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
-		return (INCOMPLETE);
+		return (INVALID);
 	}
 	buffer[r] = 0;
 	// if (req->getHasBody())
 	// 	std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
 	_request = buffer;
+	// std::cout << YELLOW << r << NL;
+	// for (size_t i = 0; i < _request.size(); i++)
+	// {
+	// 	if (_request[i] == '\n')
+	// 		std::cout << "\\n";
+	// 	else if (_request[i] == '\r')
+	// 		std::cout << "\\r";
+	// 	else if (_request[i] == '\0')
+	// 		std::cout << "\\0";
+	// 	else
+	// 		std::cout << _request[i];
+	// }
+	// std::cout << "\n";
 	req->pushRequest(_request);
-	if (_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false)	// the buffer contains the end of the request header
+	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false) || _request[0] == '\r')	// the buffer contains the end of the request header
 	{
-		std::cout << MAGENTA << "Found end of header" << NL;
+		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
 		str	rq = req->getRequest();
 		req->parseRequest(rq);
 		std::cout << req->getRequest();
@@ -369,13 +495,16 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		if (req->getContentLen() != 0)
 			req->setHasBody(true);
 		else
+		{
+			std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
 			return (FINISH);
+		}
 		// write the body's bytes onto the temp file
 		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
 		{
 			size_t	endPos;
 			openTempFile(req, file);
-			endPos = (rq.find("\r\n\r\n") != str::npos ? rq.find("\r\n\r\n") + 4 : str::npos);
+			endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
 			str	b(buffer);
 			b = b.substr(0, endPos);
 			std::cout << "Length of header part: " << b.length() << "\n";

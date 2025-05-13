@@ -59,6 +59,7 @@ class ConnectionManager
 		static unsigned int	number;
 		typedef enum
 		{
+			INVALID = -1,
 			INCOMPLETE,
 			FINISH
 		}	State;
