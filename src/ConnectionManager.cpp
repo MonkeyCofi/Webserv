@@ -191,7 +191,7 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 		filename += static_cast<char>((ConnectionManager::number++ % 10) + '0');
 		req->tempFileName = filename;
 		std::cout << "Trying to open with filename " << filename << "\n";
-		file.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+		file.open(filename.c_str(), std::ios::binary | std::ios::out);
 		if (file.fail())
 		{
 			perror("Open");
@@ -209,14 +209,21 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 
 // void	ConnectionManager::peruseFileContent(std::ifstream& inFile, const str creation_filename)
 // {
-
+	
 // }
 
 void	ConnectionManager::parseBodyFile(Request* req)
 {
 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
 	std::ifstream	tempFile;	// read from the temp file
+	std::ofstream	newFile;
 	str				line;
+	// char			buffer1[BUFFER_SIZE];
+	// char			buffer2[BUFFER_SIZE];
+	// char			*tmp;
+	// int				alt;
+	// ssize_t			bytes;
+	str				name = "";
 
 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
 	std::cout << YELLOW << "In function to parse body file" << NL;
@@ -224,6 +231,11 @@ void	ConnectionManager::parseBodyFile(Request* req)
 	{
 		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
 		// match it against the Content-Type in the next line for extra security
+		if (line.find("Content-Type: ") != str::npos)
+		{
+			std::getline(tempFile, line);
+			break ;
+		}
 		if (line.find("Content-Disposition: ") != str::npos)
 		{
 			std::cout << "Found content disposition\n";
@@ -232,19 +244,50 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			{
 				size_t	endDblquotePos = line.find_last_of('\"');
 				std::cout << "Found filename\n";
-				str name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
-				// for (size_t i = 0; name[i]; i++)
-				// 	std::cout << i << ": " << name[i] << " ascii: " << static_cast<int>(name[i]) << "\n";
+				name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
 				if (name.find("\"\r") != str::npos)
 					name.erase(name.find("\"\r"));
 				std::cout << "Filename: " << name << "\n";
 				size_t	dotPos = line.find_last_of('.');
 				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
 				std::cout << "Extension: " << file_extension << "\n";
+				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
 				// peruseFileContent(tempFile);
 			}
 		}
 	}
+	if (newFile.is_open())
+	{
+		size_t	total = 0, r = 0;
+		std::vector<char>	buf(BUFFER_SIZE);
+		while (1)
+		{
+			tempFile.read(&buf[0], BUFFER_SIZE);
+			r = tempFile.gcount();
+			if (r == 0)
+				break ;
+			total += r;
+			// buf[r] = 0;
+			newFile.write(&buf[0], r);
+		}
+		std::cout << "Wrote " << total << " bytes\n";
+		newFile.close();
+	}
+	// alt = 0;
+	// while (1) {
+	// 	if (!alt)
+	// 	{
+	// 		if (!tempFile.read(buffer1, BUFFER_SIZE))
+	// 			break ;
+	// 	}
+	// 	else 
+	// 	{
+	// 		if (!tempFile.read(buffer2, BUFFER_SIZE))
+	// 			break ;
+
+	// 	}
+	// 	bytes = tempFile.gcount();
+	// }
 }
 
 // void	ConnectionManager::parseBodyFile(Request* req)
@@ -311,12 +354,12 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
 		return (INCOMPLETE);
 	}
-	buffer[r] = '\0';
+	buffer[r] = 0;
 	// if (req->getHasBody())
 	// 	std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
 	_request = buffer;
 	req->pushRequest(_request);
-	if (req->getRequest().find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false)	// the buffer contains the end of the request header
+	if (_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false)	// the buffer contains the end of the request header
 	{
 		std::cout << MAGENTA << "Found end of header" << NL;
 		str	rq = req->getRequest();
@@ -333,14 +376,16 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			size_t	endPos;
 			openTempFile(req, file);
 			endPos = (rq.find("\r\n\r\n") != str::npos ? rq.find("\r\n\r\n") + 4 : str::npos);
+			str	b(buffer);
+			b = b.substr(0, endPos);
+			std::cout << "Length of header part: " << b.length() << "\n";
 			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
 			{
 				std::cout << RED << "There is a body but it is not present in request" << NL;
 				return (INCOMPLETE);
 			}
-			std::cout << YELLOW << "r - endPos: " << r - endPos << " endpos: " << endPos << NL;
+			std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
 			req->bytesReceived += r - endPos;
-			// req->bytesReceived += body.length();
 			file.write(&buffer[endPos], r - endPos);
 			if (file.bad() || file.fail())
 				throw(std::runtime_error("Couldn't write data to temp file\n"));
@@ -356,16 +401,11 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		if (req->getHasBody())
 		{
 			str	buf = buffer;
-			// std::cout << RED << "In else: " << r << NL;
 			req->bytesReceived += r;
 			file.write(&buffer[0], r);
-			// if (buf.find(req->body_boundaryEnd) != std::string::npos || req->bytesReceived == req->getContentLen())
 			if (req->bytesReceived == req->getContentLen())
 			{
-				std::cout << "Found ending boundary\n";
-				std::cout << CYAN << "Content len: " << req->getContentLen() << " Received the full content length's worth of bytes: " << req->bytesReceived << NL;
-				// std::cout << RED << buf << NL;
-				std::cout << YELLOW << "File size: " << file.tellp() << NL;
+				std::cout << YELLOW << "Temp file size: " << file.tellp() << NL;
 				file.close();
 				parseBodyFile(req);
 				return (FINISH);

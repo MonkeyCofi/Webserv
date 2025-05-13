@@ -24,8 +24,7 @@ char	*ft_newlinejoin(char *result, char *buffer)
 		i++;
 	if (buffer[i] && buffer[i] == '\n')
 		i++;
-	newStr = new ()
-	newStr = malloc((sizeof(char) * ft_strlen(result) + i) + 1);
+	newStr = new char[ft_strlen(result) + i + 1];
 	if (!newStr)
 		return (NULL);
 	i = 0;

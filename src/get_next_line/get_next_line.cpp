@@ -27,7 +27,7 @@ static char	*join_buf(char *result, char *buffer)
 
 	if (!result)
 	{
-		result = ft_calloc(1, sizeof(char));
+		result = new char[1];
 		if (!result)
 			return (NULL);
 	}
@@ -37,7 +37,7 @@ static char	*join_buf(char *result, char *buffer)
 		free(result);
 		return (NULL);
 	}
-	free(result);
+	delete [] result;
 	move_buffer(buffer);
 	return (line);
 }
@@ -59,7 +59,7 @@ char	*get_next_line(int fd)
 			if (bytes == 0)
 				return (ret);
 			if (bytes < 0 && ret)
-				free(ret);
+				delete [] ret;
 			if (bytes < 0)
 				return (NULL);
 			buffer[fd][bytes] = '\0';
