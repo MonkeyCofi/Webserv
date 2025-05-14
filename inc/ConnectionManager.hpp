@@ -106,6 +106,12 @@ class ConnectionManager
 		void	startConnections();
 
 		~ConnectionManager();
+
+		class	bindException: public std::exception
+		{
+			public:
+				const char* what() const throw();
+		};
 };
 
 #endif

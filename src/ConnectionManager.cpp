@@ -79,9 +79,11 @@ int ConnectionManager::setupSocket(str ip, str port)
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	if (bind(fd, (sockaddr *)&ret, sizeof(ret)) < 0)
 	{
-		perror("Bind in parameterized constructor");
+		// perror("Bind in parameterized constructor");
 		freeaddrinfo(info);
-		throw (std::exception());
+		const str	e = "Error! " + ip + ":" + port + ": " + strerror(errno);
+		throw (std::runtime_error(e));
+		// throw (ConnectionManager::bindException());
 	}
 	if (listen(fd, 128) == -1)
 	{
@@ -221,7 +223,8 @@ void	ConnectionManager::parseBodyFile(Request* req)
 	size_t				i = 0, j = 0, prevBoundPos = 0;
 	str					tempBdr;
 	size_t				boundaryPosInFile = 0;
-	const str 			boundary = req->getBoundary();
+	const str 			boundary = "\r\n" + req->getBoundary();
+	bool				sheet;
 
 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
 	while (std::getline(tempFile, line))
@@ -256,7 +259,8 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			if (newFile.is_open() == false)
 				throw (std::runtime_error("Couldn't open file to write"));
 			total = i = j = prevBoundPos = boundaryPosInFile = 0;
-			while (1)
+			sheet = true;
+			while (sheet)
 			{
 				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
 				r = tempFile.gcount();
@@ -277,7 +281,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 				k = 0;
 				while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
 					k++;
-				if (k + prevBoundPos == boundary.length())	// thks means some characters matched the boundary at the end of buffer
+				if (k + prevBoundPos == boundary.length())
 				{
 					// handle found boundary
 					break ;
@@ -299,16 +303,18 @@ void	ConnectionManager::parseBodyFile(Request* req)
 						{
 							newFile.write(&buffer[0], i);
 						}
+						sheet = false;
 						break ;
 					}
 					if (i + j == r)	// this means some characters matched the boundary at the end of buffer
 					{
 						// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
 						prevBoundPos = j;
+						break;
 					}
 				}
-				if (i > prevBoundPos)
-					newFile.write(&buffer[0], i - prevBoundPos);
+				if (i && sheet)
+					newFile.write(&buffer[0], i);
 			}
 			newFile.close();
 			tempFile.seekg(i);
@@ -463,6 +469,7 @@ void ConnectionManager::startConnections()
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
+				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
