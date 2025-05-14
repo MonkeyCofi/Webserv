@@ -437,18 +437,47 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			std::vector<char>	buffer(BUFFER_SIZE + 1);
 			size_t				r;
 			size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
+			size_t				i = 0, j = 0, prevBoundPos = 0;
+			str					tempBdr;
 			while (1)
 			{
 				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
+				const str boundary = req->getBoundary();
 				r = tempFile.gcount();
 				if (r == 0)
 					break ;
 				total += r;
 				buffer[r] = 0;
-				newFile.write(&buffer[0], r);
+				/*
+					- go through each character of the buffer
+					- if a match of the boundary character is found, check each proceeding character with the boundary (strstr)
+					- if a partial part is true, it means boundary is present in the next read
+				*/
+				j = 0;
+				for (; i < r; i++)
+				{
+					if (prevBoundPos)
+					{
+						
+					}
+					while (buffer[i] == boundary[j])
+						j++;
+					if (j != 0)	// this means some characters matched the boundary; next read could have the rest of the boundary
+					{
+						tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
+						prevBoundPos = j;
+					}
+					if (j == boundary.length() - 1)
+					{
+						i -= j + 1;
+						break ;
+					}
+				}
+				newFile.write(&buffer[0], i);
 				buffer.clear();
 			}
 			newFile.close();
+			tempFile.seekg(i);
 		}
 	}
 }
