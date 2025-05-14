@@ -165,11 +165,12 @@ void Request::setRequestField(str &header_field, str &field_content)
 		if (this->body_boundary.empty() == false)
 			return ;
 		size_t	boundary_position = field_content.find("boundary=");
+		std::cout << RED << "B: " << &field_content[boundary_position] << NL;
 		if (boundary_position != std::string::npos)
 		{
-			this->body_boundary = field_content.substr(boundary_position + 9);
+			this->body_boundary = "--";
+			this->body_boundary += field_content.substr(boundary_position + std::strlen("boundary="));
 			this->body_boundaryEnd = body_boundary + "--";
-			std::cout << "B: " << this->body_boundary << "\n";
 		}
 	}
 	if (header_field == "content-length")
