@@ -221,7 +221,7 @@ ssize_t	searchArrays(char *a, ssize_t aa, char *b, ssize_t bb, str boundary)
 	for (ssize_t i = 0; i < aa; i++)
 	{
 		ssize_t j = i;
-		while (a[j] == boundary [j - i] && j - i < length && j < aa)
+		while (j - i < length && j < aa && a[j] == boundary [j - i])
 			j++;
 		if (j - i >= length)
 			return i;
@@ -232,7 +232,7 @@ ssize_t	searchArrays(char *a, ssize_t aa, char *b, ssize_t bb, str boundary)
 	{
 		ssize_t j = i;
 		std::cout << j << "\n";
-		while (b[j] == boundary.at(j - i) && j - i < length && j < bb)
+		while (j - i < length && j < bb && b[j] == boundary.at(j - i))
 			j++;
 		if (j - i >= length)
 			return i + aa;
@@ -244,7 +244,7 @@ ssize_t	searchArrays(char *a, ssize_t aa, char *b, ssize_t bb, str boundary)
 	for (ssize_t i = 0; i < 2 * length; i++)
 	{
 		ssize_t j = i;
-		while (arr[j] == boundary[j - i] && j - i < length && j < 2 * length)
+		while (j - i < length && j < 2 * length && arr[j] == boundary[j - i])
 			j++;
 		if (j - i >= length)
 		{
@@ -257,230 +257,233 @@ ssize_t	searchArrays(char *a, ssize_t aa, char *b, ssize_t bb, str boundary)
 	return -1;
 }
 
-// void	ConnectionManager::parseBodyFile(Request* req)
-// {
-// 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
-// 	std::ifstream	tempFile;	// read from the temp file
-// 	std::ofstream	newFile;
-// 	str				line;
-// 	bool			sheet;
-// 	char			*buffer1, *buffer2, *tmp;
-// 	// int				alt;
-// 	ssize_t			b1, b2;
-// 	str				name = "";
-
-// 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
-// 	std::cout << YELLOW << "In function to parse body file" << NL;
-// 	sheet = true;
-// 	buffer1 = new char[BUFFER_SIZE];
-// 	buffer2 = new char[BUFFER_SIZE];
-// 	while (sheet) {
-// 		while (std::getline(tempFile, line))
-// 		{
-// 			// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
-// 			// match it against the Content-Type in the next line for extra security
-// 			if (line.find("Content-Type: ") != str::npos)
-// 			{
-// 				std::getline(tempFile, line);
-// 				break ;
-// 			}
-// 			if (line.find("Content-Disposition: ") != str::npos)
-// 			{
-// 				std::cout << "Found content disposition\n";
-// 				size_t	fileNamePos = line.find("filename=\"");
-// 				if (fileNamePos != str::npos)
-// 				{
-// 					size_t	endDblquotePos = line.find_last_of('\"');
-// 					std::cout << "Found filename\n";
-// 					name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
-// 					if (name.find("\"\r") != str::npos)
-// 						name.erase(name.find("\"\r"));
-// 					std::cout << "Filename: " << name << "\n";
-// 					size_t	dotPos = line.find_last_of('.');
-// 					str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
-// 					std::cout << "Extension: " << file_extension << "\n";
-// 					newFile.open(name.c_str(), std::ios::binary | std::ios::out);
-// 					// peruseFileContent(tempFile);
-// 				}
-// 			}
-// 		}
-// 		ssize_t store = -1;
-// 		if (newFile.is_open())
-// 		{
-// 			ssize_t	total = 0, r = 0;
-// 			for (ssize_t i = 0; 1; i++)
-// 			{
-// 				if (i == 0)
-// 				{
-// 					tempFile.read(&buffer1[0], BUFFER_SIZE);
-// 					r = tempFile.gcount();
-// 					b1 = r;
-// 					total += r;
-// 					if (r == 0)
-// 					{
-// 						sheet = false;
-// 						break;
-// 					}
-// 					if (r < BUFFER_SIZE)
-// 					{
-// 						store = searchArrays(buffer1, b1, NULL, -1, req->getBoundary());
-// 						if (store >= 0)
-// 						{
-// 							newFile.write(&buffer1[0], store);
-// 							sheet = false;
-// 							break;
-// 						}
-// 					}
-// 				}
-// 				tempFile.read(&buffer2[0], BUFFER_SIZE);
-// 				r = tempFile.gcount();
-// 				b2 = r;
-// 				total += r;
-// 				if (r == 0)
-// 				{
-// 					store = searchArrays(buffer1, b1, NULL, -1, req->getBoundary());
-// 					if (store >= 0)
-// 					{
-// 						newFile.write(&buffer1[0], store);
-// 						sheet = false;
-// 						break;
-// 					}
-// 				}
-// 				store = searchArrays(buffer1, b1, buffer2, b2, req->getBoundary());
-// 				if (store < b1 && store != -1)
-// 				{
-// 					newFile.write(&buffer1[0], store);
-// 					sheet = false;
-// 					break;
-// 				}
-// 				else if (store != -1)
-// 				{
-// 					store -= b1;
-// 					newFile.write(&buffer2[0], store);
-// 					sheet = false;
-// 					break;
-// 				}
-// 				if (i == 0)
-// 					newFile.write(&buffer1[0], b1);
-// 				newFile.write(&buffer2[0], b2);
-// 				tmp = buffer1;
-// 				buffer1 = buffer2;
-// 				buffer2 = tmp;
-// 				b1 = b2;
-// 			}
-// 			std::cout << "Wrote " << total << " bytes\n";
-// 			newFile.close();
-// 		}
-// 		else
-// 			break;
-// 	}
-// 	delete[] buffer1;
-// 	delete[] buffer2;
-// 	// alt = 0;
-// 	// while (1) {
-// 	// 	if (!alt)
-// 	// 	{
-// 	// 		if (!tempFile.read(buffer1, BUFFER_SIZE))
-// 	// 			break ;
-// 	// 	}
-// 	// 	else 
-// 	// 	{
-// 	// 		if (!tempFile.read(buffer2, BUFFER_SIZE))
-// 	// 			break ;
-
-// 	// 	}
-// 	// 	bytes = tempFile.gcount();
-// 	// }
-// }
-
 void	ConnectionManager::parseBodyFile(Request* req)
 {
 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
 	std::ifstream	tempFile;	// read from the temp file
 	std::ofstream	newFile;
 	str				line;
+	bool			sheet;
+	char			*buffer1, *buffer2, *tmp;
+	// int				alt;
+	ssize_t			b1, b2;
 	str				name = "";
-	bool			reading_content = false;
 
 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
-	while (std::getline(tempFile, line))
-	{
-		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
-		// match it against the Content-Type in the next line for extra security
-		if (line.find("Content-Type: ") != str::npos)
+	std::cout << YELLOW << "In function to parse body file" << NL;
+	sheet = true;
+	buffer1 = new char[BUFFER_SIZE];
+	buffer2 = new char[BUFFER_SIZE];
+	while (sheet) {
+		while (std::getline(tempFile, line))
 		{
-			std::getline(tempFile, line);
-			reading_content = true;
-		}
-		if (line.find("Content-Disposition: ") != str::npos)
-		{
-			std::cout << "Found content disposition\n";
-			size_t	fileNamePos = line.find("filename=\"");
-			if (fileNamePos != str::npos)
+			// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
+			// match it against the Content-Type in the next line for extra security
+			if (line.find("Content-Type: ") != str::npos)
 			{
-				size_t	endDblquotePos = line.find_last_of('\"');
-				std::cout << "Found filename\n";
-				name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
-				if (name.find("\"\r") != str::npos)
-					name.erase(name.find("\"\r"));
-				std::cout << "Filename: " << name << "\n";
-				size_t	dotPos = line.find_last_of('.');
-				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
-				std::cout << "Extension: " << file_extension << "\n";
-				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
+				std::getline(tempFile, line);
+				break ;
+			}
+			if (line.find("Content-Disposition: ") != str::npos)
+			{
+				std::cout << "Found content disposition\n";
+				size_t	fileNamePos = line.find("filename=\"");
+				if (fileNamePos != str::npos)
+				{
+					size_t	endDblquotePos = line.find_last_of('\"');
+					std::cout << "Found filename\n";
+					name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
+					if (name.find("\"\r") != str::npos)
+						name.erase(name.find("\"\r"));
+					std::cout << "Filename: " << name << "\n";
+					size_t	dotPos = line.find_last_of('.');
+					str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
+					std::cout << "Extension: " << file_extension << "\n";
+					newFile.open(name.c_str(), std::ios::binary | std::ios::out);
+					// peruseFileContent(tempFile);
+				}
 			}
 		}
-		if (reading_content == true)
+		ssize_t store = -1;
+		if (newFile.is_open())
 		{
-			if (newFile.is_open() == false)
-				throw (std::runtime_error("Couldn't open file to write"));
-			std::vector<char>	buffer(BUFFER_SIZE + 1);
-			size_t				r;
-			size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
-			size_t				i = 0, j = 0, prevBoundPos = 0;
-			str					tempBdr;
-			while (1)
+			ssize_t	total = 0, r = 0;
+			for (ssize_t i = 0; 1; i++)
 			{
-				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
-				const str boundary = req->getBoundary();
-				r = tempFile.gcount();
-				if (r == 0)
-					break ;
-				total += r;
-				buffer[r] = 0;
-				/*
-					- go through each character of the buffer
-					- if a match of the boundary character is found, check each proceeding character with the boundary (strstr)
-					- if a partial part is true, it means boundary is present in the next read
-				*/
-				j = 0;
-				for (; i < r; i++)
+				if (i == 0)
 				{
-					if (prevBoundPos)
+					tempFile.read(&buffer1[0], BUFFER_SIZE);
+					r = tempFile.gcount();
+					b1 = r;
+					total += r;
+					if (r == 0)
 					{
-						
+						sheet = false;
+						break;
 					}
-					while (buffer[i] == boundary[j])
-						j++;
-					if (j != 0)	// this means some characters matched the boundary; next read could have the rest of the boundary
+					if (r < BUFFER_SIZE)
 					{
-						tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
-						prevBoundPos = j;
-					}
-					if (j == boundary.length() - 1)
-					{
-						i -= j + 1;
-						break ;
+						store = searchArrays(buffer1, b1, NULL, -1, req->getBoundary());
+						if (store >= 0)
+						{
+							newFile.write(&buffer1[0], store);
+							sheet = false;
+							break;
+						}
 					}
 				}
-				newFile.write(&buffer[0], i);
-				buffer.clear();
+				tempFile.read(&buffer2[0], BUFFER_SIZE);
+				r = tempFile.gcount();
+				b2 = r;
+				total += r;
+				if (r == 0)
+				{
+					store = searchArrays(buffer1, b1, NULL, -1, req->getBoundary());
+					if (store >= 0)
+					{
+						newFile.write(&buffer1[0], store);
+						sheet = false;
+						break;
+					}
+				}
+				store = searchArrays(buffer1, b1, buffer2, b2, req->getBoundary());
+				if (store < b1 && store != -1)
+				{
+					newFile.write(&buffer1[0], store);
+					sheet = false;
+					break;
+				}
+				else if (store != -1)
+				{
+					store -= b1;
+					newFile.write(&buffer2[0], store);
+					sheet = false;
+					break;
+				}
+				if (i == 0)
+					newFile.write(&buffer1[0], b1);
+				newFile.write(&buffer2[0], b2);
+				tmp = buffer1;
+				buffer1 = buffer2;
+				buffer2 = tmp;
+				b1 = b2;
 			}
+			std::cout << "Wrote " << total << " bytes\n";
 			newFile.close();
-			tempFile.seekg(i);
 		}
+		else
+			break;
 	}
+	delete[] buffer1;
+	delete[] buffer2;
+	// alt = 0;
+	// while (1) {
+	// 	if (!alt)
+	// 	{
+	// 		if (!tempFile.read(buffer1, BUFFER_SIZE))
+	// 			break ;
+	// 	}
+	// 	else 
+	// 	{
+	// 		if (!tempFile.read(buffer2, BUFFER_SIZE))
+	// 			break ;
+
+	// 	}
+	// 	bytes = tempFile.gcount();
+	// }
 }
+
+// void	ConnectionManager::parseBodyFile(Request* req)
+// {
+// 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
+// 	std::ifstream	tempFile;	// read from the temp file
+// 	std::ofstream	newFile;
+// 	str				line;
+// 	str				name = "";
+// 	bool			reading_content = false;
+
+// 	tempFile.open(req->tempFileName.c_str(), std::ios::in);
+// 	while (std::getline(tempFile, line))
+// 	{
+// 		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
+// 		// match it against the Content-Type in the next line for extra security
+// 		if (line.find("Content-Type: ") != str::npos)
+// 		{
+// 			std::getline(tempFile, line);
+// 			reading_content = true;
+// 		}
+// 		if (line.find("Content-Disposition: ") != str::npos)
+// 		{
+// 			std::cout << "Found content disposition\n";
+// 			size_t	fileNamePos = line.find("filename=\"");
+// 			if (fileNamePos != str::npos)
+// 			{
+// 				size_t	endDblquotePos = line.find_last_of('\"');
+// 				std::cout << "Found filename\n";
+// 				name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
+// 				if (name.find("\"\r") != str::npos)
+// 					name.erase(name.find("\"\r"));
+// 				std::cout << "Filename: " << name << "\n";
+// 				size_t	dotPos = line.find_last_of('.');
+// 				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
+// 				std::cout << "Extension: " << file_extension << "\n";
+// 				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
+// 			}
+// 		}
+// 		if (reading_content == true)
+// 		{
+// 			if (newFile.is_open() == false)
+// 				throw (std::runtime_error("Couldn't open file to write"));
+// 			char				buffer[BUFFER_SIZE];
+// 			size_t				r;
+// 			size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
+// 			size_t				i = 0, j = 0, prevBoundPos = 0;
+// 			str					tempBdr;
+// 			size_t				boundaryPosInFile = 0;
+// 			const str boundary = req->getBoundary();
+// 			while (1)
+// 			{
+// 				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
+// 				r = tempFile.gcount();
+// 				if (r == 0)
+// 					break ;
+// 				total += r;
+// 				/*
+// 					- go through each character of the buffer
+// 					- if a match of the boundary character is found, check each proceeding character with the boundary (strstr)
+// 					- if more than 1/4ths of the boundary is found in current buffer, it might mean boundary is present in the next read
+// 					- therefore in the next read, instead of reading BUFFER_SIZE characters, read only up until the missing boundary characters
+// 					(maybe)
+// 				*/
+// 				i = 0;
+// 				for (; i < r; i++)
+// 				{
+// 					j = 0;
+// 					if (prevBoundPos)	// this means some part of the boundary was found in the previous read
+// 					{
+						
+// 					}
+// 					while (buffer[i + j] == boundary[j] && j < boundary.length() && i + j < r)
+// 						j++;
+// 					if (j != 0 && j != boundary.length())	// this means some characters matched the boundary; next read could have the rest of the boundary
+// 					{
+// 						// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
+// 						prevBoundPos = j;
+// 					}
+// 					if (j == boundary.length())
+// 					{
+// 						i -= j;
+// 						break ;
+// 					}
+// 				}
+// 				newFile.write(&buffer[0], i);
+// 			}
+// 			newFile.close();
+// 			tempFile.seekg(i);
+// 			(void)boundaryPosInFile;
+// 		}
+// 	}
+// }
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
@@ -494,7 +497,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	{
 		closeSocket(index);
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
-		return (INVALID);
+		return (INCOMPLETE);
+		// return (INVALID);
 	}
 	buffer[r] = 0;
 	// if (req->getHasBody())
@@ -514,7 +518,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	// }
 	// std::cout << "\n";
 	req->pushRequest(_request);
-	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false) || _request[0] == '\r')	// the buffer contains the end of the request header
+	// if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false) || _request[0] == '\r')	// the buffer contains the end of the request header
+	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
 		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
 		str	rq = req->getRequest();
@@ -607,7 +612,6 @@ void ConnectionManager::startConnections()
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				newClient(i, sock_fds.at(i));
-				// continue ;
 			}
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
@@ -627,7 +631,6 @@ void ConnectionManager::startConnections()
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
-				continue;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
