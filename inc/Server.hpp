@@ -86,6 +86,9 @@ class Server: public BlockOBJ
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);
+
+		static ResponseState	returnIncomplete();
+		static ResponseState	returnFinish();
 };
 
 #endif

@@ -520,31 +520,49 @@ bool Server::respond(int client_fd)
 	ssize_t	bytes, sb;
 	char	buffer[BUFFER_SIZE] = {0};
 
-	if (header == "")
-		return true;
+	if (header == "") 
 	std::cout << CYAN"header: " << header << NL;
 	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
 		return false;
 	header = "";
 	if (file_fd != -1)
 	{
-		while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
+		bytes = read(file_fd, buffer, BUFFER_SIZE);
+		std::cout << "Sending " << buffer << "\n";
+		if (bytes == 0)	// file has been fully read and responded with
 		{
-			tmp = ssizeToStr(bytes) + "\r\n";
+			setState(FINISH);
+			close(file_fd);
+			file_fd = -1;
+			tmp = "0\r\n\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-				return false;
-			// std::cout << YELLOW << "sending: " << buffer << NL;
-			if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
-				return false;
-			if (send(client_fd, "\r\n", 2, 0) <= 0)
-				return false;
-			total_length -= sb - 2;
+				return (keep_alive);
+			return (keep_alive);
 		}
-		tmp = "0\r\n\r\n";
-		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-			return false;
-		close(file_fd);
+		tmp = ssizeToStr(bytes) + "\r\n";
+		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// handle and return error or something
+			return (keep_alive);
+		if (send(client_fd, buffer, bytes, 0) <= 0)
+			return (keep_alive);
+		return (keep_alive);
+		// while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
+		// {
+		// 	tmp = ssizeToStr(bytes) + "\r\n";
+		// 	if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
+		// 		return false;
+		// 	// std::cout << YELLOW << "sending: " << buffer << NL;
+		// 	if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
+		// 		return false;
+		// 	if (send(client_fd, "\r\n", 2, 0) <= 0)
+		// 		return false;
+		// 	total_length -= sb - 2;
+		// }
+		// tmp = "0\r\n\r\n";
+		// if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
+		// 	return false;
+		// close(file_fd);
 	}
+	(void)sb;
 	return keep_alive;
 }
 
@@ -596,4 +614,14 @@ void	Server::setBody(str body_)
 void	Server::setFileFD(int fd_)
 {
 	this->file_fd = fd_;
+}
+
+Server::ResponseState	Server::returnIncomplete()
+{
+	return (Server::INCOMPLETE);
+}
+
+Server::ResponseState	Server::returnFinish()
+{
+	return (Server::FINISH);
 }
