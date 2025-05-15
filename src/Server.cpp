@@ -504,6 +504,16 @@ void Server::handleRequest(Request *req)
 	}
 }
 
+void	Server::setState(Server::ResponseState state)
+{
+	this->responseState = state;
+}
+
+Server::ResponseState	Server::getState() const
+{
+	return (this->responseState);
+}
+
 bool Server::respond(int client_fd)
 {
 	str		tmp;

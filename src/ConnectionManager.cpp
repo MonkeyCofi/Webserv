@@ -256,8 +256,12 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		}
 		if (reading_content == true)
 		{
+			std::cout << "putting data to file\n";
 			if (newFile.is_open() == false)
+			{
+				std::cerr << name << ": ";
 				throw (std::runtime_error("Couldn't open file to write"));
+			}
 			total = i = j = prevBoundPos = boundaryPosInFile = 0;
 			sheet = true;
 			while (sheet)
@@ -318,6 +322,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			}
 			newFile.close();
 			tempFile.seekg(i);
+			reading_content = false;
 			(void)boundaryPosInFile;
 		}
 	}
@@ -411,7 +416,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				parseBodyFile(req);
 				return (FINISH);
 			}
-			std::cout << "received " << req->bytesReceived << " bytes so far\n";
+			// std::cout << "received " << req->bytesReceived << " bytes so far\n";
 			return (INCOMPLETE);
 		}
 	}
@@ -425,7 +430,7 @@ void ConnectionManager::startConnections()
 	int							res;
 	State						state = INCOMPLETE;
 	std::map<int, Request *>	requests;
-	
+
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, sigint_handle);

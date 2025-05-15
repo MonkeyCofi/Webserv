@@ -29,6 +29,11 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
+		typedef enum
+		{
+			INCOMPLETE,
+			FINISH
+		}	ResponseState;
 		int						file_fd, min_del_depth;
 		ssize_t					total_length;
 		str						root, header, body;
@@ -38,6 +43,7 @@ class Server: public BlockOBJ
 		std::map<str, str>		error_pages;
 		std::map<str, str>		http_codes;
 		std::vector<Location *>	locations;
+		ResponseState			responseState;
 
 		void			handleError(str error_code, std::stringstream &resp);
 		bool			validAddress(str address);
@@ -69,10 +75,12 @@ class Server: public BlockOBJ
 		std::vector<str>		getIPs();
 		std::vector<str>		getPorts();
 		std::vector<Location *>	getLocations();
+		ResponseState			getState() const;
 
 		void	setHeader(str header_);
 		void	setBody(str body_);
 		void	setFileFD(int fd_);
+		void	setState(ResponseState state);
 
 		bool					respond(int client_fd);
 
