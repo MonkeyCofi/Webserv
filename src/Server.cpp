@@ -15,6 +15,8 @@ Server::Server() : BlockOBJ()
 	autoindex = false;
 	min_del_depth = 0;
 	file_fd = -1;
+	responseState = INCOMPLETE;
+	headerSent = false;
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
 	http_codes["202"] = "Accepted";
@@ -461,6 +463,7 @@ void Server::handleRequest(Request *req)
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
+	std::cout << RED << ((keep_alive) == true ? "Keep connection alive" : "End connection") << NL;
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), resp);
@@ -520,15 +523,18 @@ bool Server::respond(int client_fd)
 	ssize_t	bytes, sb;
 	char	buffer[BUFFER_SIZE] = {0};
 
-	if (header == "") 
-	std::cout << CYAN"header: " << header << NL;
-	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
-		return false;
-	header = "";
+	// if (header == "")
+	// 	std::cout << CYAN"header: " << header << NL;
+	if (headerSent == false)
+	{
+		if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
+			return false;
+		headerSent = true;
+	}
+	// header = "";
 	if (file_fd != -1)
 	{
 		bytes = read(file_fd, buffer, BUFFER_SIZE);
-		std::cout << "Sending " << buffer << "\n";
 		if (bytes == 0)	// file has been fully read and responded with
 		{
 			setState(FINISH);
@@ -536,9 +542,11 @@ bool Server::respond(int client_fd)
 			file_fd = -1;
 			tmp = "0\r\n\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-				return (keep_alive);
+			return (keep_alive);
+			headerSent = false;
 			return (keep_alive);
 		}
+		std::cout << "Sending " << buffer << "\n";
 		tmp = ssizeToStr(bytes) + "\r\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// handle and return error or something
 			return (keep_alive);

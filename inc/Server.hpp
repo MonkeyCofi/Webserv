@@ -44,6 +44,7 @@ class Server: public BlockOBJ
 		std::map<str, str>		http_codes;
 		std::vector<Location *>	locations;
 		ResponseState			responseState;
+		bool					headerSent;
 
 		void			handleError(str error_code, std::stringstream &resp);
 		bool			validAddress(str address);
@@ -89,6 +90,7 @@ class Server: public BlockOBJ
 
 		static ResponseState	returnIncomplete();
 		static ResponseState	returnFinish();
+		static ResponseState	returnHeaderSent();
 };
 
 #endif

@@ -481,13 +481,18 @@ void ConnectionManager::startConnections()
 				if (handlers.at(i) && state == FINISH)
 				{
 					// std::cout << "Responding to request\n";
-					if (handlers.at(i)->respond(sock_fds.at(i).fd) && handlers.at(i)->getState() == Server::returnFinish())
+					bool should_close;
+					if ((should_close = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
 					{
 						std::cout << "\033[31mRemoving request from map\033[0m\n";
 						delete requests[(sock_fds.at(i).fd)];
 						requests.erase(sock_fds.at(i).fd);
 						// requests.erase(requests.begin() + (test));
-						closeSocket(i);
+						if (should_close)
+						{
+							std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
+							closeSocket(i);
+						}
 					}
 				}
 				continue ;
