@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConnectionManager.cpp                                         :+:      :+:    :+:   */
+/*   ConnectionManager.cpp                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -440,7 +440,7 @@ void ConnectionManager::startConnections()
 		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
 		{
-			std::cout << "No FD event occurring\n";
+			// std::cout << "No FD event occurring\n";
 			continue ;
 		}
 		if (res < 0)
@@ -456,6 +456,7 @@ void ConnectionManager::startConnections()
 			{
 				newClient(i, sock_fds.at(i));
 			}
+			// std::cout << "Listener fd: " << sock_fds.at(i).fd << "\n";
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
@@ -464,7 +465,9 @@ void ConnectionManager::startConnections()
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
-				if (requests[sock_fds.at(i).fd] == NULL)
+				std::map<int, Request*>::iterator it = requests.lower_bound(sock_fds.at(i).fd);
+				// if (requests[sock_fds.at(i).fd] == NULL)
+				if (it == requests.end())
 				{
 					requests[sock_fds.at(i).fd] = new Request();
 					std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
@@ -474,21 +477,24 @@ void ConnectionManager::startConnections()
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
-				continue ;
+				// continue ;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
 				if (handlers.at(i) && state == FINISH)
 				{
-					// std::cout << "Responding to request\n";
-					bool should_close;
-					if ((should_close = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
+					bool keep_open;
+					if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
 					{
-						std::cout << "\033[31mRemoving request from map\033[0m\n";
-						delete requests[(sock_fds.at(i).fd)];
-						requests.erase(sock_fds.at(i).fd);
+						if (requests[sock_fds.at(i).fd])
+						{
+							std::cout << "\033[31mRemoving request from map\033[0m\n";
+							delete requests[(sock_fds.at(i).fd)];
+							requests.erase(sock_fds.at(i).fd);
+						}
+						// closeSocket(i);
 						// requests.erase(requests.begin() + (test));
-						if (should_close)
+						if (keep_open == false)
 						{
 							std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
 							closeSocket(i);

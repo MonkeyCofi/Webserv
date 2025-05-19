@@ -325,7 +325,7 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	int	fd;
 
 	resp << "HTTP/1.1 " + error_code + " " + reasonPhrase(error_code) + "\r\n";
-	resp << "Connection: Keep-Alive\r\nContent-Type: text/html\r\n";
+	resp << "Connection: keep-alive\r\nContent-Type: text/html\r\n";
 	if (error_pages.find(error_code) == error_pages.end()
 		|| (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
@@ -433,7 +433,7 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 	}
 	body += "<hr></body>\r\n</html>\r\n";
 	resp << "HTTP/1.1 " << (redir ? "301 Redirect" : "200 OK") << "\r\nContent-Type: text/html\r\nContent-Length: " << body.length() << "\r\n";
-	resp << "Connection: " << (keep_alive ? "Keep-Alive" : "close") << (redir ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
+	resp << "Connection: " << (keep_alive ? "keep-alive" : "close") << (redir ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
     closedir(dir);
 	header = resp.str() + body;
 }
@@ -517,40 +517,42 @@ Server::ResponseState	Server::getState() const
 	return (this->responseState);
 }
 
-bool Server::respond(int client_fd)
+bool Server:: respond(int client_fd)
 {
 	str		tmp;
 	ssize_t	bytes, sb;
-	char	buffer[BUFFER_SIZE] = {0};
+	char	buffer[BUFFER_SIZE + 1] = {0};
 
-	// if (header == "")
-	// 	std::cout << CYAN"header: " << header << NL;
 	if (headerSent == false)
 	{
 		if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
 			return false;
 		headerSent = true;
+		header = "";
 	}
-	// header = "";
 	if (file_fd != -1)
 	{
 		bytes = read(file_fd, buffer, BUFFER_SIZE);
+		buffer[bytes] = 0;
 		if (bytes == 0)	// file has been fully read and responded with
 		{
 			setState(FINISH);
 			close(file_fd);
 			file_fd = -1;
 			tmp = "0\r\n\r\n";
-			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-			return (keep_alive);
 			headerSent = false;
+			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// send the ending byte to the client
+				return (keep_alive);
 			return (keep_alive);
 		}
 		std::cout << "Sending " << buffer << "\n";
 		tmp = ssizeToStr(bytes) + "\r\n";
-		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// handle and return error or something
+		std::cout << tmp << " bytes\n";
+		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
 			return (keep_alive);
 		if (send(client_fd, buffer, bytes, 0) <= 0)
+			return (keep_alive);
+		if (send(client_fd, "\r\n", 2, 0) <= 0)
 			return (keep_alive);
 		return (keep_alive);
 		// while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
