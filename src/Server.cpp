@@ -16,7 +16,6 @@ Server::Server() : BlockOBJ()
 	min_del_depth = 0;
 	file_fd = -1;
 	responseState = INCOMPLETE;
-	headerSent = false;
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
 	http_codes["202"] = "Accepted";
@@ -329,6 +328,7 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	if (error_pages.find(error_code) == error_pages.end()
 		|| (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
+		std::cout << YELLOW << "BANANA" << NL;
 		total_length = errorPage(error_code).length() - 2;
 		resp << "Content-Length: " << total_length << "\r\n\r\n";
 		resp << errorPage(error_code);
@@ -394,31 +394,36 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 		redir = true;
 	}
 	full_path = root + path;
-	for (unsigned int i = 0; i < index.size(); i++)
+	std::cout << RED << 1 << NL;
+	for (unsigned int i = 0; i < this->index.size(); i++)
 	{
 		indexpath = full_path + index.at(i);
 		file_fd = open(indexpath.c_str(), O_RDONLY);
 		if (file_fd > -1)
 		{
 			fileResponse(path + index.at(i), resp, true);
+			std::cout << CYAN << 2 << NL;
 			return ;
 		}
 		else if (i != index.size() - 1)
 			continue ;
 		else if (!autoindex)
 		{
+			std::cout << GREEN << root << NL;
 			handleError("403", resp);
 			return ;
 		}
 	}
 	file_fd = -1;
 	dir = opendir(full_path.c_str());
+	std::cout << BLUE << 4 << NL;
     if (dir == NULL)
 	{
+		std::cout << YELLOW << 5 << NL;
 		handleError("404", resp);
 		return ;
 	}
-	file_fd = -1;
+	std::cout << 6 << "\n";
 	body = "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n<hr>\r\n";
 	body += "<a href=\"../\">..</a> <br>\r\n";
     while ((item = readdir(dir)) != NULL)
@@ -443,6 +448,7 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 	if (!checking_index)
 	{
 		path = root + path;
+		// std::cout << "Serving " << path << "\n";
 		file_fd = open(path.c_str(), O_RDONLY);
 	}
 	if (file_fd == -1)
@@ -476,8 +482,6 @@ void Server::handleRequest(Request *req)
 		{
 			Cgi	cgi(req->getFileURI(), this);
 			cgi.setupEnvAndRun(req, resp, this);
-			// header = resp.str();
-			// std::cout << RED << header << NL;
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);
@@ -523,12 +527,15 @@ bool Server:: respond(int client_fd)
 	ssize_t	bytes, sb;
 	char	buffer[BUFFER_SIZE + 1] = {0};
 
-	if (headerSent == false)
+	// std::cout << std::boolalpha << headerSent << NL << header << NL << file_fd << NL;
+	if (header != "")	// if the header hasn't been sent yet, send it. once the header has been se
 	{
+		std::cout << CYAN << header << NL;
 		if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
 			return false;
-		headerSent = true;
-		header = "";
+		header.clear();
+		if (file_fd == -1)
+			setState(FINISH);
 	}
 	if (file_fd != -1)
 	{
@@ -540,7 +547,6 @@ bool Server:: respond(int client_fd)
 			close(file_fd);
 			file_fd = -1;
 			tmp = "0\r\n\r\n";
-			headerSent = false;
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// send the ending byte to the client
 				return (keep_alive);
 			return (keep_alive);
@@ -584,7 +590,7 @@ bool Server::operator ==(Server &server2)
 
 	tmp = this->getNames();
 	tmp2 = server2.getNames();
-	for(std::vector<str>::iterator it = tmp.begin(); it != tmp.end(); it++)
+	for (std::vector<str>::iterator it = tmp.begin(); it != tmp.end(); it++)
 	{
 		if (std::find(tmp2.begin(), tmp2.end(), *it) != tmp2.end())
 		{

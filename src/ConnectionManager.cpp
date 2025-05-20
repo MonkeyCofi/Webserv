@@ -340,28 +340,16 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	{
 		closeSocket(index);
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
+		index--;
 		return (INCOMPLETE);
-		// return (INVALID);
 	}
 	buffer[r] = 0;
-	// if (req->getHasBody())
-	// 	std::cout << MAGENTA << "Received " << req->bytesReceived << " body bytes so far" << NL;
 	_request = buffer;
-	// std::cout << YELLOW << r << NL;
-	// for (size_t i = 0; i < _request.size(); i++)
-	// {
-	// 	if (_request[i] == '\n')
-	// 		std::cout << "\\n";
-	// 	else if (_request[i] == '\r')
-	// 		std::cout << "\\r";
-	// 	else if (_request[i] == '\0')
-	// 		std::cout << "\\0";
-	// 	else
-	// 		std::cout << _request[i];
-	// }
-	// std::cout << "\n";
+	if (!req)
+		std::cerr << "There is no request block\n";
 	req->pushRequest(_request);
-	// if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false) || _request[0] == '\r')	// the buffer contains the end of the request header
+	std::cout << CYAN << req << NL;
+	std::cout << RED << _request << "\n" << std::boolalpha << req->getHeaderReceived() << NL;
 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
 		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
@@ -369,6 +357,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		req->parseRequest(rq);
 		std::cout << req->getRequest();
 		req->setHeaderReceived(true);
+		// std::cout << "Requested URI: " << 
+		if (!req)
+			std::cerr << "No request object\n";
 		if (req->getContentLen() != 0)
 			req->setHasBody(true);
 		else
@@ -420,7 +411,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			return (INCOMPLETE);
 		}
 	}
-	std::cout << "Request hasn't been fully received\n";
+	// std::cout << "Request hasn't been fully received\n";
 	(void)state;
 	return (INCOMPLETE);
 }
@@ -465,14 +456,13 @@ void ConnectionManager::startConnections()
 			if (sock_fds.at(i).revents & POLLIN)
 			{
 				std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
-				std::map<int, Request*>::iterator it = requests.lower_bound(sock_fds.at(i).fd);
-				// if (requests[sock_fds.at(i).fd] == NULL)
+				std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
 				if (it == requests.end())
 				{
-					requests[sock_fds.at(i).fd] = new Request();
+					requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
 					std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
 				}
-				if ((state = receiveRequest(sock_fds.at(i).fd, requests[sock_fds.at(i).fd], i, state)) == FINISH)	// request has been fully received
+				if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
 				{
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
@@ -481,24 +471,22 @@ void ConnectionManager::startConnections()
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				if (handlers.at(i) && state == FINISH)
+				if (handlers.at(i) && state == FINISH)	// the request has been parsed and ready for response building
 				{
 					bool keep_open;
 					if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
 					{
-						if (requests[sock_fds.at(i).fd])
+						if (requests.find(sock_fds.at(i).fd) != requests.end())
 						{
 							std::cout << "\033[31mRemoving request from map\033[0m\n";
 							delete requests[(sock_fds.at(i).fd)];
 							requests.erase(sock_fds.at(i).fd);
 						}
-						// closeSocket(i);
-						// requests.erase(requests.begin() + (test));
-						if (keep_open == false)
-						{
-							std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
-							closeSocket(i);
-						}
+					}
+					else if (keep_open == false)
+					{
+						std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
+						closeSocket(i);
 					}
 				}
 				continue ;

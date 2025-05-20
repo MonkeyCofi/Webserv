@@ -99,6 +99,7 @@ const char*	Request::NoHostException::what() const throw()
 
 void	Request::pushRequest(std::string& req)
 {
+	std::cerr << "Pushing " << req << "\n";
 	request.push_back(req);
 }
 
