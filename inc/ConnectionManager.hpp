@@ -76,6 +76,7 @@ class ConnectionManager
 		std::vector<Server *>					handlers;
 		std::vector<std::string>				reqs;
 		std::vector<struct pollfd>				sock_fds;
+		std::vector<std::string>				tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::string								request_header;
 		std::fstream							request_body;
@@ -98,6 +99,8 @@ class ConnectionManager
 		void		openTempFile(Request* req, std::fstream& file);
 
 		void		parseBodyFile(Request* req);
+
+		void		deleteTempFiles();
 
 	public:
 		ConnectionManager(Http *protocol);

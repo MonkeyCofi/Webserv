@@ -187,11 +187,18 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 
 void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 {
+	// the filename is stored in the request object
+	// store the temp files in a vector
+	// when the server is closed, delete every file in the vector
 	if (file.is_open() == false)	// open temp file for reading message body
 	{
-		str	filename = TEMP_FILE;
-		filename += static_cast<char>((ConnectionManager::number++ % 10) + '0');
+
+		char uniqueName[255] = {0};
+		strcpy(uniqueName, ".tempXXXXXX");
+		mktemp(uniqueName);
+		str filename = str(uniqueName);
 		req->tempFileName = filename;
+
 		std::cout << "Trying to open with filename " << filename << "\n";
 		file.open(filename.c_str(), std::ios::binary | std::ios::out);
 		if (file.fail())
@@ -201,6 +208,7 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 		}
 		else if (file.good())
 		{
+			this->tempFileNames.push_back(filename);
 			std::cout << "Successfully opened " << filename << "\n";
 			return ;
 		}
@@ -275,13 +283,6 @@ void	ConnectionManager::parseBodyFile(Request* req)
 					break ;
 				}
 				total += r;
-				/*
-					- go through each character of the buffer
-					- if a match of the boundary character is found, check each proceeding character with the boundary (strstr)
-					- if more than 1/4ths of the boundary is found in current buffer, it might mean boundary is present in the next read
-					- therefore in the next read, instead of reading BUFFER_SIZE characters, read only up until the missing boundary characters
-					(maybe)
-				*/
 				k = 0;
 				while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
 					k++;
@@ -349,7 +350,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cerr << "There is no request block\n";
 	req->pushRequest(_request);
 	std::cout << CYAN << req << NL;
-	std::cout << RED << _request << "\n" << std::boolalpha << req->getHeaderReceived() << NL;
 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
 		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
@@ -357,9 +357,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		req->parseRequest(rq);
 		std::cout << req->getRequest();
 		req->setHeaderReceived(true);
-		// std::cout << "Requested URI: " << 
-		if (!req)
-			std::cerr << "No request object\n";
 		if (req->getContentLen() != 0)
 			req->setHasBody(true);
 		else
@@ -499,6 +496,7 @@ void ConnectionManager::startConnections()
 		}
 	}
 	std::cout << "Ending Server...\n";
+	this->deleteTempFiles();
 	this->request_body.close();
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
 	{
@@ -512,4 +510,17 @@ void ConnectionManager::startConnections()
 	std::cout << "Server closed!\n";
 	signal(SIGINT, SIG_DFL);
 	signal(SIGPIPE, SIG_DFL);
+}
+
+void	ConnectionManager::deleteTempFiles()
+{
+	for (std::vector<std::string>::iterator it = this->tempFileNames.begin(); it != this->tempFileNames.end(); it++)
+	{
+		// if file exists
+		if (!access((*it).c_str(), F_OK))
+		{
+			// remove it
+			std::remove((*it).c_str());
+		}
+	}
 }
