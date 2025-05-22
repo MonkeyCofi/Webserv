@@ -11,7 +11,7 @@ NAME = webserv
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	@$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+	@$(CXX) $(CXXFLAGS) -I./inc $(OBJS) -o $(NAME)
 
 %.o: %.cpp
 	@$(CXX) $(CXXFLAGS) -c $< -o $@

@@ -99,7 +99,6 @@ const char*	Request::NoHostException::what() const throw()
 
 void	Request::pushRequest(std::string& req)
 {
-	std::cerr << "Pushing " << req << "\n";
 	request.push_back(req);
 }
 
@@ -166,9 +165,9 @@ void Request::setRequestField(str &header_field, str &field_content)
 		if (this->body_boundary.empty() == false)
 			return ;
 		size_t	boundary_position = field_content.find("boundary=");
-		std::cout << RED << "B: " << &field_content[boundary_position] << NL;
 		if (boundary_position != std::string::npos)
 		{
+			std::cout << RED << "B: " << &field_content[boundary_position] << NL;
 			this->body_boundary = "--";
 			this->body_boundary += field_content.substr(boundary_position + std::strlen("boundary="));
 			this->body_boundaryEnd = body_boundary + "--";
@@ -319,4 +318,9 @@ str	Request::getRequest() const
 	for (unsigned int i = 0; i < request.size(); i++)
 		r.append(request.at(i));
 	return (r);
+}
+
+str	Request::getTempFileName() const
+{
+	return (this->tempFileName);
 }

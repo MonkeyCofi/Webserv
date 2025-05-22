@@ -87,6 +87,7 @@ class Request
 		str				getHost();
 		str				getBoundary() const;
 		str				getRequest() const;
+		str				getTempFileName() const;
 		std::fstream&	getBodyFile();
 		// getters
 

@@ -4,47 +4,6 @@
 		<link rel="stylesheet" href="styles.css">
 	</head>
 	<body>
-		<h1>This is a test html file</h1>
-		<img src="images.jpeg">
-		<p id="test">This file is read byte-by-byte to a buffer</p>
-		<p>This buffer is then sent to the client socket</p>
-		<h1>This marks the end of the file</h1>
-		<div class="post">
-			<h3>This Form uses the POST Method to send form data to the server</h3>
-			<form method="POST" action="/Users/pipolint/Desktop/webserv">
-				<label for="name">Name: </label>
-				<input type="text" name="name">
-				<label for="age">Age: </label>
-				<input type="text" name="age">
-				<input type="submit">
-			</form>
-		</div>
-		<div class="get">
-			<h3>This Form uses the GET method to ask for data from the server</h3>
-			<form method="GET" action="/Users/pipolint/Desktop/webserv/">
-				<label for="name">Name: </label>
-				<input type="text" name="name">
-				<label for="age">Age: </label>
-				<input type="text" name="age">
-				<input type="submit">
-			</form>
-		</div>
-		<form enctype="multipart/form-data" method="POST" action="">
-			<input type="name" name="name" placeholder="Enter your name">
-			<input type="number" name="age" placeholder="Enter your mobile number">
-			<input type="file" name="image">
-			<input type="email" name="email" placeholder="Enter your email">
-			<input type="submit">
-		</form>
-	</body>
-</html> -->
-
-<!DOCTYPE html>
-<html>
-	<head>
-		<link rel="stylesheet" href="styles.css">
-	</head>
-	<body>
 		<div class="form-box">
 			<form enctype="multipart/form-data" method="POST" action="">
 				<input type="name" name="name" placeholder="Enter your name">
@@ -66,4 +25,57 @@
 			<input type="submit">
 		</form>
 	</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" href="styles.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Webserv Default Page</title>
+</head>
+<body>
+	<nav id="navbar">
+		<h1>Webserv Test</h1>
+	</nav>
+
+	<main>
+		<article>
+		<h3>Welcome to JesterServ!</h3>
+		<p>This is our HTTP/1.1 complaint webserver which is written using C++. It supports:</p>
+			<ul id="server-things">
+				<li>NGINX-style I/O multiplexing for handling a multitude of clients and client requests in a way that simulates concurrency</li>
+				<li>The execution of CGI scripts written in PHP</li>
+				<li>Three HTTP methods: GET, POST and DELETE</li>
+			</ul>
+		</article>
+
+		<section id="post-requests">
+			<h3>This section is to test POST requests with the multipart/form-data encoding type</h3>
+			<form method="post" enctype="multipart/form-data">
+				<label for="upload-image">Upload an image</label>
+				<input type="name" placeholder="Enter your name">
+				<input type="file" name="upload-image">
+				<input type="submit">
+			</form>
+		</section>
+
+		<section id="post-requests">
+			<h3>This section is to test POST requests with the text/plain encoding type</h3>
+			<form method="post" enctype="text/plain">
+				<input type="text" placeholder="Enter plaintext here">
+				<input type="submit">
+			</form>
+		</section>
+
+		<section id="post-requests">
+			<h3>This section is to test POST requests with the default encoding type (application/x-www-form-urlencoded)</h3>
+			<form method="post" enctype="application/x-www-form-urlencoded">
+				<input type="text" placeholder="Enter plaintext here">
+				<input type="submit">
+			</form>
+		</section>
+	</main>
+</body>
 </html>

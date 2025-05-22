@@ -327,6 +327,46 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			(void)boundaryPosInFile;
 		}
 	}
+	if (!access(req->getTempFileName().c_str(), F_OK))	// remove the temp file used for storing binary data
+		std::remove(req->getTempFileName().c_str());
+}
+
+ConnectionManager::State	ConnectionManager::handleFirstRecv(str _request, Request* req, char* buffer, ssize_t r)
+{
+	std::fstream&	tempFile = req->getBodyFile();
+
+	str	rq = req->getRequest();
+	req->parseRequest(rq);
+	std::cout << req->getRequest();
+	req->setHeaderReceived(true);
+	if (req->getContentLen() != 0)
+		req->setHasBody(true);
+	std::cerr << (req->getHasBody() ? "Request has a body" : "Request does not have a body") << "\n";
+	if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
+	{
+		size_t	endPos;
+		openTempFile(req, tempFile);
+		endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
+		str	b(buffer);
+		b = b.substr(0, endPos);
+		std::cout << "Length of header part: " << b.length() << "\n";
+		if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
+		{
+			std::cout << RED << "There is a body but it is not present in request" << NL;
+			return (INCOMPLETE);
+		}
+		std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
+		req->bytesReceived += r - endPos;
+		tempFile.write(&buffer[endPos], r - endPos);
+		if (tempFile.bad() || tempFile.fail())
+			throw(std::runtime_error("Couldn't write data to temp file\n"));
+		if (req->bytesReceived == req->getContentLen())
+		{
+			parseBodyFile(req);
+			return (FINISH);
+		}
+	}
+	return (FINISH);
 }
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
@@ -346,49 +386,48 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	buffer[r] = 0;
 	_request = buffer;
-	if (!req)
-		std::cerr << "There is no request block\n";
 	req->pushRequest(_request);
-	std::cout << CYAN << req << NL;
+	// std::cout << CYAN << req << NL;
 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
-		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
-		str	rq = req->getRequest();
-		req->parseRequest(rq);
-		std::cout << req->getRequest();
-		req->setHeaderReceived(true);
-		if (req->getContentLen() != 0)
-			req->setHasBody(true);
-		else
-		{
-			std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
-			return (FINISH);
-		}
-		// write the body's bytes onto the temp file
-		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
-		{
-			size_t	endPos;
-			openTempFile(req, file);
-			endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
-			str	b(buffer);
-			b = b.substr(0, endPos);
-			std::cout << "Length of header part: " << b.length() << "\n";
-			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
-			{
-				std::cout << RED << "There is a body but it is not present in request" << NL;
-				return (INCOMPLETE);
-			}
-			std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
-			req->bytesReceived += r - endPos;
-			file.write(&buffer[endPos], r - endPos);
-			if (file.bad() || file.fail())
-				throw(std::runtime_error("Couldn't write data to temp file\n"));
-			if (req->bytesReceived == req->getContentLen())
-			{
-				parseBodyFile(req);
-				return (FINISH);
-			}
-		}
+		return (handleFirstRecv(_request, req, buffer, r));
+		// std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
+		// str	rq = req->getRequest();
+		// req->parseRequest(rq);
+		// std::cout << req->getRequest();
+		// req->setHeaderReceived(true);
+		// if (req->getContentLen() != 0)
+		// 	req->setHasBody(true);
+		// else
+		// {
+		// 	std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
+		// 	return (FINISH);
+		// }
+		// // write the body's bytes onto the temp file
+		// if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
+		// {
+		// 	size_t	endPos;
+		// 	openTempFile(req, file);
+		// 	endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
+		// 	str	b(buffer);
+		// 	b = b.substr(0, endPos);
+		// 	std::cout << "Length of header part: " << b.length() << "\n";
+		// 	if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
+		// 	{
+		// 		std::cout << RED << "There is a body but it is not present in request" << NL;
+		// 		return (INCOMPLETE);
+		// 	}
+		// 	std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
+		// 	req->bytesReceived += r - endPos;
+		// 	file.write(&buffer[endPos], r - endPos);
+		// 	if (file.bad() || file.fail())
+		// 		throw(std::runtime_error("Couldn't write data to temp file\n"));
+		// 	if (req->bytesReceived == req->getContentLen())
+		// 	{
+		// 		parseBodyFile(req);
+		// 		return (FINISH);
+		// 	}
+		// }
 	}
 	else
 	{
