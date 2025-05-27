@@ -166,11 +166,12 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server)
                 // error;
         }
         close(response);
-        waitpid(cgi_fd, &status, 0);
-        if (WIFEXITED(status))
-            std::cout << YELLOW << "Successfully executed script" << NL;
-        else
-            std::cout << "Child process did not exit\n";
+        (void)status;
+        // waitpid(cgi_fd, &status, 0);
+        // if (WIFEXITED(status))
+        //     std::cout << YELLOW << "Successfully executed script" << NL;
+        // else
+        //     std::cout << "Child process did not exit\n";
         std::ifstream test_stream;
         test_stream.open("./.cgi-response", std::ios::in | std::ios::binary);
         int response_fd = open("./.cgi-response", O_RDONLY);

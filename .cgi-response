@@ -1,0 +1,20 @@
+HTTP/1.1 200 OK
+Content-Length: 34
+Content-Type: text/html
+
+<p>Test</p>
+<h3>hello, Joshua</h3>p.php on line 4
+HTTP/1.1 200 OK
+Content-Length: 29
+Content-Type: text/html
+
+<p>Test</p>
+<h3>hello, 1</h3>/p>
+<h3>hello, </h3>
+
+Warning: A non-numeric value encountered in /Users/pipolint/Desktop/projects/webserv/cgi-bin/scphp.php on line 3
+HTTP/1.1 200 OK
+Content-Length: 82
+Content-Type: text/html
+
+<p>hello there. I'm trying to figure out who you are. Please give me a moment</p>0
