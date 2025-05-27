@@ -1,4 +1,5 @@
 <?php
+    sleep(5);
     $body = "<p>Test</p>\n";
     $query_string = getenv("QUERY_STRING");
     $name = strstr($query_string, "=");
@@ -9,6 +10,5 @@
     echo "Content-Length: ${content_length}\r\n";
     echo "Content-Type: text/html\r\n\r\n";
     echo $body;
-    sleep(2);
     echo $final_print;
 ?>

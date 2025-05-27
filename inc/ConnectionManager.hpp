@@ -101,7 +101,7 @@ class ConnectionManager
 		void		parseBodyFile(Request* req);
 
 		void		deleteTempFiles();
-		State		handleFirstRecv(str _request, Request* req, char* buffer, ssize_t r);
+		State		handleFirstRecv(std::fstream& tempFile, str _request, Request* req, char* buffer, ssize_t& r);
 
 
 	public:

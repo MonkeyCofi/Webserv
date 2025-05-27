@@ -155,16 +155,16 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server)
         close(pipe_fds[WRITE]);
         char b[BUFFER_SIZE] = {0};
         ssize_t r = 1;
-        int response = open("./.cgi-response", O_RDWR | O_CREAT);
+        int response = open("./.cgi-response", O_RDWR | O_CREAT, 0644);
         fcntl(response, F_SETFL, fcntl(response, F_GETFL) | O_NONBLOCK);
         fcntl(response, F_SETFD, fcntl(response, F_GETFD) | FD_CLOEXEC);
-        while (r)
-        {
-            r = read(pipe_fds[READ], b, BUFFER_SIZE);
-            if (write(response, b, r) == -1)
-                std::cerr << RED"Write error" << NL;
-                // error;
-        }
+        // while (r)
+        // {
+        //     r = read(pipe_fds[READ], b, BUFFER_SIZE);
+        //     if (write(response, b, r) == -1)
+        //         std::cerr << RED"Write error" << NL;
+        //         // error;
+        // }
         close(response);
         (void)status;
         // waitpid(cgi_fd, &status, 0);
@@ -192,6 +192,8 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server)
                 server->setBody(line);
             }
         }
+        (void)r;
+        (void)b;
     }
     (void)resp;
 }

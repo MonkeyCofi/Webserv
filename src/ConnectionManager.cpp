@@ -331,9 +331,10 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		std::remove(req->getTempFileName().c_str());
 }
 
-ConnectionManager::State	ConnectionManager::handleFirstRecv(str _request, Request* req, char* buffer, ssize_t r)
+ConnectionManager::State	ConnectionManager::handleFirstRecv(std::fstream& tempFile, 
+	str _request, Request* req, char* buffer, ssize_t& r)
 {
-	std::fstream&	tempFile = req->getBodyFile();
+	// std::fstream&	tempFile = req->getBodyFile();
 
 	str	rq = req->getRequest();
 	req->parseRequest(rq);
@@ -390,44 +391,44 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	// std::cout << CYAN << req << NL;
 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
-		return (handleFirstRecv(_request, req, buffer, r));
-		// std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
-		// str	rq = req->getRequest();
-		// req->parseRequest(rq);
-		// std::cout << req->getRequest();
-		// req->setHeaderReceived(true);
-		// if (req->getContentLen() != 0)
-		// 	req->setHasBody(true);
-		// else
-		// {
-		// 	std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
-		// 	return (FINISH);
-		// }
-		// // write the body's bytes onto the temp file
-		// if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
-		// {
-		// 	size_t	endPos;
-		// 	openTempFile(req, file);
-		// 	endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
-		// 	str	b(buffer);
-		// 	b = b.substr(0, endPos);
-		// 	std::cout << "Length of header part: " << b.length() << "\n";
-		// 	if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
-		// 	{
-		// 		std::cout << RED << "There is a body but it is not present in request" << NL;
-		// 		return (INCOMPLETE);
-		// 	}
-		// 	std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
-		// 	req->bytesReceived += r - endPos;
-		// 	file.write(&buffer[endPos], r - endPos);
-		// 	if (file.bad() || file.fail())
-		// 		throw(std::runtime_error("Couldn't write data to temp file\n"));
-		// 	if (req->bytesReceived == req->getContentLen())
-		// 	{
-		// 		parseBodyFile(req);
-		// 		return (FINISH);
-		// 	}
-		// }
+		// return (handleFirstRecv(file, _request, req, buffer, r));
+		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
+		str	rq = req->getRequest();
+		req->parseRequest(rq);
+		std::cout << req->getRequest();
+		req->setHeaderReceived(true);
+		if (req->getContentLen() != 0)
+			req->setHasBody(true);
+		else
+		{
+			std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
+			return (FINISH);
+		}
+		// write the body's bytes onto the temp file
+		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
+		{
+			size_t	endPos;
+			openTempFile(req, file);
+			endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
+			str	b(buffer);
+			b = b.substr(0, endPos);
+			std::cout << "Length of header part: " << b.length() << "\n";
+			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
+			{
+				std::cout << RED << "There is a body but it is not present in request" << NL;
+				return (INCOMPLETE);
+			}
+			std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
+			req->bytesReceived += r - endPos;
+			file.write(&buffer[endPos], r - endPos);
+			if (file.bad() || file.fail())
+				throw (std::runtime_error("Couldn't write data to temp file\n"));
+			if (req->bytesReceived == req->getContentLen())
+			{
+				parseBodyFile(req);
+				return (FINISH);
+			}
+		}
 	}
 	else
 	{
@@ -509,18 +510,19 @@ void ConnectionManager::startConnections()
 			{
 				if (handlers.at(i) && state == FINISH)	// the request has been parsed and ready for response building
 				{
-					bool keep_open;
+					bool keep_open = false;
 					if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
 					{
+						delete requests[(sock_fds.at(i).fd)];
 						if (requests.find(sock_fds.at(i).fd) != requests.end())
 						{
 							std::cout << "\033[31mRemoving request from map\033[0m\n";
-							delete requests[(sock_fds.at(i).fd)];
 							requests.erase(sock_fds.at(i).fd);
 						}
 					}
 					else if (keep_open == false)
 					{
+						delete requests[(sock_fds.at(i).fd)];
 						std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
 						closeSocket(i);
 					}
