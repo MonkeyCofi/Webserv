@@ -197,7 +197,8 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 		strcpy(uniqueName, ".tempXXXXXX");
 		mktemp(uniqueName);
 		str filename = str(uniqueName);
-		req->tempFileName = filename;
+		req->setTempFileName(filename);
+		// req->tempFileName = filename;
 
 		std::cout << "Trying to open with filename " << filename << "\n";
 		file.open(filename.c_str(), std::ios::binary | std::ios::out);
@@ -208,7 +209,8 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 		}
 		else if (file.good())
 		{
-			this->tempFileNames.push_back(filename);
+			// this->tempFileNames.push_back(filename);
+
 			std::cout << "Successfully opened " << filename << "\n";
 			return ;
 		}
@@ -234,7 +236,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 	const str 			boundary = "\r\n" + req->getBoundary();
 	bool				sheet;
 
-	tempFile.open(req->tempFileName.c_str(), std::ios::in);
+	tempFile.open(req->getTempFileName().c_str(), std::ios::in);
 	while (std::getline(tempFile, line))
 	{
 		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
@@ -566,4 +568,9 @@ void	ConnectionManager::deleteTempFiles()
 			std::remove((*it).c_str());
 		}
 	}
+}
+
+std::vector<struct pollfd>& ConnectionManager::getPollFds()
+{
+	return (this->sock_fds);
 }

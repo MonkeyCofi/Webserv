@@ -66,18 +66,25 @@ class Server: public BlockOBJ
 		void					handleRequest(Request *req);
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);
-		str						getPort(int index);
-		str						getIP(int index);
-		str						getType();
-		str						getRoot() const;
 		void					setDefault();
 		Socket*					init_listeners();
-		std::vector<str>		getNames();
-		std::vector<str>		getIPs();
-		std::vector<str>		getPorts();
-		std::vector<Location *>	getLocations();
-		ResponseState			getState() const;
 
+		/********************/
+		/*		getters		*/
+		/********************/
+		str							getPort(int index);
+		str							getIP(int index);
+		str							getType();
+		str							getRoot() const;
+		std::vector<str>			getNames();
+		std::vector<str>			getIPs();
+		std::vector<str>			getPorts();
+		std::vector<Location *>		getLocations();
+		ResponseState				getState() const;
+
+		/********************/
+		/*		setters		*/
+		/********************/
 		void	setHeader(str header_);
 		void	setBody(str body_);
 		void	setFileFD(int fd_);

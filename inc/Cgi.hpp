@@ -32,7 +32,8 @@ class Cgi
 		Cgi(const str script_path, Server* server);	// constructor that takes path to cgi script
 
 		void		setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv);
-		void		runCGI(std::stringstream& resp, Server* server);
+		// void		runCGI(std::stringstream& resp, Server* server, Request* req);
+		void    	runCGI(std::stringstream& resp, Server* server, Request* req, std::vector<struct pollfd>& pollfds);
 		char**   	envToChar();
 		bool    	validScriptAccess() const;
 };

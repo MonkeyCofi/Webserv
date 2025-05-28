@@ -37,7 +37,6 @@
 # include "Cgi.hpp"
 
 // # define BUFFER_SIZE 4096	// 4 kb
-# define TEMP_FILE "./.temp"
 
 /* Colors */
 # define RED "\033[31m"
@@ -74,9 +73,9 @@ class ConnectionManager
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
-		std::vector<std::string>				reqs;
+		std::vector<str>						reqs;
 		std::vector<struct pollfd>				sock_fds;
-		std::vector<std::string>				tempFileNames;
+		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::string								request_header;
 		std::fstream							request_body;
@@ -109,6 +108,8 @@ class ConnectionManager
 
 
 		void	startConnections();
+
+		std::vector<struct pollfd>& getPollFds();
 
 		~ConnectionManager();
 

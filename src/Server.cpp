@@ -494,12 +494,20 @@ void Server::handleRequest(Request *req)
 	{
 		// if the POST URI is a URI leading to a CGI script, execute that script
 		// the presence of Content-Length or Transfer-encoding headers indicate a message body is present in the request
-		if (req->getContentLen() == 0)
-			return ;
-		resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
-		resp << "<html><h1>POSTED</h1></html>\r\n";
-		std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
-		this->header = resp.str();
+		if (req->getFileURI().find("cgi") != str::npos)
+		{
+			Cgi	cgi(req->getFileURI(), this);
+			cgi.setupEnvAndRun(req, resp, this);
+		}
+		else
+		{
+			if (req->getContentLen() == 0)
+				return ;
+			resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
+			resp << "<html><h1>POSTED</h1></html>\r\n";
+			std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
+			this->header = resp.str();
+		}
 	}
 	else if (req->getMethod() == "DELETE")
 	{
@@ -621,9 +629,6 @@ void	Server::setFileFD(int fd_)
 {
 	this->file_fd = fd_;
 }
-/********************/
-/*		Setters		*/
-/********************/
 
 Server::ResponseState	Server::returnIncomplete()
 {
