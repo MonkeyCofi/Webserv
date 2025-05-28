@@ -29,6 +29,7 @@ Server::Server() : BlockOBJ()
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
 	http_codes["505"] = "HTTP Version Not Supported";
+	sent_bytes = 0;
 }
 
 Server::Server(const Server &copy): BlockOBJ(copy)
@@ -54,6 +55,7 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	http_codes["501"] = "Not Implemented";
 	http_codes["505"] = "HTTP Version Not Supported";
 	(void)copy;
+	sent_bytes = 0;
 }
 
 Server::~Server()
@@ -524,7 +526,7 @@ Server::ResponseState	Server::getState() const
 bool Server:: respond(int client_fd)
 {
 	str		tmp;
-	ssize_t	bytes, sb;
+	ssize_t	bytes;
 	char	buffer[BUFFER_SIZE + 1] = {0};
 
 	// std::cout << std::boolalpha << headerSent << NL << header << NL << file_fd << NL;
@@ -541,6 +543,7 @@ bool Server:: respond(int client_fd)
 	{
 		bytes = read(file_fd, buffer, BUFFER_SIZE);
 		buffer[bytes] = 0;
+		sent_bytes += bytes;
 		if (bytes == 0)	// file has been fully read and responded with
 		{
 			setState(FINISH);
@@ -561,24 +564,7 @@ bool Server:: respond(int client_fd)
 		if (send(client_fd, "\r\n", 2, 0) <= 0)
 			return (keep_alive);
 		return (keep_alive);
-		// while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
-		// {
-		// 	tmp = ssizeToStr(bytes) + "\r\n";
-		// 	if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-		// 		return false;
-		// 	// std::cout << YELLOW << "sending: " << buffer << NL;
-		// 	if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
-		// 		return false;
-		// 	if (send(client_fd, "\r\n", 2, 0) <= 0)
-		// 		return false;
-		// 	total_length -= sb - 2;
-		// }
-		// tmp = "0\r\n\r\n";
-		// if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-		// 	return false;
-		// close(file_fd);
 	}
-	(void)sb;
 	return keep_alive;
 }
 
@@ -617,6 +603,10 @@ bool Server::operator ==(Server &server2)
 }
 
 // new functions
+
+/********************/
+/*		Setters		*/
+/********************/
 void	Server::setHeader(str header_)
 {
 	this->header = header_;
@@ -631,6 +621,9 @@ void	Server::setFileFD(int fd_)
 {
 	this->file_fd = fd_;
 }
+/********************/
+/*		Setters		*/
+/********************/
 
 Server::ResponseState	Server::returnIncomplete()
 {

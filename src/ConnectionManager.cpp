@@ -504,7 +504,6 @@ void ConnectionManager::startConnections()
 					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 				}
-				// continue ;
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
@@ -513,7 +512,7 @@ void ConnectionManager::startConnections()
 					bool keep_open = false;
 					if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
 					{
-						delete requests[(sock_fds.at(i).fd)];
+						std::cerr << "Finished responding to request\n";
 						if (requests.find(sock_fds.at(i).fd) != requests.end())
 						{
 							std::cout << "\033[31mRemoving request from map\033[0m\n";
@@ -526,8 +525,11 @@ void ConnectionManager::startConnections()
 						std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
 						closeSocket(i);
 					}
+					if (handlers.at(i)->sent_bytes)
+						std::cerr << "Sent " << handlers.at(i)->sent_bytes << "\n";
+					handlers.at(i)->setState(Server::returnIncomplete());
+					handlers.at(i)->sent_bytes = 0;
 				}
-				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{

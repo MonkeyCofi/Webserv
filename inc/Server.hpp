@@ -62,6 +62,7 @@ class Server: public BlockOBJ
 		Server(const Server &copy);
 		~Server();
 
+		size_t					sent_bytes;
 		void					handleRequest(Request *req);
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);

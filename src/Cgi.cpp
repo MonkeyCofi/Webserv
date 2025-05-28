@@ -129,7 +129,7 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server)
         resp << "\r\n\r\n";
         resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
     }
-    int status;
+
     if (pipe(this->pipe_fds) == -1)
         throw (std::runtime_error("Couldn't open pipes for CGI"));
     this->cgi_fd = fork();
@@ -158,20 +158,14 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server)
         int response = open("./.cgi-response", O_RDWR | O_CREAT, 0644);
         fcntl(response, F_SETFL, fcntl(response, F_GETFL) | O_NONBLOCK);
         fcntl(response, F_SETFD, fcntl(response, F_GETFD) | FD_CLOEXEC);
-        // while (r)
-        // {
-        //     r = read(pipe_fds[READ], b, BUFFER_SIZE);
-        //     if (write(response, b, r) == -1)
-        //         std::cerr << RED"Write error" << NL;
-        //         // error;
-        // }
+        while (r)
+        {
+            r = read(pipe_fds[READ], b, BUFFER_SIZE);
+            if (write(response, b, r) == -1)
+                std::cerr << RED"Write error" << NL;
+                // error;
+        }
         close(response);
-        (void)status;
-        // waitpid(cgi_fd, &status, 0);
-        // if (WIFEXITED(status))
-        //     std::cout << YELLOW << "Successfully executed script" << NL;
-        // else
-        //     std::cout << "Child process did not exit\n";
         std::ifstream test_stream;
         test_stream.open("./.cgi-response", std::ios::in | std::ios::binary);
         int response_fd = open("./.cgi-response", O_RDONLY);
