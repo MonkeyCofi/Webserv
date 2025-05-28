@@ -2,9 +2,9 @@
 
 const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
 
-ConfigParser::ConfigParser(): err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
+ConfigParser::ConfigParser(): webserv(NULL), err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
-	// blocks.push(webserv.getProtocol());
+	webserv = new Engine();
 }
 
 bool ConfigParser::validFilename(str &fn) const
@@ -87,7 +87,7 @@ str ConfigParser::parseNext(str &line) const
 	return next;
 }
 
-bool ConfigParser::handleNext(str &word, Engine &engine)
+bool ConfigParser::handleNext(str &word)
 {
 	BlockOBJ	*ptr = NULL;
 
@@ -116,7 +116,7 @@ bool ConfigParser::handleNext(str &word, Engine &engine)
 					err_msg = "Incorrect arguments for block directive!\n";
 					return false;
 				}
-				blocks.push(webserv.getProtocol());
+				blocks.push(webserv->getProtocol());
 			}
 			else
 			{
@@ -133,12 +133,13 @@ bool ConfigParser::handleNext(str &word, Engine &engine)
 						err_msg = "Incorrect arguments for block directive!\n";
 						return false;
 					}
-					if (ptr->getType() == "Server")
-						engine.getProtocol()->servers.push_back(dynamic_cast<Server *>(ptr));
 					blocks.push(ptr);
 				}
 				else if (word[0] == ';' && blocks.size() > 0)
-					blocks.top()->handleDirective(parsed_opts);
+				{
+					if (!blocks.top()->handleDirective(parsed_opts))
+						return false;
+				}
 			}
 			while (parsed_opts.size() > 0)
 				parsed_opts.pop();
@@ -146,11 +147,10 @@ bool ConfigParser::handleNext(str &word, Engine &engine)
 		if (word == "}")
 			blocks.pop();
 	}
-	(void)engine;
 	return true;
 }
 
-bool ConfigParser::parseLine(str &line, Engine &engine)
+bool ConfigParser::parseLine(str &line)
 {
 	str	word;
 
@@ -158,40 +158,57 @@ bool ConfigParser::parseLine(str &line, Engine &engine)
 	while (line != "")
 	{
 		word = parseNext(line);
-		if (!isValidNext(word) || !handleNext(word, engine))
+		if (!isValidNext(word) || !handleNext(word))
 			return false;
 		skipWhitespace(line);
 	}
 	return true;
 }
 
-Engine ConfigParser::parse(str &fn)
+Engine *ConfigParser::parse(str &fn, bool defaultConf)
 {
-	if (!validFilename(fn))
+	if (!defaultConf && !validFilename(fn))
 		throw FilenameError("Invalid file name!");
 
-	Engine			eng;
-	str				line, cpy;
-	int				i = 0;
-	std::ifstream 	file;
-
-	file.open(fn.c_str());
+	str						line, cpy;
+	int						i = 0;
+	std::ifstream 			file;
+	std::vector <Server *>	servers;
+	if (defaultConf == true)
+		file.open("config/block_test.conf");
+	else
+		file.open(fn.c_str());
 	if (!file)
 		throw InvalidFileError("Could not open file!");
 
 	while (getline(file, line))
 	{
 		cpy = line;
+		if (cpy.find("#") != str::npos)
+			cpy = cpy.substr(0, cpy.find("#"));
 		i++;
-		if (!parseLine(cpy, eng))
+		if (!parseLine(cpy))
 			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 	}
 	if (inBlock)
 		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
 	if (expected != DEFAULT)
 		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	//std::cout << "Number of servers: " << eng.getProtocol()->servers.size() << "\n";
-	return (eng);
+	servers = webserv->getProtocol()->getServers();
+	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+	{
+		if ((*it)->getNames().size() == 0)
+			(*it)->setDefault();
+	}
+	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+    {
+		for (std::vector<Server *>::iterator it2 = it + 1; it2 != servers.end(); it2++)
+		{
+			if (**it == **it2)
+				throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
+		}
+	}
+	return (webserv);
 }
 
 ConfigParser::~ConfigParser()

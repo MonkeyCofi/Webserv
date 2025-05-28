@@ -11,14 +11,16 @@
 
 typedef std::string str;
 
+# define BUFFER_SIZE 4096	// 4kb buffer size; need to fix case where buffer size is a small number such as 32
 class BlockOBJ
 {
 	protected:
+		std::vector<std::string>			index_pages;
+		std::map<std::string, std::string>	error_pages;
 		int			min_del_depth, client_max_body;
 		str			root_dir;
 		bool		autoindex;
-		std::vector<std::string>			index_pages;
-		std::map<std::string, std::string>	error_pages;
+		bool		inDirectives(const str &dir, const str *dirs)	const;
 
 	public:
 		BlockOBJ();
@@ -27,11 +29,9 @@ class BlockOBJ
 
 		virtual bool		handleDirective(std::queue<str> opts);
 		virtual BlockOBJ	*handleBlock(std::queue<str> opts) = 0;
-
-		bool	inDirectives(const str &dir, const str *dirs)	const;
+		virtual str			getType() = 0;
 
 		const BlockOBJ &operator =(const BlockOBJ &copy);
-		virtual str	getType();
 };
 
 #endif

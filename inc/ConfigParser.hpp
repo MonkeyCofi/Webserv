@@ -24,7 +24,7 @@ class ConfigParser
 		};
 
 		const static str		directives[];
-		Engine					webserv;
+		Engine					*webserv;
 		str						err_msg;
 		int						inBlock;
 		e_next					expected;
@@ -39,14 +39,14 @@ class ConfigParser
 		void	skipWhitespace(str &line)	const;
 		bool	validFilename(str &fn)		const;
 		str		parseNext(str &line)		const;
-		bool	parseLine(str &line, Engine &engine);
-		bool	handleNext(str &word, Engine &engine);
+		bool	parseLine(str &line);
+		bool	handleNext(str &word);
 
 	public:
 		ConfigParser();
 		~ConfigParser();
 
-		Engine	parse(str &fn);		
+		Engine	*parse(str &fn, bool defaultConf);		
 
 		class FilenameError: public std::exception
 		{
