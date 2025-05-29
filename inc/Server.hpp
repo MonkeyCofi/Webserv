@@ -17,6 +17,7 @@
 # include <sstream>
 # include <sys/socket.h>
 # include <map>
+# include <set>
 # include <string>
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
@@ -63,7 +64,9 @@ class Server: public BlockOBJ
 		~Server();
 
 		size_t					sent_bytes;
-		void					handleRequest(Request *req);
+		void					handleRequest(Request *req, std::vector<struct pollfd>& pollfds, 
+								std::set<int>& cgiFds);
+
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);
 		void					setDefault();

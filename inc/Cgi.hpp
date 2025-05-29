@@ -9,6 +9,7 @@
 
 # define READ 0
 # define WRITE 1
+# define CHLDPROC 0
 
 class Cgi
 {
@@ -31,9 +32,12 @@ class Cgi
 		Cgi	&operator=(const Cgi& copy);
 		Cgi(const str script_path, Server* server);	// constructor that takes path to cgi script
 
-		void		setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv);
-		// void		runCGI(std::stringstream& resp, Server* server, Request* req);
-		void    	runCGI(std::stringstream& resp, Server* server, Request* req, std::vector<struct pollfd>& pollfds);
+		void		setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv, 
+					std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds);
+
+		void    	runCGI(std::stringstream& resp, Server* server, Request* req, 
+					std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds);
+
 		char**   	envToChar();
 		bool    	validScriptAccess() const;
 };

@@ -72,16 +72,18 @@ Cgi &Cgi::operator=(const Cgi& copy)
     return (*this);
 }
 
-void    Cgi::setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv)
+void    Cgi::setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv, 
+        std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds)
 {
+    const str uri = req->getFileURI();
+
     this->path_info = "PATH_INFO=" + str(serv->getRoot() + req->getFileURI());
     this->path_info = path_info.substr(0, path_info.find_first_of('?'));
-    this->query_string = "QUERY_STRING=" + req->getFileURI().substr(req->getFileURI().find_first_of('?'), str::npos);
+    this->query_string = "QUERY_STRING=" + uri.substr(uri.find_first_of('?') + 1, str::npos);
     this->method = "METHOD=" + req->getMethod();
     this->content_type = "CONTENT_TYPE=" + req->getContentType();
     this->host = "HTTP_HOST=" + req->getHost();
     this->content_length = "CONTENT_LENGTH=";   // incomplete
-
     this->env.push_back(path_info);
     this->env.push_back(query_string);
     this->env.push_back(method);
@@ -89,9 +91,8 @@ void    Cgi::setupEnvAndRun(Request* req, std::stringstream& resp, Server* serv)
     this->env.push_back(host);
     this->env.push_back(content_length);
     this->env.push_back("SCRIPT_NAME=" + this->scriptName);
-    // dummy vector, pass actual vector later
-    std::vector<struct pollfd> pollfds;
-    runCGI(resp, serv, req, pollfds);
+
+    runCGI(resp, serv, req, pollfds, cgiFds);
 }
 
 char**   Cgi::envToChar()
@@ -206,7 +207,12 @@ bool    Cgi::validScriptAccess() const
 //     (void)resp;
 // }
 
-void    Cgi::runCGI(std::stringstream& resp, Server* server, Request* req, std::vector<struct pollfd>& pollfds)
+/// @brief runs the cgi script and adds the READend of pipe to the poll() call
+/// @param resp the respose string stream
+/// @param server the server object that is handling the CGI request
+/// @param req the request object that requested for the CGI script
+/// @param pollfds the vector of pollfds that are being poll()'ed
+void    Cgi::runCGI(std::stringstream& resp, Server* server, Request* req, std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds)
 {
     // if the script is inaccessible, return an error page
     if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
@@ -217,6 +223,8 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server, Request* req, std::
         resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
     }
     // if request is POST, open .tmp file and dup it with stdin
+    if (pipe(this->pipe_fds) == -1)
+        throw (std::runtime_error("Couldn't open pipes for CGI"));
     if (method == "POST")
     {
         std::cout << "Opening " << req->getTempFileName() << " to pass to CGI script\n";
@@ -226,18 +234,19 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server, Request* req, std::
             // handle error
             throw (std::exception());
         }
-        dup2(in_fd, STDIN_FILENO);
+        dup2(in_fd, pipe_fds[READ]);
         close(in_fd);
     }
-    if (pipe(this->pipe_fds) == -1)
-        throw (std::runtime_error("Couldn't open pipes for CGI"));
     this->cgi_fd = fork();
-    if (cgi_fd == 0)    // child process
+    if (cgi_fd == CHLDPROC)    // child process
     {
-        str script_path = this->path_info.substr(this->path_info.find("PATH_INFO=") + std::strlen("PATH_INFO="), str::npos);
+        const str script_path = this->path_info.substr(this->path_info.find("PATH_INFO=") + std::strlen("PATH_INFO="), str::npos);
         const char* cmd = "/usr/bin/php";
         const char *const argv[3] = {cmd, script_path.c_str(), NULL};
         char* const* envp = envToChar();
+        // if post method, dup READend of pipe to STDIN
+        if (method != "POST")
+            dup2(pipe_fds[READ], STDIN_FILENO);
         close(pipe_fds[READ]);
         dup2(pipe_fds[WRITE], STDOUT_FILENO);
         close(pipe_fds[WRITE]);
@@ -258,6 +267,8 @@ void    Cgi::runCGI(std::stringstream& resp, Server* server, Request* req, std::
         read_fd.revents = 0;
         read_fd.fd = pipe_fds[READ];
         pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
+        cgiFds.insert(read_fd.fd);
+        std::cout << "Pushed " << read_fd.fd << " into set of fds\n";
     }
     (void)server;
 }

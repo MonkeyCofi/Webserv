@@ -464,10 +464,9 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 	header = resp.str();
 }
 
-void Server::handleRequest(Request *req)
+void Server::handleRequest(Request *req, std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds)
 {
 	str					file;
-	// int					count;
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
@@ -480,10 +479,11 @@ void Server::handleRequest(Request *req)
 	else if (req->getMethod() == "GET")
 	{
 		file = req->getFileURI();
+		// pass the pollfds to the CGI handler
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(req, resp, this);
+			cgi.setupEnvAndRun(req, resp, this, pollfds, cgiFds);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);
@@ -492,12 +492,10 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "POST")
 	{
-		// if the POST URI is a URI leading to a CGI script, execute that script
-		// the presence of Content-Length or Transfer-encoding headers indicate a message body is present in the request
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(req, resp, this);
+			cgi.setupEnvAndRun(req, resp, this, pollfds, cgiFds);
 		}
 		else
 		{

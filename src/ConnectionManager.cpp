@@ -32,7 +32,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 	if (!protocol)
 		throw std::runtime_error("e1");
 	std::vector<Server *>	servers = protocol->getServers();
-	this->state = HEADER;
+	// this->recv_state = HEADER;
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
 	{
 		for (unsigned int i = 0; i < (*it)->getIPs().size(); i++)
@@ -162,13 +162,13 @@ void ConnectionManager::printError(int revents)
 		std::cerr << "INVALID\n";
 }
 
-void ConnectionManager::passRequestToServer(int i, Request **req)
+void ConnectionManager::passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds)
 {
 	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else
 		handlers.at(i) = servers_per_ippp.at(i)[(*req)->getHost()];
-	handlers.at(i)->handleRequest(*req);
+	handlers.at(i)->handleRequest(*req, pollfds, cgiFds);
 	// delete *req;
 	// *req = NULL;
 }
@@ -329,7 +329,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			(void)boundaryPosInFile;
 		}
 	}
-	if (!access(req->getTempFileName().c_str(), F_OK))	// remove the temp file used for storing binary data
+	if (!access(req->getTempFileName().c_str(), F_OK))	// remove the temp file used for storing binary data0
 		std::remove(req->getTempFileName().c_str());
 }
 
@@ -455,10 +455,42 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	return (INCOMPLETE);
 }
 
+/// @brief handles all pollout events
+/// @param state the current state of the response
+/// @param i the index of the handling server
+/// @param requests the map of requests wherein the socket fd is the key and the request object is the value
+void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
+{
+	if (handlers.at(i) && state == FINISH)	// the request has been parsed and ready for response building
+	{
+		bool keep_open = false;
+		if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
+		{
+			std::cerr << "Finished responding to request\n";
+			if (requests.find(sock_fds.at(i).fd) != requests.end())
+			{
+				std::cout << "\033[31mRemoving request from map\033[0m\n";
+				requests.erase(sock_fds.at(i).fd);
+			}
+		}
+		else if (keep_open == false)
+		{
+			delete requests[(sock_fds.at(i).fd)];
+			std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
+			closeSocket(i);
+		}
+		if (handlers.at(i)->sent_bytes)
+			std::cerr << "Sent " << handlers.at(i)->sent_bytes << "\n";
+		handlers.at(i)->setState(Server::returnIncomplete());
+		handlers.at(i)->sent_bytes = 0;
+	}
+}
+
 void ConnectionManager::startConnections()
 {
 	int							res;
 	State						state = INCOMPLETE;
+	std::set<int>		cgiFds;
 	std::map<int, Request *>	requests;
 
 	main_listeners = sock_fds.size();
@@ -469,10 +501,7 @@ void ConnectionManager::startConnections()
 	{
 		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
-		{
-			// std::cout << "No FD event occurring\n";
 			continue ;
-		}
 		if (res < 0)
 		{
 			if (g_quit)
@@ -483,10 +512,7 @@ void ConnectionManager::startConnections()
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			if (sock_fds.at(i).revents & POLLIN)
-			{
 				newClient(i, sock_fds.at(i));
-			}
-			// std::cout << "Listener fd: " << sock_fds.at(i).fd << "\n";
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
@@ -494,44 +520,78 @@ void ConnectionManager::startConnections()
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
-				std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
-				if (it == requests.end())
+				if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
 				{
-					requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
-					std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
+					char buf[BUFFER_SIZE] = {0};
+					ssize_t r = 0;
+					r = read(sock_fds.at(i).fd, buf, BUFFER_SIZE);
+					if (r == 0)
+					{
+						// closeSocket(i);
+						close(sock_fds.at(i).fd);
+						cgiFds.erase(sock_fds.at(i).fd);
+						sock_fds.erase(sock_fds.begin() + i);
+						i--;
+					}
+					else if (r == -1)
+					{
+						std::cerr << "EXITING SERVER\n";
+						exit(1);
+					}
+					else
+					{
+						buf[r] = 0;
+						std::cout << buf << "\n";
+					}
 				}
-				if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
+				else
 				{
-					std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
-					this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
+					std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
+					std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
+					if (it == requests.end())
+					{
+						requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
+						std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
+					}
+					if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
+					{
+						std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
+						this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
+					}
 				}
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				if (handlers.at(i) && state == FINISH)	// the request has been parsed and ready for response building
+				if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
 				{
-					bool keep_open = false;
-					if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
-					{
-						std::cerr << "Finished responding to request\n";
-						if (requests.find(sock_fds.at(i).fd) != requests.end())
-						{
-							std::cout << "\033[31mRemoving request from map\033[0m\n";
-							requests.erase(sock_fds.at(i).fd);
-						}
-					}
-					else if (keep_open == false)
-					{
-						delete requests[(sock_fds.at(i).fd)];
-						std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
-						closeSocket(i);
-					}
-					if (handlers.at(i)->sent_bytes)
-						std::cerr << "Sent " << handlers.at(i)->sent_bytes << "\n";
-					handlers.at(i)->setState(Server::returnIncomplete());
-					handlers.at(i)->sent_bytes = 0;
+					std::cout << "CGI fd is ready for POLLOUT\n";
+					exit(0);
+					continue ;
 				}
+				handlePollout(state, i, requests);
+				// if (handlers.at(i) && state == FINISH)	// the request has been parsed and ready for response building
+				// {
+				// 	bool keep_open = false;
+				// 	if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
+				// 	{
+				// 		std::cerr << "Finished responding to request\n";
+				// 		if (requests.find(sock_fds.at(i).fd) != requests.end())
+				// 		{
+				// 			std::cout << "\033[31mRemoving request from map\033[0m\n";
+				// 			requests.erase(sock_fds.at(i).fd);
+				// 		}
+				// 	}
+				// 	else if (keep_open == false)
+				// 	{
+				// 		delete requests[(sock_fds.at(i).fd)];
+				// 		std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
+				// 		closeSocket(i);
+				// 	}
+				// 	if (handlers.at(i)->sent_bytes)
+				// 		std::cerr << "Sent " << handlers.at(i)->sent_bytes << "\n";
+				// 	handlers.at(i)->setState(Server::returnIncomplete());
+				// 	handlers.at(i)->sent_bytes = 0;
+				// }
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
