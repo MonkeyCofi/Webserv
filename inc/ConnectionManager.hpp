@@ -84,8 +84,9 @@ class ConnectionManager
 		void		addSocket(str ip, str port);
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
-		// void		passRequestToServer(int i, Request **req);
-		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds);
+
+		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, 
+					std::map<int, int>& cgiFds);
 		// Request*	receiveRequest(int client_fd, unsigned int& index);
 		void		closeSocket(unsigned int& index);
 

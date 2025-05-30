@@ -464,7 +464,8 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 	header = resp.str();
 }
 
-void Server::handleRequest(Request *req, std::vector<struct pollfd>& pollfds, std::set<int>& cgiFds)
+void Server::handleRequest(int& client_fd, Request *req, 
+	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
 	str					file;
 	std::stringstream	resp;
@@ -483,7 +484,7 @@ void Server::handleRequest(Request *req, std::vector<struct pollfd>& pollfds, st
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(req, resp, this, pollfds, cgiFds);
+			cgi.setupEnvAndRun(client_fd, req, resp, this, pollfds, cgiFds);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);
@@ -495,7 +496,7 @@ void Server::handleRequest(Request *req, std::vector<struct pollfd>& pollfds, st
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(req, resp, this, pollfds, cgiFds);
+			cgi.setupEnvAndRun(client_fd, req, resp, this, pollfds, cgiFds);
 		}
 		else
 		{
