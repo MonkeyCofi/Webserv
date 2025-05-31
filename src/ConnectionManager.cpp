@@ -165,10 +165,16 @@ void ConnectionManager::printError(int revents)
 void ConnectionManager::passRequestToServer(int i, Request **req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
-	if (!(*req)->isValidRequest() || servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
+	std::cout << "Servers_per_ippp size: " << servers_per_ippp.size() << " i " << i << "\n";
+	if (static_cast<unsigned long>(i) >= servers_per_ippp.size())
+	{
+		std::cout << "Returning from passRequestToServer\n";
+		return ;
+	}
+	if (!(*req)->isValidRequest() || servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
 	else
-		handlers.at(i) = servers_per_ippp.at(i)[(*req)->getHost()];
+		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
 	handlers.at(i)->handleRequest(sock_fds.at(i).fd, *req, pollfds, cgiFds);
 	// delete *req;
 	// *req = NULL;
@@ -179,7 +185,8 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	close(sock_fds.at(index).fd);
 	std::cout << "\033[31mClosing fd " << sock_fds.at(index).fd << "\033[0m\n";
 	sock_fds.erase(sock_fds.begin() + index);
-	reqs.erase(reqs.begin() + index);
+	if (index < reqs.size())
+		reqs.erase(reqs.begin() + index);
 	handlers.erase(handlers.begin() + index);
 	defaults.erase(defaults.begin() + index);
 	servers_per_ippp.erase(servers_per_ippp.begin() + index);
@@ -486,6 +493,53 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 	}
 }
 
+void	ConnectionManager::handleCGIread(char* buf, unsigned int& i)
+{
+	// if the cgi_fd is ready for POLLIN,
+	ssize_t r;
+
+	r = read(sock_fds.at(i).fd, buf, BUFFER_SIZE);
+	if (r == 0)
+	{
+		close(sock_fds.at(i).fd);
+		sock_fds.erase(sock_fds.begin() + i);	// remove the fd from the poll() snce reading is finished
+		std::cout << "Fully received response\n";
+		i--;
+	}
+	else if (r == -1)
+	{
+		std::cerr << "EXITING SERVER\n";
+		exit(1);
+	}
+	else
+	{
+		buf[r] = 0;
+		std::cout << buf << "\n";
+	}
+}
+
+void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests,
+	std::map<int, int>& cgiFds)
+{
+	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
+	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
+	if (it == requests.end())
+	{
+		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
+		std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
+	}
+	if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
+	{
+		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
+		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
+	}
+	// if (state == INVALID)
+	// {
+	// 	closeSocket(i);
+	// 	i--;
+	// }
+}
+
 void ConnectionManager::startConnections()
 {
 	int							res;
@@ -495,6 +549,7 @@ void ConnectionManager::startConnections()
 	std::map<int, int>			cgiFds;
 	// std::set<int>				cgiFds;
 	std::map<int, Request *>	requests;
+	char	buf[BUFFER_SIZE];
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -514,100 +569,35 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
+			// std::cout << "i: " << i << " pollfds size: " << sock_fds.size() << "\n";
 			// don't add a new client if there is an existing fd that can be used to handle the request
 			if (sock_fds.at(i).revents & POLLIN)
-			{
 				newClient(i, sock_fds.at(i));
-				continue ;
-			}
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
+			// std::cout << "i: " << i << " pollfds size: " << sock_fds.size() << "\n";
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				// if the cgi_fd is ready for POLLIN,
 				if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
-				{
-					char buf[BUFFER_SIZE] = {0};
-					ssize_t r = read(sock_fds.at(i).fd, buf, BUFFER_SIZE);
-					if (r == 0)
-					{
-						// closeSocket(i);
-						// close(sock_fds.at(i).fd);
-						// cgiFds.erase(sock_fds.at(i).fd);
-						// sock_fds.erase(sock_fds.begin() + i);
-						// i--;
-						close(sock_fds.at(i).fd);
-						sock_fds.erase(sock_fds.begin() + i);	// remove the fd from the poll() snce reading is finished
-						std::cout << "Fully received response\n";
-						continue ;
-					}
-					else if (r == -1)
-					{
-						std::cerr << "EXITING SERVER\n";
-						exit(1);
-					}
-					else
-					{
-						buf[r] = 0;
-						std::cout << buf << "\n";
-					}
-				}
+					handleCGIread(buf, i);
 				else
-				{
-					std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
-					std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
-					if (it == requests.end())
-					{
-						requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
-						std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
-					}
-					if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
-					{
-						std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
-						this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
-					}
-					if (state == INVALID)
-					{
-						closeSocket(i);
-					}
-				}
+					handlePollin(i, state, requests, cgiFds);
 			}
-			if (sock_fds.at(i).revents & POLLOUT)
+			if (sock_fds.at(i).revents & POLLOUT)	// cgi_fd will never enter pollout
 			{
 				// for POLLOUT, look at the client_fd rather than the cgi_fd
-				if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
+				if (buf[0] != '\0')
 				{
-					std::cout << "test: " << cgiFds.at(sock_fds.at(i).fd) << "\n";
-					std::cout << "CGI client fd " << cgiFds.at(sock_fds.at(i).fd) << " is ready for POLLOUT\n";
-					exit(1);
+					send(sock_fds.at(i).fd, buf, BUFFER_SIZE, 0);
+					// if (handlers.at(i)->respond(sock_fds.at(i).fd) && handlers.at(i)->getState() == Server::returnFinish())
+					// 	std::cout << "Sent response\n";
+					std::memset(buf, 0, BUFFER_SIZE);
 				}
-				handlePollout(state, i, requests);
-				// if (handlers.at(i) && state == FINISH)	// the request has been parsed and ready for response building
-				// {
-				// 	bool keep_open = false;
-				// 	if ((keep_open = handlers.at(i)->respond(sock_fds.at(i).fd)) && handlers.at(i)->getState() == Server::returnFinish())
-				// 	{
-				// 		std::cerr << "Finished responding to request\n";
-				// 		if (requests.find(sock_fds.at(i).fd) != requests.end())
-				// 		{
-				// 			std::cout << "\033[31mRemoving request from map\033[0m\n";
-				// 			requests.erase(sock_fds.at(i).fd);
-				// 		}
-				// 	}
-				// 	else if (keep_open == false)
-				// 	{
-				// 		delete requests[(sock_fds.at(i).fd)];
-				// 		std::cout << "Closing client socket fd " << sock_fds.at(i).fd << "\n";
-				// 		closeSocket(i);
-				// 	}
-				// 	if (handlers.at(i)->sent_bytes)
-				// 		std::cerr << "Sent " << handlers.at(i)->sent_bytes << "\n";
-				// 	handlers.at(i)->setState(Server::returnIncomplete());
-				// 	handlers.at(i)->sent_bytes = 0;
-				// }
+				else
+					handlePollout(state, i, requests);
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{

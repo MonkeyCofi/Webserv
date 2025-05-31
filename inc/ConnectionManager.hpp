@@ -96,7 +96,11 @@ class ConnectionManager
 
 		void		deleteTempFiles();
 		State		handleFirstRecv(std::fstream& tempFile, str _request, Request* req, char* buffer, ssize_t& r);
+
+		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, int>& cgiFds);
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
+
+		void		handleCGIread(char* buf, unsigned int& i);
 
 	public:
 		ConnectionManager(Http *protocol);
