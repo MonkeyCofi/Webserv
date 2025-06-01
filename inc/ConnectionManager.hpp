@@ -100,7 +100,10 @@ class ConnectionManager
 		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, int>& cgiFds);
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
 
-		void		handleCGIread(char* buf, unsigned int& i);
+		void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
+					std::map<int, Request *> &requests);
+
+		void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds);
 
 	public:
 		ConnectionManager(Http *protocol);

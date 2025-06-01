@@ -270,7 +270,7 @@ void    Cgi::runCGI(int& client_fd, std::stringstream& resp, Server* server,
         read_fd.revents = 0;
         read_fd.fd = pipe_fds[READ];
         pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
-        cgiFds.insert(std::pair<int, int>(read_fd.fd, client_fd));  // the READend of the cgi script is the key and the client_fd is the value
+        cgiFds.insert(std::pair<int, int>(read_fd.fd, client_fd));  // the read end of the cgi script is the key and the client_fd is the value
         std::cout << "Pushed " << read_fd.fd << " into map for client " << client_fd << "\n";
     }
     (void)server;
