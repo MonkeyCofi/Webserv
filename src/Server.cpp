@@ -561,9 +561,9 @@ bool Server:: respond(int client_fd)
 				return (keep_alive);
 			return (keep_alive);
 		}
-		std::cout << "Sending " << buffer << "\n";
+		// std::cout << "Sending " << buffer << "\n";
 		tmp = ssizeToStr(bytes) + "\r\n";
-		std::cout << tmp << " bytes\n";
+		// std::cout << tmp << " bytes\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
 			return (keep_alive);
 		if (send(client_fd, buffer, bytes, 0) <= 0)

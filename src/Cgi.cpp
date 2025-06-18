@@ -255,6 +255,7 @@ void    Cgi::runCGI(int& client_fd, std::stringstream& resp, Server* server,
         close(pipe_fds[WRITE]);
         if (execve(cmd, const_cast<char **>(argv), envp))
         {
+            std::cerr << "Unable to execute cmd\n";
             perror("Why");
             delete (envp);
             std::cerr << "Can't execute CGI script\n";

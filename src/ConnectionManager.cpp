@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/02/04 14:02:23 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/06/17 16:42:58 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -550,6 +550,7 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds)
 {
 	// if the cgi_fd is ready for POLLIN,
+	std::cout << "in cgi read\n";
 	ssize_t r;
 	int	status;
 
@@ -612,12 +613,12 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
-			// std::cout << "i: " << i << " pollfds size: " << sock_fds.size() << "\n";
 			// don't add a new client if there is an existing fd that can be used to handle the request
-			if (sock_fds.at(i).revents & POLLIN)
+			if (sock_fds.at(i).revents & POLLIN && sock_fds.size() == main_listeners)
 				newClient(i, sock_fds.at(i));
 		}
-		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
+		// for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
+		for (unsigned int i = sock_fds.size() - 1; i >= main_listeners; i--)
 		{
 			// std::cout << "i: " << i << " pollfds size: " << sock_fds.size() << "\n";
 			if (sock_fds.at(i).revents == 0)
@@ -632,6 +633,7 @@ void ConnectionManager::startConnections()
 				if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
 				{
 					std::cout << "Found " << sock_fds.at(i).fd << " in the map of fds\n";
+					std::cout << "Handling cgi\n";
 					handleCGIread(buf, i, cgiFds);
 				}
 				else
