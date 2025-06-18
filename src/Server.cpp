@@ -253,20 +253,6 @@ void Server::setDefault()
 	names.push_back("_");
 }
 
-str	Server::reasonPhrase(str status)
-{
-	if (http_codes.find(status) == http_codes.end())
-		return "";
-	return http_codes[status];
-}
-
-str	Server::errorPage(str status)
-{
-	if (http_codes.find(status) == http_codes.end())
-		return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Page</h1>\r\n<p>Unknown Error Code</p>\r\n</body>\r\n</html>\r\n";
-	return "<html>\r\n<head>\r\n<title>Error Page</title>\r\n</head>\r\n<body>\r\n<h1>Error Code " + status + "</h1>\r\n<p>" + http_codes[status] + "!</p>\r\n</body>\r\n</html>\r\n";
-}
-
 str	Server::fileType(str file_name)
 {
 	str	type;
@@ -292,26 +278,19 @@ str	Server::ssizeToStr(ssize_t x)
 	return s.str();
 }
 
-void Server::handleError(str error_code, std::stringstream &resp)
+void Server::handleError(str error_code)
 {
 	int	fd;
 
-	resp << "HTTP/1.1 " + error_code + " " + reasonPhrase(error_code) + "\r\n";
-	resp << "Connection: Keep-Alive\r\nContent-Type: text/html\r\n";
+	this->response.clear();
 	if (error_pages.find(error_code) == error_pages.end()
 		|| (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
-		total_length = errorPage(error_code).length() - 2;
-		resp << "Content-Length: " << total_length << "\r\n\r\n";
-		resp << errorPage(error_code);
-		file_fd = -1;
+		this->response.setCode(error_code);
+		this->response.setBody(this->response.errorPage(error_code), "text/html");
 	}
 	else
-	{
-		resp << "Transfer-Encoding: Chunked\r\n\r\n";
-		file_fd = fd;
-	}
-	header = resp.str();
+		this->response.setBodyFd(fd);
 }
 
 str	Server::getRoot() const
@@ -352,10 +331,11 @@ bool Server::isDirectory(const std::string& path)
 	return false;
 }
 
-void Server::directoryResponse(str path, std::stringstream &resp)
+void Server::directoryResponse(str path)
 {
 	str				indexpath, full_path, filename, body;
     DIR				*dir;
+	int				file_fd;
 	bool			redir;
     struct dirent	*item;
 
@@ -372,25 +352,23 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 		file_fd = open(indexpath.c_str(), O_RDONLY);
 		if (file_fd > -1)
 		{
-			fileResponse(path + index.at(i), resp, true);
+			fileResponse(path + index.at(i), file_fd);
 			return ;
 		}
 		else if (i != index.size() - 1)
 			continue ;
 		else if (!autoindex)
 		{
-			handleError("403", resp);
+			handleError("403");
 			return ;
 		}
 	}
-	file_fd = -1;
 	dir = opendir(full_path.c_str());
     if (dir == NULL)
 	{
-		handleError("404", resp);
+		handleError("404");
 		return ;
 	}
-	file_fd = -1;
 	body = "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n<hr>\r\n";
 	body += "<a href=\"../\">..</a> <br>\r\n";
     while ((item = readdir(dir)) != NULL)
@@ -404,40 +382,47 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 		}
 	}
 	body += "<hr></body>\r\n</html>\r\n";
-	resp << "HTTP/1.1 " << (redir ? "301 Redirect" : "200 OK") << "\r\nContent-Type: text/html\r\nContent-Length: " << body.length() << "\r\n";
-	resp << "Connection: " << (keep_alive ? "Keep-Alive" : "close") << (redir ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
+	this->response.setCode((redir ? "301" : "200"));
+	this->response.setKeepAlive(keep_alive);
+	this->response.setBody(body, "text/html");
+	if (redir)
+		this->response.setHeaderField("Location", path);
     closedir(dir);
-	header = resp.str() + body;
 }
 
-void Server::fileResponse(str path, std::stringstream &resp, bool checking_index)
+void Server::fileResponse(str path, int file_fd)
 {
-	if (!checking_index)
+	str	status = "200";
+
+	if (file_fd != -1 && path != "/index.html")
+		status = "302";
+	else
 	{
 		path = root + path;
 		file_fd = open(path.c_str(), O_RDONLY);
 	}
 	if (file_fd == -1)
 	{
-		if (!checking_index)
-			handleError("404", resp);
+		handleError("404", resp);
 		return ;
 	}
-	resp << "HTTP/1.1 " << (checking_index && path != "/index.html" ? "302 Found" : "200 OK") << "\r\nContent-Type: " << fileType(path) << "\r\n";
-	resp << "Transfer-Encoding: Chunked\r\nConnection: " << (keep_alive ? "Keep-Alive" : "close") << (checking_index && path != "/index.html" ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
-	header = resp.str();
+	this->response.setCode(status);
+	this->response.setHeaderField("Content-Type", fileType(path));
+	this->response.setBodyFd(file_fd);
+	this->response.setKeepAlive(keep_alive);
+	if (status == "302")
+		this->response.setHeaderField("Location", path);
 }
 
 void Server::handleRequest(Request *req)
 {
 	str					file;
-	// int					count;
-	std::stringstream	resp;
 
+	response.clear();
 	keep_alive = req->shouldKeepAlive();
 	if (!req->isValidRequest())
 	{
-		handleError(req->getStatus(), resp);
+		handleError(req->getStatus());
 		return ;
 	}
 	else if (req->getMethod() == "GET")
@@ -449,9 +434,9 @@ void Server::handleRequest(Request *req)
 			cgi.setupEnvAndRun(req, this);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
-			directoryResponse(req, file, resp);
+			directoryResponse(req, file);
 		else
-			fileResponse(file, resp, false);
+			fileResponse(file, -1);
 	}
 	else if (req->getMethod() == "POST")
 	{
@@ -459,10 +444,9 @@ void Server::handleRequest(Request *req)
 		// the presence of Content-Length or Transfer-encoding headers indicate a message body is present in the request
 		if (req->getContentLen() == 0)
 			return ;
-		resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
-		resp << "<html><h1>POSTED</h1></html>\r\n";
+		this->response.setCode("200");
+		this->response.setBody("<html><h1>POSTED</h1></html>\r\n", "text/html");
 		std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
-		this->header = resp.str();
 	}
 	else if (req->getMethod() == "DELETE")
 	{
@@ -478,16 +462,20 @@ void Server::handleRequest(Request *req)
 
 bool Server::respond(int client_fd)
 {
-	str		tmp;
+	int		file_fd;
+	str		tmp, header;
 	ssize_t	bytes, sb;
 	char	buffer[BUFFER_SIZE];
 
-	if (header == "")
-		return true;
+	if (this->response.headerSent())
+		return keep_alive;
+	file_fd = this->response.getBodyFd();
+	header = this->response.getHeader();
+	if (!this->response.isChunked())
+		header += this->response.getBody();
 	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
 		return false;
-	header = "";
-	if (file_fd != -1)
+	if (this->response.isChunked())
 	{
 		while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
 		{
@@ -498,7 +486,6 @@ bool Server::respond(int client_fd)
 				return false;
 			if (send(client_fd, "\r\n", 2, 0) <= 0)
 				return false;
-			total_length -= sb - 2;
 		}
 		tmp = "0\r\n\r\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)

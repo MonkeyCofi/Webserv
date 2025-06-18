@@ -20,6 +20,7 @@
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"
+# include "Response.hpp"
 
 typedef std::string str;
 
@@ -28,10 +29,10 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
-		int						file_fd, min_del_depth;
-		ssize_t					total_length;
-		str						root, header, body;
-		bool					keep_alive, autoindex;
+		int						min_del_depth;
+		str						root;
+		bool					autoindex;
+		Response				response;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports, index;
 		std::map<str, str>		error_pages;
