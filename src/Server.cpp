@@ -464,10 +464,10 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 	header = resp.str();
 }
 
-void Server::handleRequest(Request *req)
+void Server::handleRequest(int& client_fd, Request *req, 
+	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
 	str					file;
-	// int					count;
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
@@ -480,10 +480,11 @@ void Server::handleRequest(Request *req)
 	else if (req->getMethod() == "GET")
 	{
 		file = req->getFileURI();
+		// pass the pollfds to the CGI handler
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(req, resp, this);
+			cgi.setupEnvAndRun(client_fd, req, resp, this, pollfds, cgiFds);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(file, resp);
@@ -492,14 +493,20 @@ void Server::handleRequest(Request *req)
 	}
 	else if (req->getMethod() == "POST")
 	{
-		// if the POST URI is a URI leading to a CGI script, execute that script
-		// the presence of Content-Length or Transfer-encoding headers indicate a message body is present in the request
-		if (req->getContentLen() == 0)
-			return ;
-		resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
-		resp << "<html><h1>POSTED</h1></html>\r\n";
-		std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
-		this->header = resp.str();
+		if (req->getFileURI().find("cgi") != str::npos)
+		{
+			Cgi	cgi(req->getFileURI(), this);
+			cgi.setupEnvAndRun(client_fd, req, resp, this, pollfds, cgiFds);
+		}
+		else
+		{
+			if (req->getContentLen() == 0)
+				return ;
+			resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
+			resp << "<html><h1>POSTED</h1></html>\r\n";
+			std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
+			this->header = resp.str();
+		}
 	}
 	else if (req->getMethod() == "DELETE")
 	{
@@ -554,9 +561,9 @@ bool Server:: respond(int client_fd)
 				return (keep_alive);
 			return (keep_alive);
 		}
-		std::cout << "Sending " << buffer << "\n";
+		// std::cout << "Sending " << buffer << "\n";
 		tmp = ssizeToStr(bytes) + "\r\n";
-		std::cout << tmp << " bytes\n";
+		// std::cout << tmp << " bytes\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
 			return (keep_alive);
 		if (send(client_fd, buffer, bytes, 0) <= 0)
@@ -621,9 +628,6 @@ void	Server::setFileFD(int fd_)
 {
 	this->file_fd = fd_;
 }
-/********************/
-/*		Setters		*/
-/********************/
 
 Server::ResponseState	Server::returnIncomplete()
 {
