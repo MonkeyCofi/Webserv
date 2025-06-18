@@ -32,7 +32,7 @@ int main(int ac, char **av)
 	}
 	catch (const std::exception &e)
 	{
-		std::cerr << e.what() << "\n";
+		std::cerr << "Caught standard exception " << e.what() << "\n";
 		if (eng)
 			delete eng;
 		exit(1);

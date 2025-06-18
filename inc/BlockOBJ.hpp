@@ -11,7 +11,7 @@
 
 typedef std::string str;
 
-# define BUFFER_SIZE 4096	// 4kb buffer size
+# define BUFFER_SIZE 4096	// 4kb buffer size; need to fix case where buffer size is a small number such as 32
 class BlockOBJ
 {
 	protected:

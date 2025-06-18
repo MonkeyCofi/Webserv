@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Request.hpp"
+#include "ConnectionManager.hpp"
 
 Request::Request()
 {
@@ -29,6 +30,7 @@ Request::Request()
 	this->has_body = false;
 	this->bytesReceived = 0;
 	this->tempFileName = "";
+	this->isCGIrequest = false;
 }
 
 Request::~Request()
@@ -53,6 +55,7 @@ Request::Request(const Request& obj)
 	this->has_body = obj.has_body;
 	this->bytesReceived = obj.bytesReceived;
 	this->tempFileName = obj.tempFileName;
+	this->isCGIrequest = false;
 }
 
 Request::Request(str request)
@@ -89,6 +92,7 @@ Request	&Request::operator=(const Request& obj)
 	this->headerReceived = obj.headerReceived;
 	this->fullyReceived = obj.fullyReceived;
 	this->has_body = false;
+	this->isCGIrequest = false;
 	return (*this);
 }
 
@@ -136,6 +140,8 @@ bool Request::parseRequestLine(str &line)
 	this->file_URI = line.substr(0, line.find_first_of(" "));
 	if (file_URI.at(0) != '/' || this->file_URI.find_first_of("\t\r") != str::npos)
 		return false;
+	if (this->file_URI.find("cgi-bin/") != str::npos)
+		this->isCGIrequest = true;
 	pos = this->file_URI.find("%20");
 	while (pos != str::npos)
 	{
@@ -167,9 +173,10 @@ void Request::setRequestField(str &header_field, str &field_content)
 		size_t	boundary_position = field_content.find("boundary=");
 		if (boundary_position != std::string::npos)
 		{
-			this->body_boundary = field_content.substr(boundary_position + 9);
+			std::cout << RED << "B: " << &field_content[boundary_position] << NL;
+			this->body_boundary = "--";
+			this->body_boundary += field_content.substr(boundary_position + std::strlen("boundary="));
 			this->body_boundaryEnd = body_boundary + "--";
-			std::cout << "B: " << this->body_boundary << "\n";
 		}
 	}
 	if (header_field == "content-length")
@@ -260,20 +267,6 @@ std::fstream&	Request::getBodyFile()
 	return (this->bodyFile);
 }
 
-void	Request::setFullyReceived(const bool status)
-{
-	this->fullyReceived = status;
-}
-
-void	Request::setHeaderReceived(const bool status)
-{
-	this->headerReceived = status;
-}
-
-void	Request::setHasBody(const bool status)
-{
-	this->has_body = status;
-}
 
 str Request::getFileURI()
 {
@@ -317,4 +310,29 @@ str	Request::getRequest() const
 	for (unsigned int i = 0; i < request.size(); i++)
 		r.append(request.at(i));
 	return (r);
+}
+
+str	Request::getTempFileName() const
+{
+	return (this->tempFileName);
+}
+
+void	Request::setFullyReceived(const bool status)
+{
+	this->fullyReceived = status;
+}
+
+void	Request::setHeaderReceived(const bool status)
+{
+	this->headerReceived = status;
+}
+
+void	Request::setHasBody(const bool status)
+{
+	this->has_body = status;
+}
+
+void	Request::setTempFileName(const str file)
+{
+	this->tempFileName = file;
 }

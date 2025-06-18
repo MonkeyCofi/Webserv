@@ -28,6 +28,7 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	min_del_depth = 0;
 	file_fd = -1;
 	(void)copy;
+	sent_bytes = 0;
 }
 
 Server::~Server()
@@ -183,7 +184,8 @@ bool Server::handleDirective(std::queue<str> opts)
 			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
 				return false;
 		}
-		min_del_depth = std::stoi(opts.front());
+		// min_del_depth = std::stoi(opts.front());
+		min_del_depth = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
 	else
@@ -297,10 +299,11 @@ void Server::handleError(str error_code, std::stringstream &resp)
 	int	fd;
 
 	resp << "HTTP/1.1 " + error_code + " " + reasonPhrase(error_code) + "\r\n";
-	resp << "Connection: Keep-Alive\r\nContent-Type: text/html\r\n";
+	resp << "Connection: keep-alive\r\nContent-Type: text/html\r\n";
 	if (error_pages.find(error_code) == error_pages.end()
 		|| (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
+		std::cout << YELLOW << "BANANA" << NL;
 		total_length = errorPage(error_code).length() - 2;
 		resp << "Content-Length: " << total_length << "\r\n\r\n";
 		resp << errorPage(error_code);
@@ -366,31 +369,36 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 		redir = true;
 	}
 	full_path = root + path;
-	for (unsigned int i = 0; i < index.size(); i++)
+	std::cout << RED << 1 << NL;
+	for (unsigned int i = 0; i < this->index.size(); i++)
 	{
 		indexpath = full_path + index.at(i);
 		file_fd = open(indexpath.c_str(), O_RDONLY);
 		if (file_fd > -1)
 		{
 			fileResponse(path + index.at(i), resp, true);
+			std::cout << CYAN << 2 << NL;
 			return ;
 		}
 		else if (i != index.size() - 1)
 			continue ;
 		else if (!autoindex)
 		{
+			std::cout << GREEN << root << NL;
 			handleError("403", resp);
 			return ;
 		}
 	}
 	file_fd = -1;
 	dir = opendir(full_path.c_str());
+	std::cout << BLUE << 4 << NL;
     if (dir == NULL)
 	{
+		std::cout << YELLOW << 5 << NL;
 		handleError("404", resp);
 		return ;
 	}
-	file_fd = -1;
+	std::cout << 6 << "\n";
 	body = "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n<hr>\r\n";
 	body += "<a href=\"../\">..</a> <br>\r\n";
     while ((item = readdir(dir)) != NULL)
@@ -405,7 +413,7 @@ void Server::directoryResponse(str path, std::stringstream &resp)
 	}
 	body += "<hr></body>\r\n</html>\r\n";
 	resp << "HTTP/1.1 " << (redir ? "301 Redirect" : "200 OK") << "\r\nContent-Type: text/html\r\nContent-Length: " << body.length() << "\r\n";
-	resp << "Connection: " << (keep_alive ? "Keep-Alive" : "close") << (redir ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
+	resp << "Connection: " << (keep_alive ? "keep-alive" : "close") << (redir ? ("\r\nLocation: " + path) : "") << "\r\n\r\n";
     closedir(dir);
 	header = resp.str() + body;
 }
@@ -415,6 +423,7 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 	if (!checking_index)
 	{
 		path = root + path;
+		// std::cout << "Serving " << path << "\n";
 		file_fd = open(path.c_str(), O_RDONLY);
 	}
 	if (file_fd == -1)
@@ -428,13 +437,14 @@ void Server::fileResponse(str path, std::stringstream &resp, bool checking_index
 	header = resp.str();
 }
 
-void Server::handleRequest(Request *req)
+void Server::handleRequest(int& client_fd, Request *req, 
+	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
 	str					file;
-	// int					count;
 	std::stringstream	resp;
 
 	keep_alive = req->shouldKeepAlive();
+	std::cout << RED << ((keep_alive) == true ? "Keep connection alive" : "End connection") << NL;
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), resp);
@@ -443,26 +453,33 @@ void Server::handleRequest(Request *req)
 	else if (req->getMethod() == "GET")
 	{
 		file = req->getFileURI();
+		// pass the pollfds to the CGI handler
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
-			Cgi	cgi;
-			cgi.setupEnvAndRun(req, this);
+			Cgi	cgi(req->getFileURI(), this);
+			cgi.setupEnvAndRun(client_fd, req, resp, this, pollfds, cgiFds);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
-			directoryResponse(req, file, resp);
+			directoryResponse(file, resp);
 		else
 			fileResponse(file, resp, false);
 	}
 	else if (req->getMethod() == "POST")
 	{
-		// if the POST URI is a URI leading to a CGI script, execute that script
-		// the presence of Content-Length or Transfer-encoding headers indicate a message body is present in the request
-		if (req->getContentLen() == 0)
-			return ;
-		resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
-		resp << "<html><h1>POSTED</h1></html>\r\n";
-		std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
-		this->header = resp.str();
+		if (req->getFileURI().find("cgi") != str::npos)
+		{
+			Cgi	cgi(req->getFileURI(), this);
+			cgi.setupEnvAndRun(client_fd, req, resp, this, pollfds, cgiFds);
+		}
+		else
+		{
+			if (req->getContentLen() == 0)
+				return ;
+			resp << "HTTP/1.1 200 OK\r\nContent-Length: 28\r\nContent-Type: text/html\r\n\r\n";
+			resp << "<html><h1>POSTED</h1></html>\r\n";
+			std::cout << "\033[32mResponse: " << resp.str() << "\033[0m\n";
+			this->header = resp.str();
+		}
 	}
 	else if (req->getMethod() == "DELETE")
 	{
@@ -476,34 +493,57 @@ void Server::handleRequest(Request *req)
 	}
 }
 
-bool Server::respond(int client_fd)
+void	Server::setState(Server::ResponseState state)
+{
+	this->responseState = state;
+}
+
+Server::ResponseState	Server::getState() const
+{
+	return (this->responseState);
+}
+
+bool Server:: respond(int client_fd)
 {
 	str		tmp;
-	ssize_t	bytes, sb;
-	char	buffer[BUFFER_SIZE];
+	ssize_t	bytes;
+	char	buffer[BUFFER_SIZE + 1] = {0};
 
-	if (header == "")
-		return true;
-	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
-		return false;
-	header = "";
+	// std::cout << std::boolalpha << headerSent << NL << header << NL << file_fd << NL;
+	if (header != "")	// if the header hasn't been sent yet, send it. once the header has been se
+	{
+		std::cout << CYAN << header << NL;
+		if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
+			return false;
+		header.clear();
+		if (file_fd == -1)
+			setState(FINISH);
+	}
 	if (file_fd != -1)
 	{
-		while ((bytes = read(file_fd, buffer, BUFFER_SIZE)) > 0)
+		bytes = read(file_fd, buffer, BUFFER_SIZE);
+		buffer[bytes] = 0;
+		sent_bytes += bytes;
+		if (bytes == 0)	// file has been fully read and responded with
 		{
-			tmp = ssizeToStr(bytes) + "\r\n";
-			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-				return false;
-			if ((sb = send(client_fd, buffer, bytes, 0)) <= 0)
-				return false;
-			if (send(client_fd, "\r\n", 2, 0) <= 0)
-				return false;
-			total_length -= sb - 2;
+			setState(FINISH);
+			close(file_fd);
+			file_fd = -1;
+			tmp = "0\r\n\r\n";
+			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// send the ending byte to the client
+				return (keep_alive);
+			return (keep_alive);
 		}
-		tmp = "0\r\n\r\n";
+		// std::cout << "Sending " << buffer << "\n";
+		tmp = ssizeToStr(bytes) + "\r\n";
+		// std::cout << tmp << " bytes\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-			return false;
-		close(file_fd);
+			return (keep_alive);
+		if (send(client_fd, buffer, bytes, 0) <= 0)
+			return (keep_alive);
+		if (send(client_fd, "\r\n", 2, 0) <= 0)
+			return (keep_alive);
+		return (keep_alive);
 	}
 	return keep_alive;
 }
@@ -516,7 +556,7 @@ bool Server::operator ==(Server &server2)
 
 	tmp = this->getNames();
 	tmp2 = server2.getNames();
-	for(std::vector<str>::iterator it = tmp.begin(); it != tmp.end(); it++)
+	for (std::vector<str>::iterator it = tmp.begin(); it != tmp.end(); it++)
 	{
 		if (std::find(tmp2.begin(), tmp2.end(), *it) != tmp2.end())
 		{
@@ -540,4 +580,34 @@ bool Server::operator ==(Server &server2)
 		}
 	}
 	return same_name && same_ipport;
+}
+
+// new functions
+
+/********************/
+/*		Setters		*/
+/********************/
+void	Server::setHeader(str header_)
+{
+	this->header = header_;
+}
+
+void	Server::setBody(str body_)
+{
+	this->body.append(body_);
+}
+
+void	Server::setFileFD(int fd_)
+{
+	this->file_fd = fd_;
+}
+
+Server::ResponseState	Server::returnIncomplete()
+{
+	return (Server::INCOMPLETE);
+}
+
+Server::ResponseState	Server::returnFinish()
+{
+	return (Server::FINISH);
 }

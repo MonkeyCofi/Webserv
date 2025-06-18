@@ -17,6 +17,7 @@
 # include <sstream>
 # include <sys/socket.h>
 # include <map>
+# include <string>
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"
@@ -28,6 +29,11 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
+		typedef enum
+		{
+			INCOMPLETE,
+			FINISH
+		}	ResponseState;
 		int						file_fd, min_del_depth;
 		ssize_t					total_length;
 		str						root, header, body;
@@ -36,6 +42,7 @@ class Server: public BlockOBJ
 		std::vector<str>		names, ips, ports, index;
 		std::map<str, str>		error_pages;
 		std::vector<Location *>	locations;
+		ResponseState			responseState;
 
 		void			handleError(str error_code, std::stringstream &resp);
 		bool			validAddress(str address);
@@ -54,24 +61,43 @@ class Server: public BlockOBJ
 		Server(const Server &copy);
 		~Server();
 
-		void					handleRequest(Request *req);
+		size_t					sent_bytes;
+		void					handleRequest(int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
+								std::map<int, int>& cgiFds);
+
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);
-		str						getPort(int index);
-		str						getIP(int index);
-		str						getType();
-		str						getRoot() const;
 		void					setDefault();
 		Socket*					init_listeners();
-		std::vector<str>		getNames();
-		std::vector<str>		getIPs();
-		std::vector<str>		getPorts();
-		std::vector<Location *>	getLocations();
+
+		/********************/
+		/*		getters		*/
+		/********************/
+		str							getPort(int index);
+		str							getIP(int index);
+		str							getType();
+		str							getRoot() const;
+		std::vector<str>			getNames();
+		std::vector<str>			getIPs();
+		std::vector<str>			getPorts();
+		std::vector<Location *>		getLocations();
+		ResponseState				getState() const;
+
+		/********************/
+		/*		setters		*/
+		/********************/
+		void	setHeader(str header_);
+		void	setBody(str body_);
+		void	setFileFD(int fd_);
+		void	setState(ResponseState state);
 
 		bool					respond(int client_fd);
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);
+
+		static ResponseState	returnIncomplete();
+		static ResponseState	returnFinish();
 };
 
 #endif

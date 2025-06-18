@@ -29,6 +29,7 @@
 # include <fcntl.h>
 # include <cstring>
 # include <map>
+# include <set>
 # include <cstdio>
 # include "BlockOBJ.hpp"
 # include "Http.hpp"
@@ -37,7 +38,6 @@
 # include "Cgi.hpp"
 
 // # define BUFFER_SIZE 4096	// 4 kb
-# define TEMP_FILE "./.temp"
 
 /* Colors */
 # define RED "\033[31m"
@@ -59,26 +59,20 @@ class ConnectionManager
 		static unsigned int	number;
 		typedef enum
 		{
+			INVALID = -1,
 			INCOMPLETE,
 			FINISH
 		}	State;
 
-		typedef enum
-		{
-			HEADER,
-			BODY,
-			COMPLETE
-		}	recvState;
-
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
-		std::vector<std::string>				reqs;
+		std::vector<str>						reqs;
 		std::vector<struct pollfd>				sock_fds;
+		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::string								request_header;
 		std::fstream							request_body;
-		recvState								state;
 		
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
@@ -90,7 +84,9 @@ class ConnectionManager
 		void		addSocket(str ip, str port);
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
-		void		passRequestToServer(int i, Request **req);
+
+		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, 
+					std::map<int, int>& cgiFds);
 		// Request*	receiveRequest(int client_fd, unsigned int& index);
 		void		closeSocket(unsigned int& index);
 
@@ -98,13 +94,32 @@ class ConnectionManager
 
 		void		parseBodyFile(Request* req);
 
+		void		deleteTempFiles();
+		State		handleFirstRecv(std::fstream& tempFile, str _request, Request* req, char* buffer, ssize_t& r);
+
+		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, int>& cgiFds);
+		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
+
+		void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
+					std::map<int, Request *> &requests);
+
+		void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds);
+
 	public:
 		ConnectionManager(Http *protocol);
 
 
 		void	startConnections();
 
+		std::vector<struct pollfd>& getPollFds();
+
 		~ConnectionManager();
+
+		class	bindException: public std::exception
+		{
+			public:
+				const char* what() const throw();
+		};
 };
 
 #endif

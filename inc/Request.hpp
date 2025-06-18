@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#pragma once
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
@@ -31,6 +32,8 @@
 
 typedef std::string str;
 
+class	ConnectionManager;
+
 class Request
 {
 	private:
@@ -40,20 +43,22 @@ class Request
 		str					file_URI;
 		bool				has_body;
 		bool				keepAlive;
+		bool				isCGIrequest;
 		str					contentType;
 		bool				validRequest;
 		size_t				contentLength;
+		bool				headerReceived;
 		str					body_boundary;
 		bool				fullyReceived;
-		bool				headerReceived;
+		str					tempFileName;
 		std::fstream		bodyFile;
+		std::vector<str>	request;
 		
 		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, str &field_conent);
 		
-		std::vector<std::string>	request;
 		
 		Request(const Request& obj);
 	public:
@@ -64,18 +69,17 @@ class Request
 
 		size_t				bytesReceived;
 		str					body_boundaryEnd;
-		str					tempFileName;
 
 		Request	&parseRequest(str& request);
 		void	pushRequest(std::string& req);
-
-		std::vector<str>	fileNames;
 
 		bool			shouldKeepAlive();
 		bool			isValidRequest();
 		void			setHasBody(const bool status);
 		
-		// getters
+		/********************/
+		/*		getters		*/
+		/********************/
 		bool			getFullyReceived() const;
 		bool			getHasBody() const;
 		bool			getHeaderReceived() const;
@@ -87,11 +91,16 @@ class Request
 		str				getHost();
 		str				getBoundary() const;
 		str				getRequest() const;
+		str				getTempFileName() const;
 		std::fstream&	getBodyFile();
-		// getters
+		bool			isCGI() const;
 
+		/********************/
+		/*		setters		*/
+		/********************/
 		void	setFullyReceived(const bool status);
 		void	setHeaderReceived(const bool status);
+		void	setTempFileName(const str file);
 
 		class	NoHostException: public std::exception
 		{
