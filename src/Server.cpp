@@ -15,21 +15,6 @@ Server::Server() : BlockOBJ()
 	autoindex = false;
 	min_del_depth = 0;
 	file_fd = -1;
-	responseState = INCOMPLETE;
-	http_codes["200"] = "OK";
-	http_codes["201"] = "Created";
-	http_codes["202"] = "Accepted";
-	http_codes["204"] = "No Content";
-	http_codes["301"] = "Redirect";
-	http_codes["302"] = "Found";
-	http_codes["304"] = "Not Modified";
-	http_codes["403"] = "Forbidden";
-	http_codes["404"] = "Page Not Found";
-	http_codes["414"] = "URI Too Long";
-	http_codes["500"] = "Internal Server Error";
-	http_codes["501"] = "Not Implemented";
-	http_codes["505"] = "HTTP Version Not Supported";
-	sent_bytes = 0;
 }
 
 Server::Server(const Server &copy): BlockOBJ(copy)
@@ -42,18 +27,6 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	autoindex = false;
 	min_del_depth = 0;
 	file_fd = -1;
-	http_codes["200"] = "OK";
-	http_codes["201"] = "Created";
-	http_codes["202"] = "Accepted";
-	http_codes["204"] = "No Content";
-	http_codes["301"] = "Redirect";
-	http_codes["304"] = "Not Modified";
-	http_codes["403"] = "Forbidden";
-	http_codes["404"] = "Page Not Found";
-	http_codes["414"] = "URI Too Long";
-	http_codes["500"] = "Internal Server Error";
-	http_codes["501"] = "Not Implemented";
-	http_codes["505"] = "HTTP Version Not Supported";
 	(void)copy;
 	sent_bytes = 0;
 }

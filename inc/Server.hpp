@@ -41,7 +41,6 @@ class Server: public BlockOBJ
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports, index;
 		std::map<str, str>		error_pages;
-		std::map<str, str>		http_codes;
 		std::vector<Location *>	locations;
 		ResponseState			responseState;
 

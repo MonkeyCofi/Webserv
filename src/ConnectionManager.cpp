@@ -647,6 +647,7 @@ void ConnectionManager::startConnections()
 				{
 					if ((*it).second == sock_fds.at(i).fd)
 						cgiPollout = !cgiPollout;
+
 				}
 				if (cgiPollout)
 				{
