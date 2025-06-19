@@ -30,6 +30,12 @@ class	Socket;
 class Server: public BlockOBJ
 {
 	private:
+		typedef enum
+		{
+			INCOMPLETE,
+			FINISH
+		}	ResponseState;
+
 		int						min_del_depth;
 		str						root;
 		bool					autoindex;
@@ -48,8 +54,10 @@ class Server: public BlockOBJ
 		str				errorPage(str status);
 		str				ssizeToStr(ssize_t x);
 		bool			isDirectory(const std::string& path);
-		void			directoryResponse(str path, std::stringstream &resp);
-		void			fileResponse(str path, std::stringstream &resp, bool checking_index);
+		// void			directoryResponse(str path, std::stringstream &resp);
+		void 			directoryResponse(str path);
+		// void			fileResponse(str path, bool checking_index);
+		void			fileResponse(str path, int file_fd);
 		// unsigned int	fileSize(int fd);
 
 	public:
@@ -65,6 +73,7 @@ class Server: public BlockOBJ
 		BlockOBJ				*handleBlock(std::queue<str> opts);
 		void					setDefault();
 		Socket*					init_listeners();
+		void 					handleError(str error_code);
 
 		/********************/
 		/*		getters		*/

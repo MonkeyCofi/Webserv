@@ -2,6 +2,7 @@
 #define RESPONSE_HPP
 
 #include <sstream>
+#include <map>
 
 typedef std::string str;
 
@@ -32,10 +33,11 @@ class Response
 		str		errorPage(str status) const;
 		str		getBody() const;
 		int		getBodyFd() const;
+		str		getHeader() const;
 		void	clear();
 
 		Response	&operator =(Response &copy);
 		~Response();
-}
+};
 
 #endif
