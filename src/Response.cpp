@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(): code("200"), chunked(false), keep_alive(false), header_sent(false), fd(-1)
+Response::Response(): header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -41,7 +41,7 @@ Response::Response(Response &copy)
 	http_codes["505"] = "HTTP Version Not Supported";
 }
 
-Response::Response(str code): code(code), chunked(false), keep_alive(false), header_sent(false), fd(-1)
+Response::Response(str code): header(""), body(""), code(code), chunked(false), header_sent(false), keep_alive(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -63,7 +63,7 @@ void Response::setHeaderField(str field, str value)
 	if (this->header == "")
 	{
 		this->header = "HTTP/1.1 " + this->code;
-		if (http_codes.find(status) != http_codes.end())
+		if (http_codes.find(this->code) != http_codes.end())
 			this->header += " " + http_codes[this->code] + "\r\n";
 		else
 			this->header += "\r\n";
@@ -78,7 +78,7 @@ void Response::setHeaderField(str field, int value)
 	if (this->header == "")
 	{
 		this->header = "HTTP/1.1 " + this->code;
-		if (http_codes.find(status) != http_codes.end())
+		if (http_codes.find(this->code) != http_codes.end())
 			this->header += " " + http_codes[this->code] + "\r\n";
 		else
 			this->header += "\r\n";
@@ -94,7 +94,7 @@ void Response::setHeaderField(str field, ssize_t value)
 	if (this->header == "")
 	{
 		this->header = "HTTP/1.1 " + this->code;
-		if (http_codes.find(status) != http_codes.end())
+		if (http_codes.find(this->code) != http_codes.end())
 			this->header += " " + http_codes[this->code] + "\r\n";
 		else
 			this->header += "\r\n";
@@ -107,7 +107,7 @@ void Response::setBodyFd(int fd)
 {
 	this->fd = fd;
 	this->chunked = true;
-	this->setHeaderField("Transfer-Encoding", "Chunked")
+	this->setHeaderField("Transfer-Encoding", "Chunked");
 }
 
 void Response::setKeepAlive(bool keepAlive)
@@ -122,14 +122,14 @@ void Response::setBody(str body, str type)
 		type = "text/plain";
 	this->body = body;
 	this->setHeaderField("Content-Type", type);
-	this->setHeaderField("Content-Length", body.length() - 2);
+	this->setHeaderField("Content-Length", static_cast<ssize_t>(body.length() - 2));
 }
 
 void Response::setCode(str code)
 {
 	this->code = code;
 	this->header = "HTTP/1.1 " + this->code;
-	if (http_codes.find(status) != http_codes.end())
+	if (http_codes.find(this->code) != http_codes.end())
 		this->header += " " + http_codes[this->code] + "\r\n";
 	else
 		this->header += "\r\n";
@@ -139,7 +139,7 @@ str	Response::errorPage(str status) const
 {
 	if (http_codes.find(status) == http_codes.end())
 		return "<html><head><title>Error Page</title></head><body><h1>Error Page</h1><p>Unknown Error Code</p></body></html>\r\n";
-	return "<html><head><title>Error Page</title></head><body><h1>Error Code " + status + "</h1><p>" + http_codes[status] + "!</p></body></html>\r\n";
+	return "<html><head><title>Error Page</title></head><body><h1>Error Code " + status + "</h1><p>" + http_codes.at(status) + "!</p></body></html>\r\n";
 }
 
 void Response::setHeaderSent(bool sent)
@@ -162,12 +162,12 @@ bool Response::headerSent() const
 	return header_sent;
 }
 
-str Response::getHeader() const
+str Response::getHeader()
 {
 	if (this->header == "")
 	{
 		this->header = "HTTP/1.1 " + this->code;
-		if (http_codes.find(status) != http_codes.end())
+		if (http_codes.find(this->code) != http_codes.end())
 			this->header += " " + http_codes[this->code] + "\r\n";
 		else
 			this->header += "\r\n";
@@ -199,9 +199,19 @@ void Response::clear()
 Response &Response::operator =(Response &copy)
 {
 	(void) copy;
+	return (*this);
 }
 
-~Response()
+Response::~Response()
 {
 
 }
+
+void	Response::printResponse()
+{
+	std::cout << "Header: \n";
+	std::cout << this->header << "\n";
+	std::cout << "Body: \n";
+	std::cout << this->body << "\n";
+}
+

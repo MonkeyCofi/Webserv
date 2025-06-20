@@ -3,16 +3,17 @@
 
 #include <sstream>
 #include <map>
+#include <iostream>
 
 typedef std::string str;
 
 class Response
 {
 	private:
-		std::map<str, str>	http_codes;
 		str					header, body, code;
 		bool				chunked, header_sent, keep_alive;
 		int					fd;
+		std::map<str, str>	http_codes;
 
 	public:
 		Response();
@@ -33,11 +34,13 @@ class Response
 		str		errorPage(str status) const;
 		str		getBody() const;
 		int		getBodyFd() const;
-		str		getHeader() const;
+		str		getHeader();
 		void	clear();
 
 		Response	&operator =(Response &copy);
 		~Response();
+
+		void	printResponse();
 };
 
 #endif

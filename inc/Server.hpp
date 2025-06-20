@@ -55,9 +55,9 @@ class Server: public BlockOBJ
 		str				ssizeToStr(ssize_t x);
 		bool			isDirectory(const std::string& path);
 		// void			directoryResponse(str path, std::stringstream &resp);
-		void 			directoryResponse(str path);
+		void 			directoryResponse(Request* req, str path);
 		// void			fileResponse(str path, bool checking_index);
-		void			fileResponse(str path, int file_fd);
+		void			fileResponse(Request* req, str path, int file_fd);
 		// unsigned int	fileSize(int fd);
 
 	public:
