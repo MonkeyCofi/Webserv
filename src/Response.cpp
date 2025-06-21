@@ -71,22 +71,6 @@ void Response::setHeaderField(str field, str value)
 	this->header += field + ": " + value + "\r\n";
 }
 
-void Response::setHeaderField(str field, int value)
-{
-	std::stringstream	ss;
-
-	if (this->header == "")
-	{
-		this->header = "HTTP/1.1 " + this->code;
-		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
-	}
-	ss << field << ": " << value << "\r\n";
-	this->header += ss.str();
-}
-
 void Response::setHeaderField(str field, ssize_t value)
 {
 	std::stringstream	ss;
@@ -122,7 +106,7 @@ void Response::setBody(str body, str type)
 		type = "text/plain";
 	this->body = body;
 	this->setHeaderField("Content-Type", type);
-	this->setHeaderField("Content-Length", static_cast<ssize_t>(body.length() - 2));
+	this->setHeaderField("Content-Length", body.length() - 2);
 }
 
 void Response::setCode(str code)
@@ -135,11 +119,11 @@ void Response::setCode(str code)
 		this->header += "\r\n";
 }
 
-str	Response::errorPage(str status) const
+str	Response::errorPage(str code) const
 {
-	if (http_codes.find(status) == http_codes.end())
+	if (http_codes.find(code) == http_codes.end())
 		return "<html><head><title>Error Page</title></head><body><h1>Error Page</h1><p>Unknown Error Code</p></body></html>\r\n";
-	return "<html><head><title>Error Page</title></head><body><h1>Error Code " + status + "</h1><p>" + http_codes.at(status) + "!</p></body></html>\r\n";
+	return "<html><head><title>Error Page</title></head><body><h1>Error Code " + code + "</h1><p>" + http_codes.at(code) + "!</p></body></html>\r\n";
 }
 
 void Response::setHeaderSent(bool sent)

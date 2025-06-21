@@ -4,6 +4,7 @@
 #include <sstream>
 #include <map>
 #include <iostream>
+#include <cstdlib>
 
 typedef std::string str;
 
@@ -21,7 +22,6 @@ class Response
 		Response(Response &copy);
 
 		void	setHeaderField(str field, str value);
-		void	setHeaderField(str field, int value);
 		void	setHeaderField(str field, ssize_t value);
 		void	setBodyFd(int fd);
 		void	setBody(str body, str type);
