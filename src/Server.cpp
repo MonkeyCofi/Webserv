@@ -350,6 +350,7 @@ void Server::directoryResponse(Request* req, str path)
 		file_fd = open(indexpath.c_str(), O_RDONLY);
 		if (file_fd > -1)
 		{
+			std::cout << GREEN << "FileREsponsing In th3 d1r3ct0ry!\n" << RESET;
 			fileResponse(req, path + index.at(i), file_fd);
 			return ;
 		}
@@ -492,7 +493,7 @@ bool Server::respond(int client_fd)
 	header = this->response.getHeader();
 	if (!this->response.isChunked())
 		header += this->response.getBody();
-	std::cout << MAGENTA << "CLIENT FD MF: " << client_fd << " PLEASE WORK!\n";
+	std::cout << MAGENTA << "CLIENT FD MF: " << client_fd << " PLEASE WORK!\n" << RESET;
 	if (!this->response.headerSent() && send(client_fd, header.c_str(), header.length(), 0) <= 0)
 		return this->response.keepAlive();
 	this->response.setHeaderSent(true);
