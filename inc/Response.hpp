@@ -31,6 +31,7 @@ class Response
 		bool	isChunked() const;
 		bool	headerSent() const;
 		bool	keepAlive() const;
+		bool 	doneSending() const;
 		str		errorPage(str status) const;
 		str		getBody() const;
 		int		getBodyFd() const;

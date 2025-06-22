@@ -91,12 +91,28 @@ void Response::setBodyFd(int fd)
 {
 	this->fd = fd;
 	this->chunked = true;
+	if (this->header == "")
+	{
+		this->header = "HTTP/1.1 " + this->code;
+		if (http_codes.find(this->code) != http_codes.end())
+			this->header += " " + http_codes[this->code] + "\r\n";
+		else
+			this->header += "\r\n";
+	}
 	this->setHeaderField("Transfer-Encoding", "Chunked");
 }
 
 void Response::setKeepAlive(bool keepAlive)
 {
 	this->keep_alive = keepAlive;
+	if (this->header == "")
+	{
+		this->header = "HTTP/1.1 " + this->code;
+		if (http_codes.find(this->code) != http_codes.end())
+			this->header += " " + http_codes[this->code] + "\r\n";
+		else
+			this->header += "\r\n";
+	}
 	this->setHeaderField("Connection", (keepAlive? "Keep-Alive" : "close"));
 }
 
@@ -105,6 +121,14 @@ void Response::setBody(str body, str type)
 	if (type == "")
 		type = "text/plain";
 	this->body = body;
+	if (this->header == "")
+	{
+		this->header = "HTTP/1.1 " + this->code;
+		if (http_codes.find(this->code) != http_codes.end())
+			this->header += " " + http_codes[this->code] + "\r\n";
+		else
+			this->header += "\r\n";
+	}
 	this->setHeaderField("Content-Type", type);
 	this->setHeaderField("Content-Length", body.length() - 2);
 }
@@ -134,6 +158,11 @@ void Response::setHeaderSent(bool sent)
 bool Response::isChunked() const
 {
 	return chunked;
+}
+
+bool Response::doneSending() const
+{
+	return (header_sent && !chunked) || (chunked && fd == -1);
 }
 
 bool Response::keepAlive() const

@@ -362,7 +362,6 @@ void Server::directoryResponse(Request* req, str path)
 		}
 	}
 	dir = opendir(full_path.c_str());
-	std::cout << BLUE << 4 << NL;
     if (dir == NULL)
 	{
 		handleError("404");
@@ -382,7 +381,6 @@ void Server::directoryResponse(Request* req, str path)
 	}
 	body += "<hr></body>\r\n</html>\r\n";
 	this->response.setCode((redir ? "301" : "200"));
-	// this->response.setKeepAlive(this->response.keepAlive());
 	this->response.setKeepAlive(req->shouldKeepAlive());
 	this->response.setBody(body, "text/html");
 	if (redir)
@@ -408,10 +406,9 @@ void Server::fileResponse(Request* req, str path, int file_fd)
 		return ;
 	}
 	this->response.setCode(status);
+	this->response.setKeepAlive(req->shouldKeepAlive());
 	this->response.setHeaderField("Content-Type", fileType(path));
 	this->response.setBodyFd(file_fd);
-	// this->response.setKeepAlive(this->response.keepAlive());
-	this->response.setKeepAlive(req->shouldKeepAlive());
 	if (status == "302")
 		this->response.setHeaderField("Location", path);
 }
@@ -422,8 +419,7 @@ void Server::handleRequest(int& client_fd, Request *req,
 	str					file;
 
 	response.clear();
-	// keep_alive = req->shouldKeepAlive();
-	std::cout << RED << ((this->response.keepAlive()) == true ? "Keep connection alive" : "End connection") << NL;
+	// std::cout << RED << ((this->response.keepAlive()) == true ? "Keep connection alive" : "End connection") << NL;
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus());
@@ -482,22 +478,30 @@ Server::ResponseState	Server::getState() const
 
 bool Server::respond(int client_fd)
 {
+	bool	ret;
 	int		file_fd;
 	str		tmp, header;
 	ssize_t	bytes;
-	char	buffer[BUFFER_SIZE];
+	char	buffer[BUFFER_SIZE + 1];
 
-	this->response.printResponse();
-	if (this->response.headerSent())
+	if (this->response.doneSending())
 		return this->response.keepAlive();
+	else
+		this->response.printResponse();
 	file_fd = this->response.getBodyFd();
 	header = this->response.getHeader();
 	if (!this->response.isChunked())
 		header += this->response.getBody();
-	if (send(client_fd, header.c_str(), header.length(), 0) <= 0)
-		return false;
-	if (this->response.isChunked())
+	std::cout << MAGENTA << "CLIENT FD MF: " << client_fd << " PLEASE WORK!\n";
+	if (!this->response.headerSent() && send(client_fd, header.c_str(), header.length(), 0) <= 0)
+		return this->response.keepAlive();
+	this->response.setHeaderSent(true);
+	ret = this->response.keepAlive();
+	if (!this->response.isChunked())
+		std::cout << BLUE << "Done responding!\n" << RESET;
+	else
 	{
+		std::cout << BLUE << "Done sending header!\n" << RESET;
 		bytes = read(file_fd, buffer, BUFFER_SIZE);
 		if (bytes == -1)
 		{
@@ -513,26 +517,46 @@ bool Server::respond(int client_fd)
 			std::cout << "Finished reading response from body file\n";
 			setState(FINISH);
 			close(file_fd);
-			file_fd = -1;
+			this->response.setBodyFd(-1);
 			tmp = "0\r\n\r\n";
 			if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)	// send the ending byte to the client
+			{
+				std::cout << "Pierce is wrong, I am wrong as well\n";
 				return (this->response.keepAlive());
+			}
+	
 			return (this->response.keepAlive());
 		}
 		// this->response.setBody(buffer, "");
 		std::cout << "buffer: " << buffer << "\n";
+		std::cout << "Bytes: " << bytes << "\n";
 		// std::cout << "Sending " << buffer << "\n";
 		tmp = ssizeToStr(bytes) + "\r\n";
 		// std::cout << tmp << " bytes\n";
+		std::cout << "--------------================\n";
+		std::cout << tmp << "\n";
 		if (send(client_fd, tmp.c_str(), tmp.length(), 0) <= 0)
-			return (this->response.keepAlive());
+		{
+			std::cout << "123WHAFSJDKLASJKLFAJSDKLFALSKDF\n";
+			return (ret);
+		}
+
+		std::cout << "--------------================\n";
+		std::cout << buffer << ", " << bytes << "\n";
 		if (send(client_fd, buffer, bytes, 0) <= 0)
-			return (this->response.keepAlive());
+		{
+			std::cout << "456WHAFSJDKLASJKLFAJSDKLFALSKDF\n";
+			return (ret);
+		}
+
 		if (send(client_fd, "\r\n", 2, 0) <= 0)
-			return (this->response.keepAlive());
-		return (this->response.keepAlive());
+		{
+			std::cout << "789WHAFSJDKLASJKLFAJSDKLFALSKDF\n";
+			return (ret);
+		}
+
 	}
-	return this->response.keepAlive();
+	return ret;
 }
 
 bool Server::operator ==(Server &server2)
