@@ -71,6 +71,7 @@ class ConnectionManager
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
+		std::map<int, Request *>				requests;
 		std::string								request_header;
 		std::fstream							request_body;
 		

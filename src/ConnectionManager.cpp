@@ -179,6 +179,14 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 {
 	close(sock_fds.at(index).fd);
 	std::cout << "\033[31mClosing fd " << sock_fds.at(index).fd << "\033[0m\n";
+	if (requests.find(sock_fds.at(index).fd) == requests.end())
+		std::cout << "Not found\n";
+	else
+	{
+		std::cout << "Request exists and will now be deleted\n";
+		delete requests[(sock_fds.at(index).fd)];
+		requests.erase(sock_fds.at(index).fd);
+	}
 	sock_fds.erase(sock_fds.begin() + index);
 	if (index < reqs.size())
 		reqs.erase(reqs.begin() + index);
@@ -389,10 +397,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r <= 0)
 	{
-		closeSocket(index);
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
 		std::cout << MAGENTA << "FD: " << client_fd << "\nIndex: " << index << RESET << "\n";
-		// index--;
+		closeSocket(index);
 		return (INVALID);
 	}
 	buffer[r] = 0;
@@ -493,15 +500,9 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		// }
 		else if (keep_open == false && handlers[i]->getState() == Server::returnFinish())
 		{
-			if (requests.find(sock_fds[i].fd) == requests.end())
-				std::cout << "Not found\n";
-			else
-				std::cout << "Request exists and will now be deleted\n";
-			delete requests[(sock_fds[i].fd)];
-			requests.erase(sock_fds[i].fd);
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << "\n";
-			std::cout << "Closing socket\n";
 			closeSocket(i);
+			std::cout << "Closed socket\n";
 		}
 		if (!handlers[i])
 			std::cout << "There is no handler\n";
@@ -556,6 +557,8 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 	}
+	else
+		i--;
 	//Print here and inside of receiveRequest to know where it's stopping
 }
 
@@ -600,12 +603,10 @@ void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, 
 
 void ConnectionManager::startConnections()
 {
-	int							res;
-	State						state = INCOMPLETE;
-	std::map<int, int>			cgiFds;	// key is the read end of the pipe and value is the client_fd
-
-	std::map<int, Request *>	requests;
-	char	buf[BUFFER_SIZE] = {0};
+	int					res;
+	State				state = INCOMPLETE;
+	std::map<int, int>	cgiFds;	// key is the read end of the pipe and value is the client_fd
+	char				buf[BUFFER_SIZE] = {0};
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -626,7 +627,7 @@ void ConnectionManager::startConnections()
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			// don't add a new client if there is an existing fd that can be used to handle the request
-			if (sock_fds.at(i).revents & POLLIN && sock_fds.size() == main_listeners)
+			if (sock_fds.at(i).revents & POLLIN)
 				newClient(i, sock_fds.at(i));
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
