@@ -37,9 +37,9 @@ class Server: public BlockOBJ
 			FINISH
 		}	ResponseState;
 
-		int						min_del_depth;
 		str						root;
 		bool					autoindex;
+		unsigned int			min_del_depth;
 		std::map<int, Response>	response;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports, index;

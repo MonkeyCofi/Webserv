@@ -464,20 +464,22 @@ void Server::handleRequest(int& client_fd, Request *req,
 	{
 		uri = req->getFileURI();
 		len = uri.length();
-		count = 0;
+		count = -1;
 		for (unsigned int i = 0; i < len; i++)
 			count += (uri.at(i) == '/');
-		count -= (uri.at(len - 1) == '/')
+		count -= (uri.at(len - 1) == '/' && len > 1);
 		if (count < min_del_depth)
 		{
 			handleError("409", client_fd);
 			return ;
 		}
-		if (stat(path.c_str(), &s) == 0) {
+		uri = root + uri;
+		if (stat(uri.c_str(), &s) == 0) 
+		{
 			// Check if it's a directory
 			if (S_ISDIR(s.st_mode))
 			{
-				dir = opendir(path);
+				dir = opendir(uri.c_str());
 				if (!dir)
 				{
 					handleError("500", client_fd);
@@ -495,19 +497,23 @@ void Server::handleRequest(int& client_fd, Request *req,
 					handleError("409", client_fd);
 					return ;
 				}
-				if (rmdir(uri) == -1)
+				if (rmdir(uri.c_str()) == -1)
 				{
 					handleError("500", client_fd);
 					return ;
 				}
+				this->response[client_fd].setCode("204");
+				this->response[client_fd].setKeepAlive(req->shouldKeepAlive());
 			}
 			else if (S_ISREG(s.st_mode))
 			{
-				if (remove(uri) == -1)
+				if (remove(uri.c_str()) == -1)
 				{
 					handleError("500", client_fd);
 					return ;
 				}
+				this->response[client_fd].setCode("204");
+				this->response[client_fd].setKeepAlive(req->shouldKeepAlive());
 			}
 			else
 			{
@@ -517,7 +523,7 @@ void Server::handleRequest(int& client_fd, Request *req,
 		}
 		else
 		{
-			handleError("409", client_fd);
+			handleError("404", client_fd);
 			return ;
 		}
 	}
