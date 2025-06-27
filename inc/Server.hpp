@@ -4,6 +4,7 @@
 # include <iostream>
 # include <exception>
 # include <algorithm>
+# include <cstdio>
 # include <unistd.h>
 # include <fcntl.h>
 # include <vector>

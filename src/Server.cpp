@@ -177,7 +177,6 @@ bool Server::handleDirective(std::queue<str> opts)
 			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
 				return false;
 		}
-		// min_del_depth = std::stoi(opts.front());
 		min_del_depth = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
@@ -366,7 +365,7 @@ void Server::directoryResponse(Request* req, str path, int client_fd)
 	dir = opendir(full_path.c_str());
     if (dir == NULL)
 	{
-		handleError("404", client_fd);
+		handleError("500", client_fd);
 		return ;
 	}
 	body = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr>";
@@ -399,7 +398,6 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 	else
 	{
 		path = root + path;
-		// std::cout << "Serving " << path << "\n";
 		file_fd = open(path.c_str(), O_RDONLY);
 	}
 	if (file_fd == -1)
@@ -418,7 +416,11 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 void Server::handleRequest(int& client_fd, Request *req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
-	str					file;
+	struct stat 	s;
+	struct dirent*	entry;
+	unsigned int	len, count;
+	str				file, uri;
+	DIR* 			dir;
 
 	if (response.find(client_fd) == response.end())
 		response[client_fd] = Response();
@@ -460,13 +462,64 @@ void Server::handleRequest(int& client_fd, Request *req,
 	}
 	else if (req->getMethod() == "DELETE")
 	{
-		// count = 0;
-		// for (unsigned int i = 0; i < req->getFileURI(); i++)
-		// 	count += (req->getFileURI());
-		// if (count < min_del_depth)
-		// {
-		// 	handleError()
-		// }
+		uri = req->getFileURI();
+		len = uri.length();
+		count = 0;
+		for (unsigned int i = 0; i < len; i++)
+			count += (uri.at(i) == '/');
+		count -= (uri.at(len - 1) == '/')
+		if (count < min_del_depth)
+		{
+			handleError("409", client_fd);
+			return ;
+		}
+		if (stat(path.c_str(), &s) == 0) {
+			// Check if it's a directory
+			if (S_ISDIR(s.st_mode))
+			{
+				dir = opendir(path);
+				if (!dir)
+				{
+					handleError("500", client_fd);
+					return ;
+				}
+				count = 0;
+				while ((entry = readdir(dir)) != NULL) {
+					if (++count > 2) {
+						break;
+					}
+				}
+				closedir(dir);
+				if (count > 2)
+				{
+					handleError("409", client_fd);
+					return ;
+				}
+				if (rmdir(uri) == -1)
+				{
+					handleError("500", client_fd);
+					return ;
+				}
+			}
+			else if (S_ISREG(s.st_mode))
+			{
+				if (remove(uri) == -1)
+				{
+					handleError("500", client_fd);
+					return ;
+				}
+			}
+			else
+			{
+				handleError("400", client_fd);
+				return ;
+			}
+		}
+		else
+		{
+			handleError("409", client_fd);
+			return ;
+		}
 	}
 }
 
@@ -530,48 +583,25 @@ bool Server::respond(int client_fd)
 			this->response[client_fd].setBodyFd(-1);
 			tmp = "0\r\n\r\n";
 			if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)	// send the ending byte to the client
-			{
-				std::cout << "Pierce is wrong, I am wrong as well\n";
 				return (this->response[client_fd].keepAlive());
-			}
 			std::cout << "--------\n";
 			std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
 			std::cout << "--------\n";
-			return (this->response[client_fd].keepAlive());
+			return (ret);
 		}
-		// this->response.setBody(buffer, "");
-		// std::cout << "buffer: " << buffer << "\n";
-		// std::cout << "Bytes: " << bytes << "\n";
-		// std::cout << "Sending " << buffer << "\n";
 		tmp = ssizeToStr(bytes) + "\r\n";
-		// std::cout << tmp << " bytes\n";
-		// std::cout << "--------------================\n";
-		// std::cout << tmp << "\n";
 		if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)
-		{
-			std::cout << "123WHAFSJDKLASJKLFAJSDKLFALSKDF\n";
 			return (ret);
-		}
 		std::cout << "--------\n";
 		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
 		std::cout << "--------\n";
-
-		// std::cout << "--------------================\n";
-		// std::cout << buffer << ", " << bytes << "\n";
 		if ((tw = send(client_fd, buffer, bytes, 0)) <= 0)
-		{
-			std::cout << "456WHAFSJDKLASJKLFAJSDKLFALSKDF\n";
 			return (ret);
-		}
 		std::cout << "--------\n";
 		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
 		std::cout << "--------\n";
-
 		if ((tw = send(client_fd, "\r\n", 2, 0)) <= 0)
-		{
-			std::cout << "789WHAFSJDKLASJKLFAJSDKLFALSKDF\n";
 			return (ret);
-		}
 		std::cout << "--------\n";
 		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
 		std::cout << "--------\n";
