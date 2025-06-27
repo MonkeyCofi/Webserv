@@ -39,14 +39,14 @@ class Server: public BlockOBJ
 		int						min_del_depth;
 		str						root;
 		bool					autoindex;
-		Response				response;
+		std::map<int, Response>	response;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports, index;
 		std::map<str, str>		error_pages;
 		std::vector<Location *>	locations;
 		ResponseState			responseState;
 
-		void			handleError(str error_code, std::stringstream &resp);
+		void			handleError(str error_code, int client_fd);
 		bool			validAddress(str address);
 		bool			handleAddress(str address);
 		str				reasonPhrase(str status);
@@ -55,9 +55,9 @@ class Server: public BlockOBJ
 		str				ssizeToStr(ssize_t x);
 		bool			isDirectory(const std::string& path);
 		// void			directoryResponse(str path, std::stringstream &resp);
-		void 			directoryResponse(Request* req, str path);
+		void 			directoryResponse(Request* req, str path, int client_fd);
 		// void			fileResponse(str path, bool checking_index);
-		void			fileResponse(Request* req, str path, int file_fd);
+		void			fileResponse(Request* req, str path, int file_fd, int client_fd);
 		// unsigned int	fileSize(int fd);
 
 	public:

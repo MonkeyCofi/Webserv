@@ -19,7 +19,7 @@ class Response
 	public:
 		Response();
 		Response(str code);
-		Response(Response &copy);
+		Response(const Response &copy);
 
 		void	setHeaderField(str field, str value);
 		void	setHeaderField(str field, ssize_t value);
@@ -38,7 +38,7 @@ class Response
 		str		getHeader();
 		void	clear();
 
-		Response	&operator =(Response &copy);
+		Response	&operator =(const Response &copy);
 		~Response();
 
 		void	printResponse();

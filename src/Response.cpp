@@ -17,7 +17,7 @@ Response::Response(): header(""), body(""), code("200"), chunked(false), header_
 	http_codes["505"] = "HTTP Version Not Supported";
 }
 
-Response::Response(Response &copy)
+Response::Response(const Response &copy)
 {
 	this->header = copy.header;
 	this->body = copy.body;
@@ -203,9 +203,15 @@ void Response::clear()
 	this->keep_alive = false;
 }
 
-Response &Response::operator =(Response &copy)
+Response &Response::operator =(const Response &copy)
 {
-	(void) copy;
+	this->header = copy.header;
+	this->body = copy.body;
+	this->code = copy.code;
+	this->chunked = copy.chunked;
+	this->header_sent = copy.header_sent;
+	this->fd = copy.fd;
+	this->keep_alive = copy.keep_alive;
 	return (*this);
 }
 

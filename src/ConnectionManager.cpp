@@ -166,11 +166,12 @@ void ConnectionManager::passRequestToServer(int i, Request **req,
 	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
 	std::cout << "Request host: " << (*req)->getHost() << "\n";
-	if (!(*req)->isValidRequest() || servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
+	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
-	else
+	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
-	handlers.at(i)->handleRequest(sock_fds.at(i).fd, *req, pollfds, cgiFds);
+	if ((*req)->isValidRequest())
+		handlers.at(i)->handleRequest(sock_fds.at(i).fd, *req, pollfds, cgiFds);
 	// delete *req;
 	// *req = NULL;
 }
@@ -395,7 +396,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		std::cout << "There is no request\n";
 	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
-	if (r <= 0)
+	if (r < 0)
+		return (INCOMPLETE);
+	if (r == 0)
 	{
 		std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
 		std::cout << MAGENTA << "FD: " << client_fd << "\nIndex: " << index << RESET << "\n";
@@ -503,6 +506,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << "\n";
 			closeSocket(i);
 			std::cout << "Closed socket\n";
+			return ;
 		}
 		if (!handlers[i])
 			std::cout << "There is no handler\n";
@@ -557,8 +561,6 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 	}
-	else
-		i--;
 	//Print here and inside of receiveRequest to know where it's stopping
 }
 
