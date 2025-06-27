@@ -275,19 +275,20 @@ str	Server::ssizeToStr(ssize_t x)
 
 void Server::handleError(str error_code)
 {
-	int	fd = open(error_pages[error_code].c_str(), O_RDONLY);
+	bool	keep;
+	int		fd;
 
+	keep = this->response.keepAlive();
 	this->response.clear();
-	if (error_pages.find(error_code) == error_pages.end() || fd == -1)
+	this->response.setCode(error_code);
+	this->response.setKeepAlive(keep);
+	if (error_pages.find(error_code) == error_pages.end() || (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
-		if (fd != -1)
-			close(fd);
-		this->response.setCode(error_code);
 		this->response.setBody(this->response.errorPage(error_code), "text/html");
+		return ;
 	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);
-	// else
-		// this->response.setBodyFd(fd);
+	this->response.setBodyFd(fd);
 }
 
 str	Server::getRoot() const
@@ -368,8 +369,8 @@ void Server::directoryResponse(Request* req, str path)
 		handleError("404");
 		return ;
 	}
-	body = "<html>\r\n<head>\r\n<title>Index of " + path + "</title>\r\n</head>\r\n<body>\r\n<h1>Index of " + path + "</h1>\r\n<hr>\r\n";
-	body += "<a href=\"../\">..</a> <br>\r\n";
+	body = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr>";
+	body += "<a href=\"../\">..</a> <br>";
     while ((item = readdir(dir)) != NULL)
 	{
 		filename = str(item->d_name);
@@ -377,10 +378,10 @@ void Server::directoryResponse(Request* req, str path)
 		{
 			if (isDirectory(full_path + filename))
 				filename += "/";
-			body += "<a href=\"./" + filename + "\">" + filename + "</a> <br>\r\n";
+			body += "<a href=\"./" + filename + "\">" + filename + "</a> <br>";
 		}
 	}
-	body += "<hr></body>\r\n</html>\r\n";
+	body += "<hr></body></html>\r\n";
 	this->response.setCode((redir ? "301" : "200"));
 	this->response.setKeepAlive(req->shouldKeepAlive());
 	this->response.setBody(body, "text/html");
@@ -493,13 +494,12 @@ bool Server::respond(int client_fd)
 	header = this->response.getHeader();
 	if (!this->response.isChunked())
 		header += this->response.getBody();
-	std::cout << MAGENTA << "CLIENT FD MF: " << client_fd << " PLEASE WORK!\n" << RESET;
 	if (!this->response.headerSent() && send(client_fd, header.c_str(), header.length(), 0) <= 0)
 		return this->response.keepAlive();
 	this->response.setHeaderSent(true);
 	ret = this->response.keepAlive();
 	if (!this->response.isChunked())
-		std::cout << BLUE << "Done responding!\n" << RESET;
+		std::cout << BLUE << "Done responding!\n\nSent:\n" << header << "\n\n" << RESET;
 	else
 	{
 		std::cout << BLUE << "Done sending header!\n" << RESET;

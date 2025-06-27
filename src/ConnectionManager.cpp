@@ -143,8 +143,8 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
 	client.events = POLLIN | POLLOUT;
 	client.revents = 0;
+	std::cout << "Pushing back client fd " << client.fd << " at index " << sock_fds.size() << "\n";
 	sock_fds.push_back(client);
-	std::cout << "Pushing back client fd " << client.fd << "\n";
 	reqs.push_back("");
 	handlers.push_back(NULL);
 	defaults.push_back(defaults.at(i));
@@ -541,8 +541,9 @@ void	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests,
 	std::map<int, int>& cgiFds)
 {
-	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "\n";
+	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
 	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
+	//Print here and inside of receiveRequest to know where it's stopping
 	if (it == requests.end())
 	{
 		std::cout << CYAN <<  "Creating a new request for fd " << sock_fds.at(i).fd << "\n" << RESET;
@@ -555,6 +556,7 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 	}
+	//Print here and inside of receiveRequest to know where it's stopping
 }
 
 void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds)

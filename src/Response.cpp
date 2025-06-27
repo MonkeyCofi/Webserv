@@ -64,9 +64,8 @@ void Response::setHeaderField(str field, str value)
 	{
 		this->header = "HTTP/1.1 " + this->code;
 		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
+			this->header += " " + http_codes[this->code];
+		this->header += "\r\n";
 	}
 	this->header += field + ": " + value + "\r\n";
 }
@@ -79,9 +78,8 @@ void Response::setHeaderField(str field, ssize_t value)
 	{
 		this->header = "HTTP/1.1 " + this->code;
 		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
+			this->header += " " + http_codes[this->code];
+		this->header += "\r\n";
 	}
 	ss << field << ": " << value << "\r\n";
 	this->header += ss.str();
@@ -95,9 +93,8 @@ void Response::setBodyFd(int fd)
 	{
 		this->header = "HTTP/1.1 " + this->code;
 		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
+			this->header += " " + http_codes[this->code];
+		this->header += "\r\n";
 	}
 	this->setHeaderField("Transfer-Encoding", "Chunked");
 }
@@ -109,9 +106,8 @@ void Response::setKeepAlive(bool keepAlive)
 	{
 		this->header = "HTTP/1.1 " + this->code;
 		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
+			this->header += " " + http_codes[this->code];
+		this->header += "\r\n";
 	}
 	this->setHeaderField("Connection", (keepAlive? "Keep-Alive" : "close"));
 }
@@ -120,14 +116,14 @@ void Response::setBody(str body, str type)
 {
 	if (type == "")
 		type = "text/plain";
+	this->chunked = false;
 	this->body = body;
 	if (this->header == "")
 	{
 		this->header = "HTTP/1.1 " + this->code;
 		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
+			this->header += " " + http_codes[this->code];
+		this->header += "\r\n";
 	}
 	this->setHeaderField("Content-Type", type);
 	this->setHeaderField("Content-Length", body.length() - 2);
@@ -138,9 +134,8 @@ void Response::setCode(str code)
 	this->code = code;
 	this->header = "HTTP/1.1 " + this->code;
 	if (http_codes.find(this->code) != http_codes.end())
-		this->header += " " + http_codes[this->code] + "\r\n";
-	else
-		this->header += "\r\n";
+		this->header += " " + http_codes[this->code];
+	this->header += "\r\n";
 }
 
 str	Response::errorPage(str code) const
@@ -181,9 +176,8 @@ str Response::getHeader()
 	{
 		this->header = "HTTP/1.1 " + this->code;
 		if (http_codes.find(this->code) != http_codes.end())
-			this->header += " " + http_codes[this->code] + "\r\n";
-		else
-			this->header += "\r\n";
+			this->header += " " + http_codes[this->code];
+		this->header += "\r\n";
 	}
 	return header + "\r\n";
 }
