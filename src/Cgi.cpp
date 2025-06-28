@@ -72,7 +72,7 @@ Cgi &Cgi::operator=(const Cgi& copy)
     return (*this);
 }
 
-void    Cgi::setupEnvAndRun(int& client_fd, Request* req, std::stringstream& resp, Server* serv, 
+void    Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
         std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
     const str uri = req->getFileURI();
@@ -92,7 +92,7 @@ void    Cgi::setupEnvAndRun(int& client_fd, Request* req, std::stringstream& res
     this->env.push_back(content_length);
     this->env.push_back("SCRIPT_NAME=" + this->scriptName);
 
-    runCGI(client_fd, resp, serv, req, pollfds, cgiFds);
+    runCGI(client_fd, serv, req, pollfds, cgiFds);
 }
 
 char**   Cgi::envToChar()
@@ -213,16 +213,16 @@ bool    Cgi::validScriptAccess() const
 /// @param server the server object that is handling the CGI request
 /// @param req the request object that requested for the CGI script
 /// @param pollfds the vector of pollfds that are being poll()'ed
-void    Cgi::runCGI(int& client_fd, std::stringstream& resp, Server* server, 
+void    Cgi::runCGI(int& client_fd, Server* server, 
         Request* req, std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
 {
     // if the script is inaccessible, return an error page
     if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
     {
-        resp << "HTTP/1.1 404 Not Found\r\n";
-        resp << "Content-Length: 83\r\n";
-        resp << "\r\n\r\n";
-        resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
+        // resp << "HTTP/1.1 404 Not Found\r\n";
+        // resp << "Content-Length: 83\r\n";
+        // resp << "\r\n\r\n";
+        // resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
         return ;
     }
     // if request is POST, open .tmp file and dup it with stdin
