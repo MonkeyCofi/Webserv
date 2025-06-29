@@ -19,6 +19,7 @@
 # include <sys/socket.h>
 # include <map>
 # include <string>
+# include "CGIinfo.hpp"
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
 # include "Request.hpp"
@@ -68,7 +69,7 @@ class Server: public BlockOBJ
 
 		size_t					sent_bytes;
 		void					handleRequest(int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
-								std::map<int, int>& cgiFds);
+								std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);

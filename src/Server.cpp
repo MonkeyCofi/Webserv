@@ -414,7 +414,7 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 }
 
 void Server::handleRequest(int& client_fd, Request *req, 
-	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
+	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	struct stat 	s;
 	struct dirent*	entry;
@@ -438,7 +438,7 @@ void Server::handleRequest(int& client_fd, Request *req,
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiFds);
+			cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiFds, cgiProcesses);
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(req, file, client_fd);
@@ -450,7 +450,7 @@ void Server::handleRequest(int& client_fd, Request *req,
 		if (req->getFileURI().find("cgi") != str::npos)
 		{
 			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiFds);
+			cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiFds, cgiProcesses);
 		}
 		else
 		{

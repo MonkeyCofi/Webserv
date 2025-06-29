@@ -35,7 +35,9 @@
 # include "Http.hpp"
 # include "Server.hpp"
 # include "Request.hpp"
+
 # include "Cgi.hpp"
+# include "CGIinfo.hpp"
 
 // # define BUFFER_SIZE 4096	// 4 kb
 
@@ -64,6 +66,8 @@ class ConnectionManager
 			FINISH
 		}	State;
 
+		
+
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
@@ -87,7 +91,7 @@ class ConnectionManager
 		void		printError(int revents);
 
 		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, 
-					std::map<int, int>& cgiFds);
+					std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 		// Request*	receiveRequest(int client_fd, unsigned int& index);
 		void		closeSocket(unsigned int& index);
 
@@ -98,13 +102,17 @@ class ConnectionManager
 		void		deleteTempFiles();
 		State		handleFirstRecv(std::fstream& tempFile, str _request, Request* req, char* buffer, ssize_t& r);
 
-		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, int>& cgiFds);
+		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
 
-		void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
-					std::map<int, Request *> &requests);
+		// void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
+		// 			std::map<int, Request *> &requests);
 
-		void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds);
+		void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
+		std::map<int, Request *> &requests, std::map<int, CGIinfo>& cgiProcesses);
+
+		// void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses););
+		void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 
 	public:
 		ConnectionManager(Http *protocol);

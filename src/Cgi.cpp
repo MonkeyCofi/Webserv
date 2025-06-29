@@ -73,7 +73,7 @@ Cgi &Cgi::operator=(const Cgi& copy)
 }
 
 void    Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
-        std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
+        std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
     const str uri = req->getFileURI();
 
@@ -92,15 +92,16 @@ void    Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv,
     this->env.push_back(content_length);
     this->env.push_back("SCRIPT_NAME=" + this->scriptName);
 
-    runCGI(client_fd, serv, req, pollfds, cgiFds);
+    runCGI(client_fd, serv, req, pollfds, cgiFds, cgiProcesses);
 }
 
 char**   Cgi::envToChar()
 {
     char**  envp = new char*[env.size() + 1];
+
     size_t  i = 0;
     for (; i < this->env.size(); i++)
-        envp[i] = const_cast<char *>(this->env[i].c_str());
+        envp[i] = const_cast<char *>(this->env[i].c_str()); // take constness away from string
     envp[i] = NULL;
     return (envp);
 }
@@ -122,156 +123,68 @@ bool    Cgi::validScriptAccess() const
     return (false);
 }
 
-// void    Cgi::runCGI(std::stringstream& resp, Server* server, Request* req)
-// {
-//     // if the script is inaccessible, return an error page
-//     if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
-//     {
-//         resp << "HTTP/1.1 404 Not Found\r\n";
-//         resp << "Content-Length: 83\r\n";
-//         resp << "\r\n\r\n";
-//         resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
-//     }
-//     // if request is POST, open .tmp file and dup it with stdin
-//     if (method == "POST")
-//     {
-//         std::cout << "Opening " << req->getTempFileName() << " to pass to CGI script\n";
-//         int in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
-//         if (in_fd == -1)
-//         {
-//             // handle error
-//             throw (std::exception());
-//         }
-//         dup2(in_fd, STDIN_FILENO);
-//         close(in_fd);
-//     }
-//     if (pipe(this->pipe_fds) == -1)
-//         throw (std::runtime_error("Couldn't open pipes for CGI"));
-//     this->cgi_fd = fork();
-//     if (cgi_fd == 0)    // child process
-//     {
-//         str script_path = this->path_info.substr(this->path_info.find("PATH_INFO=") + std::strlen("PATH_INFO="), str::npos);
-//         const char* cmd = "/usr/bin/php";
-//         const char *const argv[3] = {cmd, script_path.c_str(), NULL};
-//         char* const* envp = envToChar();
-//         close(pipe_fds[READ]);
-//         dup2(pipe_fds[WRITE], STDOUT_FILENO);
-//         close(pipe_fds[WRITE]);
-//         if (execve(cmd, const_cast<char **>(argv), envp))
-//         {
-//             perror("Why");
-//             delete (envp);
-//             std::cerr << "Can't execute CGI script\n";
-//             exit(EXIT_FAILURE);
-//         }
-//     }
-//     else
-//     {
-//         close(pipe_fds[WRITE]);
-//         char b[BUFFER_SIZE] = {0};
-//         ssize_t r = 1;
-//         int response = open("./.cgi-response", O_RDWR | O_CREAT, 0644);
-//         fcntl(response, F_SETFL, fcntl(response, F_GETFL) | O_NONBLOCK);
-//         fcntl(response, F_SETFD, fcntl(response, F_GETFD) | FD_CLOEXEC);
-//         // while (r)
-//         // {
-//         //     r = read(pipe_fds[READ], b, BUFFER_SIZE);
-//         //     if (write(response, b, r) == -1)
-//         //         std::cerr << RED"Write error" << NL;
-//         //         // error;
-//         // }
-//         // close(response);
-//         std::ifstream test_stream;
-//         test_stream.open("./.cgi-response", std::ios::in | std::ios::binary);
-//         int response_fd = open("./.cgi-response", O_RDONLY);
-//         if (response_fd == -1)
-//             throw (std::runtime_error("Can't open CGI response FD"));
-//         server->setFileFD(response_fd);
-//         str line;
-//         while (std::getline(test_stream, line))
-//         {
-//             if (line.find("HTTP/1.1") != str::npos)
-//             {
-//                 std::cout << RED << line << NL;
-//                 server->setHeader(line);
-//             }
-//             else
-//             {
-//                 std::cout << RED << line << NL;
-//                 server->setBody(line);
-//             }
-//         }
-//         (void)r;
-//         (void)b;
-//     }
-//     (void)resp;
-// }
-
-/// @brief runs the cgi script and adds the READend of pipe to the poll() call
-/// @param client_fd the client's file descriptor
-/// @param resp the respose string stream
-/// @param server the server object that is handling the CGI request
-/// @param req the request object that requested for the CGI script
-/// @param pollfds the vector of pollfds that are being poll()'ed
 void    Cgi::runCGI(int& client_fd, Server* server, 
-        Request* req, std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
+        Request* req, std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
     // if the script is inaccessible, return an error page
     if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
     {
-        // resp << "HTTP/1.1 404 Not Found\r\n";
-        // resp << "Content-Length: 83\r\n";
-        // resp << "\r\n\r\n";
-        // resp << "<html><center><h1>404 Not Found</h1></center><hr><center>JesterServ</center></html>";
+        // if script is not accessible, respond with error page
         return ;
     }
     // if request is POST, open .tmp file and dup it with stdin
     if (pipe(this->pipe_fds) == -1)
         throw (std::runtime_error("Couldn't open pipes for CGI"));
-    if (method == "POST")
-    {
-        std::cout << "Opening " << req->getTempFileName() << " to pass to CGI script\n";
-        int in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
-        if (in_fd == -1)
-        {
-            // handle error
-            throw (std::exception());
-        }
-        dup2(in_fd, pipe_fds[READ]);
-        close(in_fd);
-    }
     this->cgi_fd = fork();
-    if (cgi_fd == CHLDPROC)    // child process
+    if (this->cgi_fd == CHLDPROC)    // child process
     {
         const str script_path = this->path_info.substr(this->path_info.find("PATH_INFO=") + std::strlen("PATH_INFO="), str::npos);
         const char* cmd = "/usr/bin/php";
         const char *const argv[3] = {cmd, script_path.c_str(), NULL};
         char* const* envp = envToChar();
-        // if post method, dup READend of pipe to STDIN
+        int in_fd = -1;
+        // if post method, dup READ of pipe to STDIN
+        close(this->pipe_fds[READ]);
         if (method != "POST")
-            dup2(pipe_fds[READ], STDIN_FILENO);
-        close(pipe_fds[READ]);
-        dup2(pipe_fds[WRITE], STDOUT_FILENO);
-        close(pipe_fds[WRITE]);
-        if (execve(cmd, const_cast<char **>(argv), envp))
         {
-            std::cerr << "Unable to execute cmd\n";
-            perror("Why");
-            delete (envp);
-            std::cerr << "Can't execute CGI script\n";
-            exit(EXIT_FAILURE);
+            in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
+            if (in_fd == -1)
+                throw (std::exception());
         }
+        else
+        {
+            in_fd = open("/dev/null", O_RDONLY);
+            if (in_fd == -1)
+                throw (std::exception());
+        }
+        if (in_fd != -1)
+        {
+            dup2(in_fd, STDIN_FILENO);
+            close(in_fd);
+        }
+
+        execve(cmd, const_cast<char **>(argv), envp);
+        std::cerr << "Unable to execute cmd\n";
+        perror("Why");
+        delete (envp);
+        std::cerr << "Can't execute CGI script\n";
+        exit(EXIT_FAILURE);
     }
     else
     {
         close(pipe_fds[WRITE]);
         fcntl(pipe_fds[READ], F_SETFL, O_NONBLOCK); // set the read end of the pipe to non blocking
+
         struct pollfd read_fd;
-        read_fd.events = POLLIN | POLLOUT;
+        read_fd.events = POLLIN;
         read_fd.revents = 0;
         read_fd.fd = pipe_fds[READ];
         pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
-        cgiFds.insert(std::pair<int, int>(read_fd.fd, client_fd));  // the read end of the cgi script is the key and the client_fd is the value
+        const int&  key = read_fd.fd;
+        const int&  value = client_fd;
+        cgiFds.insert(std::pair<int, int>(key, value));  // the read end of the cgi script is the key and the client_fd is the value
+        cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
+        // cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
         std::cout << "Pushed " << read_fd.fd << " into map for client " << client_fd << "\n";
     }
     (void)server;

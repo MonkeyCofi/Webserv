@@ -3,9 +3,9 @@
 
 # include <iostream>
 # include <map>
-# include <unistd.h>
 # include <sys/wait.h>
 # include "Server.hpp"
+# include "CGIinfo.hpp"
 
 # define READ 0
 # define WRITE 1
@@ -33,10 +33,10 @@ class Cgi
 		Cgi(const str script_path, Server* server);	// constructor that takes path to cgi script
 
 		void		setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
-					std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds);
+					std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 
 		void    	runCGI(int& client_fd, Server* server, Request* req, 
-					std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds);
+					std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 
 		char**   	envToChar();
 		bool    	validScriptAccess() const;

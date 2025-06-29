@@ -163,7 +163,7 @@ void ConnectionManager::printError(int revents)
 
 // if cgi is requested, don't erase the request for the client_fd
 void ConnectionManager::passRequestToServer(int i, Request **req, 
-	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds)
+	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	std::cout << "Request host: " << (*req)->getHost() << "\n";
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
@@ -171,7 +171,7 @@ void ConnectionManager::passRequestToServer(int i, Request **req,
 	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
 	if ((*req)->isValidRequest())
-		handlers.at(i)->handleRequest(sock_fds.at(i).fd, *req, pollfds, cgiFds);
+		handlers.at(i)->handleRequest(sock_fds.at(i).fd, *req, pollfds, cgiFds, cgiProcesses);
 	// delete *req;
 	// *req = NULL;
 }
@@ -207,12 +207,13 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 
 		char uniqueName[255] = {0};
 		strcpy(uniqueName, ".tempXXXXXX");
-		mktemp(uniqueName);
+		int tmp = mkstemp(uniqueName);
 		str filename = str(uniqueName);
 		req->setTempFileName(filename);
 		// req->tempFileName = filename;
 
 		std::cout << "Trying to open with filename " << filename << "\n";
+		close(tmp);
 		file.open(filename.c_str(), std::ios::binary | std::ios::out);
 		if (file.fail())
 		{
@@ -266,7 +267,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 			{
 				size_t	endDblquotePos = line.find_last_of('\"');
 				std::cout << "Found filename\n";
-				name = line.substr(fileNamePos + 10);	// the 10 is the length of filename="
+				name = line.substr(fileNamePos + 10);
 				if (name.find("\"\r") != str::npos)
 					name.erase(name.find("\"\r"));
 				std::cout << "Filename: " << name << "\n";
@@ -345,45 +346,6 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		std::remove(req->getTempFileName().c_str());
 }
 
-ConnectionManager::State	ConnectionManager::handleFirstRecv(std::fstream& tempFile, 
-	str _request, Request* req, char* buffer, ssize_t& r)
-{
-	// std::fstream&	tempFile = req->getBodyFile();
-
-	str	rq = req->getRequest();
-	req->parseRequest(rq);
-	std::cout << req->getRequest();
-	req->setHeaderReceived(true);
-	if (req->getContentLen() != 0)
-		req->setHasBody(true);
-	std::cerr << (req->getHasBody() ? "Request has a body" : "Request does not have a body") << "\n";
-	if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
-	{
-		size_t	endPos;
-		openTempFile(req, tempFile);
-		endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
-		str	b(buffer);
-		b = b.substr(0, endPos);
-		std::cout << "Length of header part: " << b.length() << "\n";
-		if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
-		{
-			std::cout << RED << "There is a body but it is not present in request" << NL;
-			return (INCOMPLETE);
-		}
-		std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
-		req->bytesReceived += r - endPos;
-		tempFile.write(&buffer[endPos], r - endPos);
-		if (tempFile.bad() || tempFile.fail())
-			throw(std::runtime_error("Couldn't write data to temp file\n"));
-		if (req->bytesReceived == req->getContentLen())
-		{
-			parseBodyFile(req);
-			return (FINISH);
-		}
-	}
-	return (FINISH);
-}
-
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	char			buffer[BUFFER_SIZE + 1];
@@ -391,10 +353,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	std::string		_request;
 	std::fstream&	file = req->getBodyFile();
 
-	if (!req)
-	{
-		std::cout << "There is no request\n";
-	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r < 0)
 		return (INCOMPLETE);
@@ -424,7 +382,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
 			return (FINISH);
 		}
-		// write the body's bytes onto the temp file
 		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
 		{
 			size_t	endPos;
@@ -464,11 +421,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				parseBodyFile(req);
 				return (FINISH);
 			}
-			// std::cout << "received " << req->bytesReceived << " bytes so far\n";
 			return (INCOMPLETE);
 		}
 	}
-	// std::cout << "Request hasn't been fully received\n";
 	(void)state;
 	return (INCOMPLETE);
 }
@@ -518,33 +473,42 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 }
 
 void	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& i, 
-		std::map<int, Request *> &requests)
+		std::map<int, Request *> &requests, std::map<int, CGIinfo>& cgiProcesses)
 {
-	for (std::map<int, Request*>::iterator it = requests.begin(); it != requests.end(); it++)
+	CGIinfo* infoPtr = NULL;
+	int	pipe_fd = -1;
+
+	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
 	{
-		std::cout << RED << "FIRST: " << (*it).first << NL;
-		std::cout << RED << "SECOND: " << (*it).second << NL;
+		if (it->second.getClientFd() == sock_fds.at(i).fd && it->second.isComplete())
+		{
+			infoPtr = &it->second;
+			pipe_fd = it->first;
+			break ;
+		}
 	}
-	if (requests.find(sock_fds.at(i).fd) != requests.end())
-		std::cout << requests.find(sock_fds.at(i).fd)->second->getRequest() << "\n";
-	else
-		std::cout << "Requests map doesn't contain a request for fd " << sock_fds.at(i).fd << "\n";
-	std::cout << "CGI pollout\n";
-	send(sock_fds.at(i).fd, buf, BUFFER_SIZE, 0);
-	std::cout << BLUE << "Buffer: " << buf << NL;
-	std::memset(buf, 0, BUFFER_SIZE);
-	if (buf[0] == 0)
-		std::cout << "empty\n";
-	if (handlers[i])
-		handlers[i]->setState(Server::returnFinish());
-	else
-		std::cout << "There is no handler for current request\n";
+
+	if (infoPtr == NULL)
+	{
+		std::cout << "There is no complete CGI response\n";
+		return ;
+	}
+	// send the response to the client
+	if (infoPtr->getBuffer().empty() == false)
+	{
+		ssize_t	sent = send(sock_fds.at(i).fd, infoPtr->getBuffer().c_str(), BUFFER_SIZE, 0);
+		std::cout << "sent: " << sent << " bytes\n";
+		cgiProcesses.erase(pipe_fd);
+		if (handlers[i])
+			handlers[i]->setState(Server::returnFinish());
+	}
 	(void)state;
+	(void)buf;
 	(void)requests;
 }
 
 void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests,
-	std::map<int, int>& cgiFds)
+	std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
 	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
@@ -558,57 +522,58 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 	if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
 	{
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
-		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds);
+		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiFds, cgiProcesses);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 	}
 	//Print here and inside of receiveRequest to know where it's stopping
 }
 
-void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds)
+void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	// if the cgi_fd is ready for POLLIN,
 	std::cout << "in cgi read\n";
 	ssize_t r;
 	int	status;
+	char	buffer[BUFFER_SIZE + 1] = {0};
 
-	// std::cout << "in  CGI read\n";
 	r = read(sock_fds.at(i).fd, buf, BUFFER_SIZE);
-	if (r == 0)
-	{
-		close(sock_fds.at(i).fd);
-		sock_fds.erase(sock_fds.begin() + i);	// remove the fd from the poll() snce reading is finished
-		std::cout << "Fully received response\n";
-		i--;
-		std::cout << "fd : " << sock_fds.at(i).fd << "\n";
-		if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
-		{
-			std::cout << RED << "Erasing fd from map" << NL;
-			cgiFds.erase(sock_fds.at(i).fd); // remove the file descriptor from the map
-		}
-		else
-			std::cout << "Fd is not in map\n";
-	}
-	else if (r == -1)
+	if (r == -1)
 	{
 		std::cerr << "EXITING SERVER\n";
 		exit(1);
 	}
+	else if (r == 0)
+	{
+		CGIinfo& info = cgiProcesses[sock_fds.at(i).fd];
+		int	status;
+
+		pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
+		if (res == info.getPid())
+		{
+			info.completeResponse();
+		}
+		close(sock_fds.at(i).fd);
+		sock_fds.erase(sock_fds.begin() + i);
+		i--;
+	}
 	else
 	{
 		buf[r] = 0;
-		std::cout << buf << "\n";
+		cgiProcesses[sock_fds.at(i).fd].concatBuffer(std::string(buffer));
 	}
 	std::cout << YELLOW << "Read " << buf << NL;
 	waitpid(sock_fds.at(i).fd, &status, WNOHANG);
 	(void)status;
+	(void)cgiFds;
 }
 
 void ConnectionManager::startConnections()
 {
-	int					res;
-	State				state = INCOMPLETE;
-	std::map<int, int>	cgiFds;	// key is the read end of the pipe and value is the client_fd
-	char				buf[BUFFER_SIZE] = {0};
+	int						res;
+	State					state = INCOMPLETE;
+	std::map<int, int>		cgiFds;	// key is the read end of the pipe and value is the client_fd
+	std::map<int, CGIinfo>	cgiProcesses;	// key is read_end, value is CGIinfo object
+	char					buf[BUFFER_SIZE] = {0};
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -616,7 +581,7 @@ void ConnectionManager::startConnections()
 	std::cout << "Server has " << main_listeners << " listeners\n";
 	while (g_quit != true)
 	{
-		res = poll(&sock_fds[0], sock_fds.size(), 500);
+		res = poll(&sock_fds[0], sock_fds.size(), -1);
 		if (res == 0)
 			continue ;
 		if (res < 0)
@@ -628,49 +593,43 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
-			// don't add a new client if there is an existing fd that can be used to handle the request
 			if (sock_fds.at(i).revents & POLLIN)
 				newClient(i, sock_fds.at(i));
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
-		// for (unsigned int i = sock_fds.size() - 1; i >= main_listeners; i--)
 		{
-			// std::cout << "i: " << i << " pollfds size: " << sock_fds.size() << "\n";
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				/* 
-					if the read end file descriptor is found in the map of fds
-						read from the file descriptor
-					// once the response has been fully read, remove the pair from the map
-				*/
-				if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())
+				// if (cgiFds.find(sock_fds.at(i).fd) != cgiFds.end())	// cgiFds(key: cgiReadFd, value: client_fd)
+				if (cgiProcesses.find(sock_fds.at(i).fd) != cgiProcesses.end())
 				{
 					std::cout << "Found " << sock_fds.at(i).fd << " in the map of fds\n";
 					std::cout << "Handling cgi\n";
-					handleCGIread(buf, i, cgiFds);
+					handleCGIread(buf, i, cgiFds, cgiProcesses);
 				}
 				else
 				{
-					handlePollin(i, state, requests, cgiFds);
+					handlePollin(i, state, requests, cgiFds, cgiProcesses);
 					continue ;
 				}
 			}
 			if (sock_fds.at(i).revents & POLLOUT)	// cgi_fd will never enter pollout
 			{
 				bool	cgiPollout = false;
-				// if the client fd is in the cgi fds map, this means it is ready to send response
+
 				for (std::map<int, int>::iterator it = cgiFds.begin(); it != cgiFds.end(); it++)
 				{
+					std::cout << BLUE << "key: " << (*it).first << " value: " << (*it).second << "\033[0m\n";
 					if ((*it).second == sock_fds.at(i).fd)
 						cgiPollout = !cgiPollout;
 
 				}
 				if (cgiPollout)
 				{
-					std::cout << "in CGI pollout\n";
-					handleCGIPollout(state, buf, i, requests);
+					std::cout << "fd: " << sock_fds.at(i).fd << " is in CGI pollout\n";
+					handleCGIPollout(state, buf, i, requests, cgiProcesses);
 				}
 				else
 				{
@@ -701,9 +660,7 @@ void ConnectionManager::startConnections()
 	this->deleteTempFiles();
 	this->request_body.close();
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
-	{
 		closeSocket(i);
-	}
 	std::cout << "Server closed!\n";
 	signal(SIGINT, SIG_DFL);
 	signal(SIGPIPE, SIG_DFL);
