@@ -126,12 +126,12 @@ bool    Cgi::validScriptAccess() const
 void    Cgi::runCGI(int& client_fd, Server* server, 
         Request* req, std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
-    // if the script is inaccessible, return an error page
     if (!validScriptAccess()) // if there is no set error page for error code (unimplemented), send default page
     {
         // if script is not accessible, respond with error page
         return ;
     }
+
     // if request is POST, open .tmp file and dup it with stdin
     if (pipe(this->pipe_fds) == -1)
         throw (std::runtime_error("Couldn't open pipes for CGI"));
@@ -143,17 +143,10 @@ void    Cgi::runCGI(int& client_fd, Server* server,
         const char *const argv[3] = {cmd, script_path.c_str(), NULL};
         char* const* envp = envToChar();
         int in_fd = -1;
-        // if post method, dup READ of pipe to STDIN
         close(this->pipe_fds[READ]);
-        if (method != "POST")
+        if (method == "POST")
         {
             in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
-            if (in_fd == -1)
-                throw (std::exception());
-        }
-        else
-        {
-            in_fd = open("/dev/null", O_RDONLY);
             if (in_fd == -1)
                 throw (std::exception());
         }
@@ -162,7 +155,10 @@ void    Cgi::runCGI(int& client_fd, Server* server,
             dup2(in_fd, STDIN_FILENO);
             close(in_fd);
         }
+        dup2(pipe_fds[WRITE], STDOUT_FILENO);
+        close(pipe_fds[WRITE]);
 
+        // std::cout << "Executing script in child process\n";
         execve(cmd, const_cast<char **>(argv), envp);
         std::cerr << "Unable to execute cmd\n";
         perror("Why");
@@ -173,19 +169,18 @@ void    Cgi::runCGI(int& client_fd, Server* server,
     else
     {
         close(pipe_fds[WRITE]);
-        fcntl(pipe_fds[READ], F_SETFL, O_NONBLOCK); // set the read end of the pipe to non blocking
+        fcntl(pipe_fds[READ], F_SETFL, O_NONBLOCK | O_CLOEXEC); // set the read end of the pipe to non blocking
+        // close(pipe_fds[READ]);
 
         struct pollfd read_fd;
         read_fd.events = POLLIN;
         read_fd.revents = 0;
         read_fd.fd = pipe_fds[READ];
+        std::cout << "Pushing " << read_fd.fd << " into map for client " << client_fd << "\n";
         pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
-        const int&  key = read_fd.fd;
-        const int&  value = client_fd;
-        cgiFds.insert(std::pair<int, int>(key, value));  // the read end of the cgi script is the key and the client_fd is the value
         cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
         // cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
-        std::cout << "Pushed " << read_fd.fd << " into map for client " << client_fd << "\n";
     }
+    (void)cgiFds;
     (void)server;
 }

@@ -5,4 +5,7 @@ of less importance: file upload in ram
 POST request handle header fields
 POST request handle json??
 
-least importance: 100% CPU
+least importance: 100% CPU (fixed, somehow)
+
+fixed:
+	100% cpu usage (probably an issue with something with cgi)

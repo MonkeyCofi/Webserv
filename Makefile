@@ -1,6 +1,6 @@
 CXX = c++
-# CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iinc/ #-g3 -fsanitize=address -pedantic
-CXXFLAGS = -Iinc
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iinc/ -g3 -fsanitize=address -pedantic
+# CXXFLAGS = -Iinc
 SRCDIR = src/
 SRCFIL = main.cpp BlockOBJ.cpp ConfigParser.cpp Engine.cpp Location.cpp Http.cpp Server.cpp\
 		Request.cpp ConnectionManager.cpp Cgi.cpp Response.cpp CGIinfo.cpp

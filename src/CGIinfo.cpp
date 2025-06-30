@@ -35,6 +35,7 @@ CGIinfo::CGIinfo(const CGIinfo& obj)
     this->child_pid = obj.child_pid;
     this->client_fd = obj.client_fd;
     this->response_complete = obj.response_complete;
+    this->response_str.clear();
     this->response_str = obj.response_str;
 }
 
@@ -66,4 +67,10 @@ bool    CGIinfo::isComplete() const
 std::string CGIinfo::getBuffer() const
 {
     return (this->response_str);
+}
+
+void    CGIinfo::printInfo() const
+{
+    std::cout << "Process pid: " << this->child_pid << "\n" << "Client fd: " << this->client_fd << "\n"
+        << "Response complete: " << this->response_complete << "\n" << "Response string: " << this->response_str << "\n";
 }

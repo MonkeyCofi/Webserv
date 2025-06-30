@@ -17,14 +17,16 @@ class CGIinfo
         CGIinfo();
         CGIinfo(int _client, pid_t _child);
         CGIinfo(const CGIinfo& obj);
-        CGIinfo&    operator=(const CGIinfo& obj);
-        void    concatBuffer(std::string str);
-        pid_t   getPid() const;
-        int     getClientFd() const;
-        bool    isComplete() const;
-        void    completeResponse();
-        std::string getBuffer() const;
         ~CGIinfo();
+
+        CGIinfo&    operator=(const CGIinfo& obj);
+        void        concatBuffer(std::string str);
+        pid_t       getPid() const;
+        int         getClientFd() const;
+        bool        isComplete() const;
+        void        completeResponse();
+        std::string getBuffer() const;
+        void        printInfo() const;
 };
 
 # endif

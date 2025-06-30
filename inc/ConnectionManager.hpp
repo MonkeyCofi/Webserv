@@ -108,7 +108,7 @@ class ConnectionManager
 		// void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
 		// 			std::map<int, Request *> &requests);
 
-		void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
+		bool		handleCGIPollout(State& state, char* buf, unsigned int& i, 
 		std::map<int, Request *> &requests, std::map<int, CGIinfo>& cgiProcesses);
 
 		// void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses););
