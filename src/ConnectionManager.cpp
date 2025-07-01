@@ -436,10 +436,10 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 /// @param state the current state of the response
 /// @param i the index of the handling server
 /// @param requests the map of requests wherein the socket fd is the key and the request object is the value
-void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
+void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
-	if (i >= handlers.size())
-		return ;
+	// if (i >= handlers.size())
+	// 	return ;
 	Server* handler = handlers[i];
 
 	if (handler && state == FINISH)	// the request has been parsed and ready for response building
@@ -491,19 +491,22 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 		return (false);
 	}
 	// std::cout << "CGI Client fd: " << sock_fds.at(i).fd << " is ready for POLLOUT\n";
-	// Server* handler = handlers[i];
+	Server* handler = handlers[i];
+	(void)handler;
+	handler.cgiRespond(infoPtr);
+	
 	// std::cout << handler->getIP(0) << ":" << handler->getPort(0) << "\n";
 	// handler->respond(infoPtr->getClientFd());
 	// send the response to the client
 	if (infoPtr->getBuffer().empty() == false)
 	{
-		// ssize_t	sent = send(sock_fds.at(i).fd, infoPtr->getBuffer().c_str(), BUFFER_SIZE, 0);
-		std::cout << "Sending " << infoPtr->getBuffer() << " to fd: " << infoPtr->getClientFd() << "\n";
-		ssize_t	sent = send(infoPtr->getClientFd(), const_cast<char *>(infoPtr->getBuffer().c_str()), infoPtr->getBuffer().size(), 0);
-		std::cout << "sent: " << sent << " bytes\n";
-		cgiProcesses.erase(pipe_fd);
-		if (handlers[i])
-			handlers[i]->setState(Server::returnFinish());
+		
+		// std::cout << "Sending " << infoPtr->getBuffer() << " to fd: " << infoPtr->getClientFd() << "\n";
+		// ssize_t	sent = send(infoPtr->getClientFd(), const_cast<char *>(infoPtr->getBuffer().c_str()), infoPtr->getBuffer().size(), 0);
+		// std::cout << "sent: " << sent << " bytes\n";
+		// cgiProcesses.erase(pipe_fd);
+		// if (handlers[i])
+		// 	handlers[i]->setState(Server::returnFinish());
 	}
 	(void)state;
 	(void)buf;

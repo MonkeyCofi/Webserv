@@ -98,7 +98,8 @@ class Server: public BlockOBJ
 		void	setFileFD(int fd_);
 		void	setState(ResponseState state);
 
-		bool					respond(int client_fd);
+		bool	respond(int client_fd);
+		bool	cgirespond(CGIinfo* infoPtr);
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);

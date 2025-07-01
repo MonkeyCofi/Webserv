@@ -3,6 +3,7 @@
 
 # include <unistd.h>
 # include <iostream>
+# include "Response.hpp"
 
 typedef std::string str;
 
@@ -13,6 +14,7 @@ class CGIinfo
         str		response_str;
         bool	response_complete;
         pid_t	child_pid;
+        str     header;
     public:
         CGIinfo();
         CGIinfo(int _client, pid_t _child);
@@ -27,6 +29,7 @@ class CGIinfo
         void        completeResponse();
         std::string getBuffer() const;
         void        printInfo() const;
+        Response    parseCgiResponse();
 };
 
 # endif

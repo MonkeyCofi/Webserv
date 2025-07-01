@@ -74,3 +74,20 @@ void    CGIinfo::printInfo() const
     std::cout << "Process pid: " << this->child_pid << "\n" << "Client fd: " << this->client_fd << "\n"
         << "Response complete: " << this->response_complete << "\n" << "Response string: " << this->response_str << "\n";
 }
+
+Response    CGIinfo::parseCgiResponse()
+{
+    Response    r;
+    str         header;
+
+    size_t  key_pos = this->response_str.find("Content-type");
+    if (key_pos != str::npos)
+    {
+        // get string from after Content-type up until the first \r\n after the Content-type position
+        size_t  value_end_pos = this->response_str.find("\r\n", key_pos + 1);
+        str value = this->response_str.substr(key_pos, value_end_pos - key_pos);
+        r.setHeaderField("Content-type:", value);
+    }
+    key_pos = this->response_str.find("Content-Length")
+    return (r);
+}
