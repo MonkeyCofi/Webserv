@@ -162,7 +162,7 @@ void    Cgi::runCGI(int& client_fd, Server* server,
         execve(cmd, const_cast<char **>(argv), envp);
         std::cerr << "Unable to execute cmd\n";
         perror("Why");
-        delete (envp);
+        delete [] (envp);
         std::cerr << "Can't execute CGI script\n";
         exit(EXIT_FAILURE);
     }

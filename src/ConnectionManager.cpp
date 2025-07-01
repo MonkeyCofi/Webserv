@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/06/17 16:42:58 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/07/01 01:10:17 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -499,7 +499,7 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 	{
 		// ssize_t	sent = send(sock_fds.at(i).fd, infoPtr->getBuffer().c_str(), BUFFER_SIZE, 0);
 		std::cout << "Sending " << infoPtr->getBuffer() << " to fd: " << infoPtr->getClientFd() << "\n";
-		ssize_t	sent = send(infoPtr->getClientFd(), infoPtr->getBuffer().c_str(), BUFFER_SIZE, 0);
+		ssize_t	sent = send(infoPtr->getClientFd(), const_cast<char *>(infoPtr->getBuffer().c_str()), infoPtr->getBuffer().size(), 0);
 		std::cout << "sent: " << sent << " bytes\n";
 		cgiProcesses.erase(pipe_fd);
 		if (handlers[i])
