@@ -75,19 +75,38 @@ void    CGIinfo::printInfo() const
         << "Response complete: " << this->response_complete << "\n" << "Response string: " << this->response_str << "\n";
 }
 
+bool    CGIinfo::charEq(char c1, char c2)
+{
+    return (c1 == c2);
+}
+
+// returns iterator of search_val in to_search case-insensitively
+str::iterator    CGIinfo::nameFound(str to_search, str search_val)
+{
+    return (std::search(to_search.begin(), to_search.end(), search_val.begin(), search_val.end(), charEq));
+}
+
+str CGIinfo::getValue(str main_str, str key, str::iterator& key_start)
+{
+    size_t  value_start_pos = std::distance(main_str.begin(), key_start) + std::strlen(key.c_str());
+    size_t  value_end_pos = main_str.find("\r\n", value_start_pos);
+    return (main_str.substr(value_start_pos, value_end_pos - value_start_pos));
+}
+
 Response    CGIinfo::parseCgiResponse()
 {
     Response    r;
     str         header;
 
-    size_t  key_pos = this->response_str.find("Content-type");
-    if (key_pos != str::npos)
-    {
-        // get string from after Content-type up until the first \r\n after the Content-type position
-        size_t  value_end_pos = this->response_str.find("\r\n", key_pos + 1);
-        str value = this->response_str.substr(key_pos, value_end_pos - key_pos);
-        r.setHeaderField("Content-type:", value);
-    }
-    key_pos = this->response_str.find("Content-Length")
+    str::iterator   key_pos_iter = nameFound(this->response_str, "content-type");
+    if (key_pos_iter != this->response_str.end())
+        r.setHeaderField("Content-type", getValue(this->response_str, "content-type", key_pos_iter));
+    key_pos_iter = nameFound(this->response_str, "content-length");
+    if (key_pos_iter != this->response_str.end())
+        r.setHeaderField("Content-Length", getValue(this->response_str, "content-length", key_pos_iter));
+    // the position after \r\n\r\n
+    std::string::iterator pos = std::find(this->response_str.begin(), this->response_str.end(), "\r\n\r\n");
+    // write the body to the header
+    r.setHeaderField("", this->response_str.substr(std::distance(this->response_str.begin(), pos)));
     return (r);
 }

@@ -542,6 +542,7 @@ Server::ResponseState	Server::getState() const
 bool	Server::cgirespond(CGIinfo* infoPtr)
 {
 	const int&	client_fd = infoPtr->getClientFd();
+	this->response[client_fd] = infoPtr->parseCgiResponse();
 	// send the string from the infoPtr
 	// if the value of send is lesser than the size of the response string, set as incomplete
 	return (true);
