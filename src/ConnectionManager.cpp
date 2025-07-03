@@ -141,7 +141,8 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
-	client.events = POLLIN | POLLOUT;
+	// client.events = POLLIN | POLLOUT;
+	client.events = POLLIN;
 	client.revents = 0;
 	std::cout << "Pushing back client fd " << client.fd << " at index " << sock_fds.size() << "\n";
 	sock_fds.push_back(client);
@@ -175,7 +176,7 @@ void ConnectionManager::passRequestToServer(int i, Request **req,
 		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
 	std::cout << "Test: " << handlers.at(i)->getIP(0) << ":" << handlers.at(i)->getPort(0) << "\n";
 	if ((*req)->isValidRequest())
-		handlers.at(i)->handleRequest(sock_fds.at(i).fd, *req, pollfds, cgiFds, cgiProcesses);
+		handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, pollfds, cgiFds, cgiProcesses);
 	// delete *req;
 	// *req = NULL;
 }
@@ -438,8 +439,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 /// @param requests the map of requests wherein the socket fd is the key and the request object is the value
 void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
-	// if (i >= handlers.size())
-	// 	return ;
+	std::cerr << "fd in pollout: " << sock_fds.at(i).fd << "\n";
 	Server* handler = handlers[i];
 
 	if (handler && state == FINISH)	// the request has been parsed and ready for response building
@@ -447,6 +447,7 @@ void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<i
 		bool keep_open = handler->respond(sock_fds[i].fd);
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
+			sock_fds.at(i).events &= ~POLLOUT;
 			std::cerr << "Finished responding to request\n";
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{
@@ -477,6 +478,7 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 	{
 		// if (it->second.isComplete() == false)
 		// 	std::cout << "Not complete\n";
+		std::cout << "Checking fd: " << it->first << " for client: " << it->second.getClientFd() << "\n";
 		if (it->second.getClientFd() == sock_fds.at(i).fd && it->second.isComplete())
 		{
 			infoPtr = &it->second;
@@ -493,21 +495,7 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 	// std::cout << "CGI Client fd: " << sock_fds.at(i).fd << " is ready for POLLOUT\n";
 	Server* handler = handlers[i];
 	(void)handler;
-	handler.cgiRespond(infoPtr);
-	
-	// std::cout << handler->getIP(0) << ":" << handler->getPort(0) << "\n";
-	// handler->respond(infoPtr->getClientFd());
-	// send the response to the client
-	if (infoPtr->getBuffer().empty() == false)
-	{
-		
-		// std::cout << "Sending " << infoPtr->getBuffer() << " to fd: " << infoPtr->getClientFd() << "\n";
-		// ssize_t	sent = send(infoPtr->getClientFd(), const_cast<char *>(infoPtr->getBuffer().c_str()), infoPtr->getBuffer().size(), 0);
-		// std::cout << "sent: " << sent << " bytes\n";
-		// cgiProcesses.erase(pipe_fd);
-		// if (handlers[i])
-		// 	handlers[i]->setState(Server::returnFinish());
-	}
+	handler->cgiRespond(infoPtr);
 	(void)state;
 	(void)buf;
 	(void)requests;

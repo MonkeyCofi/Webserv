@@ -413,7 +413,7 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		this->response[client_fd].setHeaderField("Location", path);
 }
 
-void Server::handleRequest(int& client_fd, Request *req, 
+void Server::handleRequest(int& i, int& client_fd, Request *req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	struct stat 	s;
@@ -425,6 +425,7 @@ void Server::handleRequest(int& client_fd, Request *req,
 	if (response.find(client_fd) == response.end())
 		response[client_fd] = Response();
 	response[client_fd].clear();
+	pollfds.at(i).events |= POLLOUT;
 	// std::cout << RED << ((this->response.keepAlive()) == true ? "Keep connection alive" : "End connection") << NL;
 	if (!req->isValidRequest())
 	{
@@ -539,10 +540,13 @@ Server::ResponseState	Server::getState() const
 	return (this->responseState);
 }
 
-bool	Server::cgirespond(CGIinfo* infoPtr)
+bool	Server::cgiRespond(CGIinfo* infoPtr)
 {
 	const int&	client_fd = infoPtr->getClientFd();
 	this->response[client_fd] = infoPtr->parseCgiResponse();
+	std::cout << "\033[31m";
+	this->response[client_fd].printResponse();
+	std::cout << "\033[0m";
 	// send the string from the infoPtr
 	// if the value of send is lesser than the size of the response string, set as incomplete
 	return (true);

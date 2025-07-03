@@ -68,7 +68,7 @@ class Server: public BlockOBJ
 		~Server();
 
 		size_t					sent_bytes;
-		void					handleRequest(int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
+		void					handleRequest(int& i, int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
 								std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
 
 		bool					handleDirective(std::queue<str> opts);
@@ -99,7 +99,7 @@ class Server: public BlockOBJ
 		void	setState(ResponseState state);
 
 		bool	respond(int client_fd);
-		bool	cgirespond(CGIinfo* infoPtr);
+		bool	cgiRespond(CGIinfo* infoPtr);
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);

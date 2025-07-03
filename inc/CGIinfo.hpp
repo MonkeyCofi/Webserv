@@ -31,7 +31,7 @@ class CGIinfo
 		void        printInfo() const;
 		Response    parseCgiResponse();
 
-		bool			charEq(char c1, char c2);
+		static bool		charEq(const char& c1, const char& c2);
 		str::iterator	nameFound(str to_search, str search_val);
 		str				getValue(str main_str, str key, str::iterator& key_start);
 };

@@ -75,7 +75,7 @@ void    CGIinfo::printInfo() const
         << "Response complete: " << this->response_complete << "\n" << "Response string: " << this->response_str << "\n";
 }
 
-bool    CGIinfo::charEq(char c1, char c2)
+bool    CGIinfo::charEq(const char& c1, const char& c2)
 {
     return (c1 == c2);
 }
@@ -83,7 +83,7 @@ bool    CGIinfo::charEq(char c1, char c2)
 // returns iterator of search_val in to_search case-insensitively
 str::iterator    CGIinfo::nameFound(str to_search, str search_val)
 {
-    return (std::search(to_search.begin(), to_search.end(), search_val.begin(), search_val.end(), charEq));
+    return (std::search(to_search.begin(), to_search.end(), search_val.begin(), search_val.end(), CGIinfo::charEq));
 }
 
 str CGIinfo::getValue(str main_str, str key, str::iterator& key_start)
@@ -105,8 +105,10 @@ Response    CGIinfo::parseCgiResponse()
     if (key_pos_iter != this->response_str.end())
         r.setHeaderField("Content-Length", getValue(this->response_str, "content-length", key_pos_iter));
     // the position after \r\n\r\n
-    std::string::iterator pos = std::find(this->response_str.begin(), this->response_str.end(), "\r\n\r\n");
+    // std::string::iterator pos = std::find(this->response_str.begin(), this->response_str.end(), str("\r\n\r\n"));
+    size_t  endPos = this->response_str.find("\r\n\r\n");
     // write the body to the header
-    r.setHeaderField("", this->response_str.substr(std::distance(this->response_str.begin(), pos)));
+    r.setHeaderField("", this->response_str.substr(endPos));
+    // r.setHeaderField("", this->response_str.substr(std::distance(this->response_str.begin(), pos)));
     return (r);
 }
