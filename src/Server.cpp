@@ -553,19 +553,12 @@ bool	Server::cgiRespond(CGIinfo* infoPtr)
 	{
 		if (this->response[client_fd].getHeader().empty())
 		{
-			// std::cout << 
 			this->response[client_fd] = infoPtr->parseCgiResponse();
 		}
 		this->response[client_fd].printResponse();
 		std::cout << "Sending cgi response object's response to client fd " << client_fd << "\n";
 		respond(client_fd);
 	}
-	// std::cout << "Sending: ";
-	// std::cout << "\033[31m";
-	// this->response[client_fd].printResponse();
-	// std::cout << "\033[0m";
-	// send the string from the infoPtr
-	// if the value of send is lesser than the size of the response string, set as incomplete
 	return (true);
 }
 

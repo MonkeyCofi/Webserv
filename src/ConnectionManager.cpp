@@ -548,16 +548,16 @@ void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, 
 		int	status;
 
 		info.printInfo();
-		pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
-		std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
-		std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
-		if (res == info.getPid())
-		{
-			std::cout << "Script finished executing\n";
-			info.completeResponse();
-		}
-		// kill(info.getPid(), SIGQUIT);
-		// info.completeResponse();
+		// pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
+		// std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
+		// std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
+		// if (res == info.getPid())
+		// {
+		// 	std::cout << "Script finished executing\n";
+		// 	info.completeResponse();
+		// }
+		kill(info.getPid(), SIGQUIT);
+		info.completeResponse();
 		close(sock_fds.at(i).fd);
 		sock_fds.erase(sock_fds.begin() + i);
 		i--;
