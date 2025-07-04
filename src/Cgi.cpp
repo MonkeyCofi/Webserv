@@ -146,6 +146,7 @@ void    Cgi::runCGI(int& client_fd, Server* server,
         close(this->pipe_fds[READ]);
         if (method == "POST")
         {
+            std::cout << "Post method\n";
             in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
             if (in_fd == -1)
                 throw (std::exception());

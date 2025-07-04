@@ -32,8 +32,8 @@ class CGIinfo
 		Response    parseCgiResponse();
 
 		static bool		charEq(const char& c1, const char& c2);
-		str::iterator	nameFound(str to_search, str search_val);
-		str				getValue(str main_str, str key, str::iterator& key_start);
+		str::iterator	nameFound(str& to_search, str search_val);
+		str				getValue(str& main_str, str key, str::iterator& key_start);
 };
 
 # endif

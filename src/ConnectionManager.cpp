@@ -439,7 +439,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 /// @param requests the map of requests wherein the socket fd is the key and the request object is the value
 void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
-	std::cerr << "fd in pollout: " << sock_fds.at(i).fd << "\n";
+	// std::cerr << "fd in pollout: " << sock_fds.at(i).fd << "\n";
 	Server* handler = handlers[i];
 
 	if (handler && state == FINISH)	// the request has been parsed and ready for response building
@@ -478,10 +478,11 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 	{
 		// if (it->second.isComplete() == false)
 		// 	std::cout << "Not complete\n";
-		std::cout << "Checking fd: " << it->first << " for client: " << it->second.getClientFd() << "\n";
+		// std::cout << "Checking fd: " << it->first << " for client: " << it->second.getClientFd() << "\n";
 		if (it->second.getClientFd() == sock_fds.at(i).fd && it->second.isComplete())
 		{
 			infoPtr = &it->second;
+			std::cout << "CGI fd: " << it->first << " finished executing for client fd: " << infoPtr->getClientFd() << "\n";
 			pipe_fd = it->first;
 			break ;
 		}
@@ -492,12 +493,15 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 		// std::cout << "There is no complete CGI response\n";
 		return (false);
 	}
-	// std::cout << "CGI Client fd: " << sock_fds.at(i).fd << " is ready for POLLOUT\n";
+
+	// the handler is the server object that would contain the response map where: [key] = client_fd, [value] = response object
+	// once there is a client fd that is ready for pollout and it is a client of a cgi request, respond to the request
+	// once the client has been responded to, remove the cgi object from the ma of cgi processes
 	Server* handler = handlers[i];
-	(void)handler;
 	handler->cgiRespond(infoPtr);
-	(void)state;
 	(void)buf;
+	(void)state;
+	(void)handler;
 	(void)requests;
 	return (true);
 }
@@ -544,20 +548,20 @@ void	ConnectionManager::handleCGIread(char* buf, unsigned int& i, std::map<int, 
 		int	status;
 
 		info.printInfo();
-		kill(info.getPid(), SIGQUIT);
-		info.completeResponse();
-		(void)status;
-		// std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
-		// pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
-		// std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
-		// if (res == info.getPid())
-		// {
-		// 	std::cout << "Script finished executing\n";
-		// 	info.completeResponse();
-		// }
+		pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
+		std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
+		std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
+		if (res == info.getPid())
+		{
+			std::cout << "Script finished executing\n";
+			info.completeResponse();
+		}
+		// kill(info.getPid(), SIGQUIT);
+		// info.completeResponse();
 		close(sock_fds.at(i).fd);
 		sock_fds.erase(sock_fds.begin() + i);
 		i--;
+		(void)status;
 	}
 	else
 	{

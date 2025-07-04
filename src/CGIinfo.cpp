@@ -77,20 +77,30 @@ void    CGIinfo::printInfo() const
 
 bool    CGIinfo::charEq(const char& c1, const char& c2)
 {
-    return (c1 == c2);
+    return (tolower(c1) == tolower(c2));
 }
 
 // returns iterator of search_val in to_search case-insensitively
-str::iterator    CGIinfo::nameFound(str to_search, str search_val)
+str::iterator    CGIinfo::nameFound(str& to_search, str search_val)
 {
-    return (std::search(to_search.begin(), to_search.end(), search_val.begin(), search_val.end(), CGIinfo::charEq));
+    str::iterator retIt = std::search(to_search.begin(), to_search.end(), search_val.begin(), search_val.end(), CGIinfo::charEq);
+    // if (retIt == to_search.end())
+    //     std::cout << "Couldn't find " << search_val << " in \033[31m" << to_search << "\033[0m\n";
+    // else
+    //     std::cout << "\033[33m" << "found " << search_val << "\033[0m\n";
+    return (retIt);
 }
 
-str CGIinfo::getValue(str main_str, str key, str::iterator& key_start)
+str CGIinfo::getValue(str& main_str, str key, str::iterator& key_start)
 {
     size_t  value_start_pos = std::distance(main_str.begin(), key_start) + std::strlen(key.c_str());
     size_t  value_end_pos = main_str.find("\r\n", value_start_pos);
-    return (main_str.substr(value_start_pos, value_end_pos - value_start_pos));
+    str value = main_str.substr(value_start_pos, value_end_pos - value_start_pos);
+    size_t colonSp_pos = value.find(":");
+    if (colonSp_pos != str::npos)
+        value.erase(colonSp_pos, 1);
+    std::cout << "Key: " << key << " value: " << value << "\n";
+    return (value);
 }
 
 Response    CGIinfo::parseCgiResponse()
@@ -99,16 +109,15 @@ Response    CGIinfo::parseCgiResponse()
     str         header;
 
     str::iterator   key_pos_iter = nameFound(this->response_str, "content-type");
+    str             content_type;
+
+    // std::cout << *key_pos_iter << "\n";
     if (key_pos_iter != this->response_str.end())
-        r.setHeaderField("Content-type", getValue(this->response_str, "content-type", key_pos_iter));
-    key_pos_iter = nameFound(this->response_str, "content-length");
-    if (key_pos_iter != this->response_str.end())
-        r.setHeaderField("Content-Length", getValue(this->response_str, "content-length", key_pos_iter));
-    // the position after \r\n\r\n
-    // std::string::iterator pos = std::find(this->response_str.begin(), this->response_str.end(), str("\r\n\r\n"));
-    size_t  endPos = this->response_str.find("\r\n\r\n");
+        content_type = getValue(this->response_str, "content-type", key_pos_iter);
+    size_t  endPos = this->response_str.find("\r\n\r\n") + std::strlen("\r\n\r\n");
     // write the body to the header
-    r.setHeaderField("", this->response_str.substr(endPos));
+    r.setBody(this->response_str.substr(endPos), content_type);
+    // r.setHeaderField("", this->response_str.substr(endPos));
     // r.setHeaderField("", this->response_str.substr(std::distance(this->response_str.begin(), pos)));
     return (r);
 }
