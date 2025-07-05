@@ -542,7 +542,7 @@ Server::ResponseState	Server::getState() const
 
 bool	Server::cgiRespond(CGIinfo* infoPtr)
 {
-	std::cout << "In cgi respond function\n";
+	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
 	if (this->response.find(client_fd) == this->response.end())
 	{
@@ -554,9 +554,9 @@ bool	Server::cgiRespond(CGIinfo* infoPtr)
 		if (this->response[client_fd].getHeader().empty())
 		{
 			this->response[client_fd] = infoPtr->parseCgiResponse();
+			std::cout << "Sending cgi response object's response to client fd " << client_fd << "\n";
 		}
-		this->response[client_fd].printResponse();
-		std::cout << "Sending cgi response object's response to client fd " << client_fd << "\n";
+		// this->response[client_fd].printResponse();
 		respond(client_fd);
 	}
 	return (true);

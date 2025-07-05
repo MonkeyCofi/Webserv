@@ -482,7 +482,7 @@ bool	ConnectionManager::handleCGIPollout(State& state, char* buf, unsigned int& 
 		if (it->second.getClientFd() == sock_fds.at(i).fd && it->second.isComplete())
 		{
 			infoPtr = &it->second;
-			std::cout << "CGI fd: " << it->first << " finished executing for client fd: " << infoPtr->getClientFd() << "\n";
+			// std::cout << "CGI fd: " << it->first << " finished executing for client fd: " << infoPtr->getClientFd() << "\n";
 			pipe_fd = it->first;
 			break ;
 		}

@@ -105,6 +105,7 @@ str CGIinfo::getValue(str& main_str, str key, str::iterator& key_start)
 
 Response    CGIinfo::parseCgiResponse()
 {
+    std::cout << "in parse CGI response function\n";
     Response    r;
     str         header;
 

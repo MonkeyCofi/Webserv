@@ -1,5 +1,5 @@
 <?php
-    sleep(3);
+    // sleep(3);
     $body = "<p>Test</p>\n";
     $query_string = getenv("QUERY_STRING");
     $name = strstr($query_string, "=");

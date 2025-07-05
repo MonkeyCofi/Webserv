@@ -228,3 +228,12 @@ void	Response::printResponse()
 	std::cout << this->body << "\n";
 }
 
+size_t	Response::getSentBytes() const
+{
+	return (this->sent_bytes);
+}
+
+void	Response::addSentBytes(size_t value)
+{
+	this->sent_bytes += value;
+}
