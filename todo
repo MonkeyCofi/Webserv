@@ -9,3 +9,7 @@ least importance: 100% CPU (fixed, somehow)
 
 fixed:
 	100% cpu usage (probably an issue with something with cgi)
+		- i lied. it was due to the keep-alive client fds still being ready for a POLLOUT
+		- the fix was to make the fd only wait for a POLLIN event, and then XOR the POLLOUT event to the fd.events field when
+		the fd has fully received its request, and once the fd has been fully responded with, remove the POLLOUT event from the
+		fd.events field

@@ -63,6 +63,8 @@ class ConnectionManager
 		{
 			INVALID = -1,
 			INCOMPLETE,
+			CGI_INCOMPLETE,
+			CGI_FINISH,
 			FINISH
 		}	State;
 
