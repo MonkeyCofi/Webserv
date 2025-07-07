@@ -92,9 +92,7 @@ class ConnectionManager
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 
-		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, 
-					std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
-		// Request*	receiveRequest(int client_fd, unsigned int& index);
+		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
 		void		closeSocket(unsigned int& index);
 
 		void		openTempFile(Request* req, std::fstream& file);
@@ -102,19 +100,13 @@ class ConnectionManager
 		void		parseBodyFile(Request* req);
 
 		void		deleteTempFiles();
-		State		handleFirstRecv(std::fstream& tempFile, str _request, Request* req, char* buffer, ssize_t& r);
 
-		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
+		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, CGIinfo>& cgiProcesses);
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
 
-		// void		handleCGIPollout(State& state, char* buf, unsigned int& i, 
-		// 			std::map<int, Request *> &requests);
+		bool		handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses);
 
-		bool		handleCGIPollout(State& state, char* buf, unsigned int& i, 
-		std::map<int, Request *> &requests, std::map<int, CGIinfo>& cgiProcesses);
-
-		// void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses););
-		void		handleCGIread(char* buf, unsigned int& i, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
+		void		handleCGIread(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses);
 
 	public:
 		ConnectionManager(Http *protocol);

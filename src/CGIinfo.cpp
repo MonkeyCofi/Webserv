@@ -108,17 +108,22 @@ Response    CGIinfo::parseCgiResponse()
     std::cout << "in parse CGI response function\n";
     Response    r;
     str         header;
-
-    str::iterator   key_pos_iter = nameFound(this->response_str, "content-type");
+    str::iterator   content_type_iter = nameFound(this->response_str, "content-type");
     str             content_type;
 
-    // std::cout << *key_pos_iter << "\n";
-    if (key_pos_iter != this->response_str.end())
-        content_type = getValue(this->response_str, "content-type", key_pos_iter);
-    size_t  endPos = this->response_str.find("\r\n\r\n") + std::strlen("\r\n\r\n");
-    // write the body to the header
-    r.setBody(this->response_str.substr(endPos), content_type);
-    // r.setHeaderField("", this->response_str.substr(endPos));
-    // r.setHeaderField("", this->response_str.substr(std::distance(this->response_str.begin(), pos)));
+    if (content_type_iter != this->response_str.end())
+        content_type = getValue(this->response_str, "content-type", content_type_iter);
+    size_t  endPos = -1;
+    if (this->response_str.find("\r\n\r\n") != str::npos)
+    {
+        endPos = this->response_str.find("\r\n\r\n") + std::strlen("\r\n\r\n");
+        r.setBody(this->response_str.substr(endPos), content_type);
+    }
+    else    // if the cgi script doesn't write a body, write the headers
+    {
+        ;
+    }
+    (void)content_type_iter;
+    (void)content_type;
     return (r);
 }

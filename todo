@@ -4,6 +4,13 @@ file upload (currently blocking)
 of less importance: file upload in ram
 POST request handle header fields
 POST request handle json??
+loading another client while a cgi script is executing
+(unsure if correct) currently using kill(child_pid, SIGQUIT) when reading from cgi fd returns 0
+set cgi response pages when the script:
+	- cannot be found
+	- cannot be executed
+	- fails during execution
+	- 
 
 least importance: 100% CPU (fixed, somehow)
 

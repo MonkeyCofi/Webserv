@@ -69,13 +69,11 @@ class Server: public BlockOBJ
 
 		size_t					sent_bytes;
 		void					handleRequest(int& i, int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
-								std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
+								std::map<int, CGIinfo>& cgiProcesses);
 
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);
 		void					setDefault();
-		Socket*					init_listeners();
-		void 					handleError(str error_code);
 
 		/********************/
 		/*		getters		*/
