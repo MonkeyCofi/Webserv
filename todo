@@ -7,10 +7,9 @@ POST request handle json??
 loading another client while a cgi script is executing
 (unsure if correct) currently using kill(child_pid, SIGQUIT) when reading from cgi fd returns 0
 set cgi response pages when the script:
-	- cannot be found
-	- cannot be executed
+	- cannot be found (fixed)
+	- cannot be executed (fixed)
 	- fails during execution
-	- 
 
 least importance: 100% CPU (fixed, somehow)
 
@@ -20,3 +19,4 @@ fixed:
 		- the fix was to make the fd only wait for a POLLIN event, and then XOR the POLLOUT event to the fd.events field when
 		the fd has fully received its request, and once the fd has been fully responded with, remove the POLLOUT event from the
 		fd.events field
+	cgi error page return when the script is inaccessible either due to: the script not being found or; the script not being executable
