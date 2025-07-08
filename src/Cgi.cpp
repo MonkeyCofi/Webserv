@@ -133,7 +133,10 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 	}
 
 	if (pipe(this->pipe_fds) == -1)	// if pipe fails, internal server error
+	{
+		std::cout << "returning 500\n";
 		return ("500");
+	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
 	{

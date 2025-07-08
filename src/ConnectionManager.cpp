@@ -489,7 +489,12 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>
 	Server* handler = handlers[i];
 
 	if (handler->cgiRespond(infoPtr) == true)	// if true, remove the cgiProcess from the map
+	{
+		std::cout << "Closing client socket fd " << this->sock_fds[i].fd << "\n";
+		closeSocket(i);
+		std::cout << "Closed socket\n";
 		cgiProcesses.erase(pipe_fd);
+	}
 	return (true);
 }
 
