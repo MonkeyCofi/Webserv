@@ -141,7 +141,6 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	client.fd = acc_sock;
 	fcntl(client.fd, F_SETFL, fcntl(client.fd, F_GETFL) | O_NONBLOCK);
 	fcntl(client.fd, F_SETFD, fcntl(client.fd, F_GETFD) | FD_CLOEXEC);
-	// client.events = POLLIN | POLLOUT;
 	client.events = POLLIN;
 	client.revents = 0;
 	std::cout << "Pushing back client fd " << client.fd << " at index " << sock_fds.size() << "\n";
@@ -165,8 +164,8 @@ void ConnectionManager::printError(int revents)
 // if cgi is requested, don't erase the request for the client_fd
 void ConnectionManager::passRequestToServer(int i, Request **req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
-
 {
+	std::cout << "servers per ippp size: " << servers_per_ippp.size() << " i: " << i << "\n";
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
@@ -370,7 +369,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
 		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
-		str	rq = req->getRequest();
+		str rq = req->getRequest();
 		req->parseRequest(rq);
 		std::cout << req->getRequest();
 		req->setHeaderReceived(true);
@@ -402,6 +401,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			if (req->bytesReceived == req->getContentLen())
 			{
 				parseBodyFile(req);
+				req->clearVector();
 				return (FINISH);
 			}
 		}
@@ -445,6 +445,7 @@ void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<i
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{
 				std::cout << "\033[31mRemoving request from map\033[0m\n";
+				delete requests[sock_fds[i].fd];
 				requests.erase(sock_fds[i].fd);
 			}
 		}
@@ -579,7 +580,7 @@ void ConnectionManager::startConnections()
 	int						res;
 	State					state = INCOMPLETE;
 	std::map<int, CGIinfo>	cgiProcesses;	// key is read_end, value is CGIinfo object
-	this->getPollFds().reserve(4096);
+	this->sock_fds.reserve(4096);
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -587,7 +588,7 @@ void ConnectionManager::startConnections()
 	std::cout << "Server has " << main_listeners << " listeners\n";
 	while (g_quit != true)
 	{
-		res = poll(&sock_fds[0], sock_fds.size(), -1);
+		res = poll(&sock_fds[0], sock_fds.size(), 500);
 		if (res == 0)
 			continue ;
 		if (res < 0)
@@ -625,6 +626,9 @@ void ConnectionManager::startConnections()
 					continue ;
 				handlePollout(state, i, requests);
 			}
+			std::cout << "servers_per_ippp size: " << servers_per_ippp.size() << "\n";
+			std::cout << "handlers size: " << handlers.size() << "\n";
+			std::cout << "defaults size: " << defaults.size() << "\n";
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "POLLHUP event\n";
@@ -652,9 +656,10 @@ void ConnectionManager::startConnections()
 						std::cout << client_it->fd << " event getting OR'd with POLLOUT\n";
 						client_it->events |= POLLOUT;
 					}
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					i--;
+					closeSocket(i);
+					// close(sock_fds.at(i).fd);
+					// sock_fds.erase(sock_fds.begin() + i);
+					// i--;
 				}
 				else
 				{

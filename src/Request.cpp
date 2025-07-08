@@ -40,6 +40,7 @@ Request::~Request()
 
 Request::Request(const Request& obj)
 {
+	std::cout << "request copy constructor called\n";
 	this->method = obj.method;
 	this->file_URI = obj.file_URI;
 	this->keepAlive = obj.keepAlive;
@@ -78,6 +79,7 @@ Request::Request(str request)
 
 Request	&Request::operator=(const Request& obj)
 {
+	std::cout << "request copy assignment called\n";
 	if (&obj == this)
 		return (*this);
 	this->method = obj.method;
@@ -103,7 +105,8 @@ const char*	Request::NoHostException::what() const throw()
 
 void	Request::pushRequest(std::string& req)
 {
-	request.push_back(req);
+	request.append(req);
+	// request.push_back(req);
 }
 
 void Request::changeToLower(char &c)
@@ -247,7 +250,7 @@ bool	Request::getFullyReceived() const
 	return fullyReceived;
 }
 
-str Request::getStatus()
+const str& Request::getStatus() const
 {
 	return status;
 }
@@ -268,17 +271,17 @@ std::fstream&	Request::getBodyFile()
 }
 
 
-str Request::getFileURI()
+const str& Request::getFileURI() const
 {
 	return file_URI;
 }
 
-str Request::getMethod()
+const str& Request::getMethod() const
 {
 	return method;
 }
 
-str Request::getHost()
+const str& Request::getHost() const
 {
 	return host;
 }
@@ -288,12 +291,12 @@ bool Request::shouldKeepAlive()
 	return keepAlive;
 }
 
-str Request::getContentType()
+const str&	Request::getContentType() const
 {
 	return contentType;
 }
 
-str	Request::getBoundary() const
+const str&	Request::getBoundary() const
 {
 	return (body_boundary);
 }
@@ -303,16 +306,12 @@ size_t Request::getContentLen()
 	return contentLength;
 }
 
-str	Request::getRequest() const
+const str&	Request::getRequest() const
 {
-	str	r;
-
-	for (unsigned int i = 0; i < request.size(); i++)
-		r.append(request.at(i));
-	return (r);
+	return (this->request);
 }
 
-str	Request::getTempFileName() const
+const str&	Request::getTempFileName() const
 {
 	return (this->tempFileName);
 }
@@ -320,6 +319,11 @@ str	Request::getTempFileName() const
 void	Request::setFullyReceived(const bool status)
 {
 	this->fullyReceived = status;
+}
+
+void	Request::clearVector()
+{
+	this->request.clear();
 }
 
 void	Request::setHeaderReceived(const bool status)

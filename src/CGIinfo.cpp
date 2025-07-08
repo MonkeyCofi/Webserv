@@ -75,30 +75,26 @@ void    CGIinfo::printInfo() const
         << "Response complete: " << this->response_complete << "\n" << "Response string: " << this->response_str << "\n";
 }
 
-bool    CGIinfo::charEq(const char& c1, const char& c2)
-{
-    return (tolower(c1) == tolower(c2));
-}
-
 // returns iterator of search_val in to_search case-insensitively
-str::iterator    CGIinfo::nameFound(str& to_search, str search_val)
+size_t    CGIinfo::nameFound(str& to_search, str search_val)
 {
-    str::iterator retIt = std::search(to_search.begin(), to_search.end(), search_val.begin(), search_val.end(), CGIinfo::charEq);
-    // if (retIt == to_search.end())
-    //     std::cout << "Couldn't find " << search_val << " in \033[31m" << to_search << "\033[0m\n";
-    // else
-    //     std::cout << "\033[33m" << "found " << search_val << "\033[0m\n";
-    return (retIt);
+    str cpys = to_search;
+    for (unsigned int i = 0; i < cpys.length(); i++)
+        cpys[i] = std::tolower(cpys[i]);
+    for (unsigned int i = 0; i < search_val.length(); i++)
+        search_val[i] = std::tolower(search_val[i]);
+    return (cpys.find(search_val));
 }
 
-str CGIinfo::getValue(str& main_str, str key, str::iterator& key_start)
+str CGIinfo::getValue(str& main_str, str key, size_t key_start)
 {
-    size_t  value_start_pos = std::distance(main_str.begin(), key_start) + std::strlen(key.c_str());
+    size_t  value_start_pos = key_start;
     size_t  value_end_pos = main_str.find("\r\n", value_start_pos);
-    str value = main_str.substr(value_start_pos, value_end_pos - value_start_pos);
-    size_t colonSp_pos = value.find(":");
-    if (colonSp_pos != str::npos)
-        value.erase(colonSp_pos, 1);
+    str value = main_str.substr(main_str.find(":", value_start_pos) + 1, value_end_pos - (main_str.find(":", value_start_pos) + 1));
+    // str value = main_str.substr(value_start_pos, value_end_pos - value_start_pos);
+    // size_t colonSp_pos = value.find(":");
+    // if (colonSp_pos != str::npos)
+    //     value.erase(colonSp_pos, 1);
     std::cout << "Key: " << key << " value: " << value << "\n";
     return (value);
 }
@@ -108,15 +104,15 @@ Response    CGIinfo::parseCgiResponse()
     std::cout << "in parse CGI response function\n";
     Response    r;
     str         header;
-    str::iterator   content_type_iter = nameFound(this->response_str, "content-type");
+    size_t   content_type_iter = nameFound(this->response_str, "content-type");
     str             content_type;
 
-    if (content_type_iter != this->response_str.end())
+    if (content_type_iter != str::npos)
         content_type = getValue(this->response_str, "content-type", content_type_iter);
     size_t  endPos = -1;
     if (this->response_str.find("\r\n\r\n") != str::npos)
     {
-        endPos = this->response_str.find("\r\n\r\n") + std::strlen("\r\n\r\n");
+        endPos = this->response_str.find("\r\n\r\n") + str("\r\n\r\n").length();
         r.setBody(this->response_str.substr(endPos), content_type);
     }
     else    // if the cgi script doesn't write a body, write the headers
