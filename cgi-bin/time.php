@@ -5,5 +5,9 @@
 	echo "\r\n";
 	echo "<html><body>\r\n";
 	echo "<h2>Server Time: " . date('Y-m-d H:i:s') . "</h2>\r\n";
+	echo "<form method=\"GET\" action=\"./time.php\">";
+	echo "<button type=\"submit\">Check time again</button>";
+	echo "</form>";
 	echo "</body></html>\r\n";
+	exit(0);
 ?>

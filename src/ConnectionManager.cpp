@@ -165,6 +165,7 @@ void ConnectionManager::printError(int revents)
 // if cgi is requested, don't erase the request for the client_fd
 void ConnectionManager::passRequestToServer(int i, Request **req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
+
 {
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
