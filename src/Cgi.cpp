@@ -128,6 +128,7 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		Request* req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	str access_status = validScriptAccess();
+
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
 	{
 		// if script is not accessible, respond with error page
@@ -139,6 +140,14 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		std::cout << "returning 500\n";
 		return ("500");
 	}
+	int	in_fd = -1;
+	if (method == "POST")
+	{
+		// std::cerr << "Post method\n";
+		in_fd = open(req->getTempFileName().c_str(), O_RDONLY | O_CLOEXEC);
+		if (in_fd == -1)
+			throw (std::exception());
+	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
 	{
@@ -146,15 +155,7 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		const char* cmd = "/usr/bin/php";
 		const char *const argv[3] = {cmd, script_path.c_str(), NULL};
 		char* const* envp = envToChar();
-		int in_fd = -1;
 		close(this->pipe_fds[READ]);
-		if (method == "POST")
-		{
-			std::cerr << "Post method\n";
-			in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
-			if (in_fd == -1)
-				throw (std::exception());
-		}
 		if (in_fd != -1)
 		{
 			dup2(in_fd, STDIN_FILENO);
@@ -174,8 +175,8 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 	else
 	{
 		close(pipe_fds[WRITE]);
-		fcntl(pipe_fds[READ], F_SETFL, O_NONBLOCK | O_CLOEXEC); // set the read end of the pipe to non blocking
-		// close(pipe_fds[READ]);
+		fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
+		fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);
 
 		struct pollfd read_fd;
 		read_fd.events = POLLIN;

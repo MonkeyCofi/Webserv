@@ -1,5 +1,7 @@
 #!php
 <?php
+    $len = getenv("CONTENT_LENGTH)");
+    echo $len;
     echo "Content-type: text/html\r\n";
     echo "\r\n";
     $file = fopen('php://stdin', 'r');

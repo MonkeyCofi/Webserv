@@ -199,6 +199,11 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
+// void	ConnectionManager::handleCGIfd()
+// {
+	
+// }
+
 void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 {
 	// the filename is stored in the request object
@@ -550,7 +555,7 @@ void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& c
 		// 	std::cout << "Script finished executing\n";
 		// 	info.completeResponse();
 		// }
-		kill(info.getPid(), SIGQUIT);
+		// kill(info.getPid(), SIGQUIT);
 		// in the pollfds vector, find the client fd's index and set its event field to fd.event |= POLLOUT
 		const int	client_fd = info.getClientFd();
 		std::vector<struct pollfd>&	fds = this->sock_fds;
