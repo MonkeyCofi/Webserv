@@ -68,7 +68,7 @@ class Server: public BlockOBJ
 		~Server();
 
 		size_t					sent_bytes;
-		void					handleRequest(int& i, int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
+		void					handleRequest(int& i, int client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
 								std::map<int, CGIinfo>& cgiProcesses);
 
 		bool					handleDirective(std::queue<str> opts);

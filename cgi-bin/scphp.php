@@ -10,5 +10,6 @@
     echo "Content-Type:text/html\r\n\r\n";
     echo $body;
     echo $final_print;
+    // sleep(10);
     exit(0);
 ?>

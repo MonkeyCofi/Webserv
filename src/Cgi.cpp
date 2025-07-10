@@ -75,15 +75,17 @@ Cgi &Cgi::operator=(const Cgi& copy)
 str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
 		std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
-	const str uri = req->getFileURI();
+	const str& uri = req->getFileURI();
+    std::ostringstream  length;
 
-	this->path_info = "PATH_INFO=" + str(serv->getRoot() + req->getFileURI());
+	this->path_info = "PATH_INFO=" + str(serv->getRoot() + uri);
 	this->path_info = path_info.substr(0, path_info.find_first_of('?'));
 	this->query_string = "QUERY_STRING=" + uri.substr(uri.find_first_of('?') + 1, str::npos);
 	this->method = "METHOD=" + req->getMethod();
 	this->content_type = "CONTENT_TYPE=" + req->getContentType();
 	this->host = "HTTP_HOST=" + req->getHost();
-	this->content_length = "CONTENT_LENGTH=";   // incomplete
+    length << req->getContentLen();
+	this->content_length = "CONTENT_LENGTH=" + length.str();   // incomplete
 	this->env.push_back(path_info);
 	this->env.push_back(query_string);
 	this->env.push_back(method);
@@ -148,7 +150,7 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		close(this->pipe_fds[READ]);
 		if (method == "POST")
 		{
-			std::cout << "Post method\n";
+			std::cerr << "Post method\n";
 			in_fd = open(req->getTempFileName().c_str(), O_RDONLY);
 			if (in_fd == -1)
 				throw (std::exception());

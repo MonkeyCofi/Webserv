@@ -413,7 +413,7 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		this->response[client_fd].setHeaderField("Location", path);
 }
 
-void Server::handleRequest(int& i, int& client_fd, Request *req, 
+void Server::handleRequest(int& i, int client_fd, Request *req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	struct stat 	s;
@@ -560,6 +560,7 @@ bool	Server::cgiRespond(CGIinfo* infoPtr)
 	std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
 	this->response[client_fd] = infoPtr->parseCgiResponse();
+	std::cout << "responding\n";
 	respond(client_fd);
 	if (this->response[client_fd].doneSending())
 	{

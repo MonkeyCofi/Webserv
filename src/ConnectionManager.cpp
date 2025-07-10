@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/07/01 01:10:17 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/07/09 23:50:50 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,7 +165,7 @@ void ConnectionManager::printError(int revents)
 void ConnectionManager::passRequestToServer(int i, Request **req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
-	std::cout << "servers per ippp size: " << servers_per_ippp.size() << " i: " << i << "\n";
+	// std::cout << "servers per ippp size: " << servers_per_ippp.size() << " i: " << i << "\n";
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
@@ -185,8 +185,10 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	else
 	{
 		std::cout << "Request exists and will now be deleted\n";
-		delete requests[(sock_fds.at(index).fd)];
+		Request* temp = requests[sock_fds[index].fd];
 		requests.erase(sock_fds.at(index).fd);
+		delete temp;
+		// delete requests[(sock_fds.at(index).fd)];
 	}
 	sock_fds.erase(sock_fds.begin() + index);
 	if (index < reqs.size())
@@ -445,8 +447,9 @@ void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<i
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{
 				std::cout << "\033[31mRemoving request from map\033[0m\n";
-				delete requests[sock_fds[i].fd];
+				Request* temp = requests[sock_fds[i].fd];
 				requests.erase(sock_fds[i].fd);
+				delete temp;
 			}
 		}
 		else if (keep_open == false && handler->getState() == Server::returnFinish())
@@ -580,7 +583,6 @@ void ConnectionManager::startConnections()
 	int						res;
 	State					state = INCOMPLETE;
 	std::map<int, CGIinfo>	cgiProcesses;	// key is read_end, value is CGIinfo object
-	this->sock_fds.reserve(4096);
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -588,7 +590,7 @@ void ConnectionManager::startConnections()
 	std::cout << "Server has " << main_listeners << " listeners\n";
 	while (g_quit != true)
 	{
-		res = poll(&sock_fds[0], sock_fds.size(), 500);
+		res = poll(&sock_fds[0], sock_fds.size(), -1);
 		if (res == 0)
 			continue ;
 		if (res < 0)
@@ -656,10 +658,10 @@ void ConnectionManager::startConnections()
 						std::cout << client_it->fd << " event getting OR'd with POLLOUT\n";
 						client_it->events |= POLLOUT;
 					}
-					closeSocket(i);
-					// close(sock_fds.at(i).fd);
-					// sock_fds.erase(sock_fds.begin() + i);
-					// i--;
+					// closeSocket(i);
+					close(sock_fds.at(i).fd);
+					sock_fds.erase(sock_fds.begin() + i);
+					i--;
 				}
 				else
 				{
@@ -674,6 +676,7 @@ void ConnectionManager::startConnections()
 	this->request_body.close();
 	for (unsigned int i = 0; i < sock_fds.size(); i++)
 		closeSocket(i);
+	sock_fds.clear();
 	std::cout << "Server closed!\n";
 	signal(SIGINT, SIG_DFL);
 	signal(SIGPIPE, SIG_DFL);
