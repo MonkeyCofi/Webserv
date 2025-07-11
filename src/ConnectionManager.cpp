@@ -473,6 +473,7 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>
 	CGIinfo* infoPtr = NULL;
 	int	pipe_fd = -1;
 
+	std::cout << "in CGI pollout\n";
 	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
 	{
 		// if the client fd is present in the map and the cgi script has finished executing
@@ -534,6 +535,7 @@ void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& c
 	ssize_t r;
 	char	buffer[BUFFER_SIZE + 1] = {0};
 
+	std::cout << "in CGI read\n";
 	r = read(sock_fds.at(i).fd, buffer, BUFFER_SIZE);
 	if (r == -1)
 	{
@@ -581,6 +583,7 @@ void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& c
 		buffer[r] = 0;
 		cgiProcesses[sock_fds.at(i).fd].concatBuffer(std::string(buffer));
 	}
+	std::cout << buffer << "\n";
 }
 
 void ConnectionManager::startConnections()

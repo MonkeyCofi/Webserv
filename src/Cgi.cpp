@@ -174,6 +174,8 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 	}
 	else
 	{
+		if (in_fd != -1)
+			close(in_fd);
 		close(pipe_fds[WRITE]);
 		fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
 		fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);
