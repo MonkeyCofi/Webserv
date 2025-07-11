@@ -15,6 +15,7 @@ class Response
 		bool				chunked, header_sent, keep_alive;
 		int					fd;
 		std::map<str, str>	http_codes;
+		size_t				sent_bytes;
 
 	public:
 		Response();
@@ -37,6 +38,8 @@ class Response
 		int		getBodyFd() const;
 		str		getHeader();
 		void	clear();
+		size_t	getSentBytes() const;
+		void	addSentBytes(size_t value);
 
 		Response	&operator =(const Response &copy);
 		~Response();

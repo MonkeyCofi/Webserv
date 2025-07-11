@@ -52,13 +52,11 @@ class Request
 		bool				fullyReceived;
 		str					tempFileName;
 		std::fstream		bodyFile;
-		std::vector<str>	request;
+		str					request;
 		
-		static bool	is_digit(char c);
 		static void	changeToLower(char &c);
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, str &field_conent);
-		
 		
 		Request(const Request& obj);
 	public:
@@ -83,17 +81,16 @@ class Request
 		bool			getFullyReceived() const;
 		bool			getHasBody() const;
 		bool			getHeaderReceived() const;
-		str				getFileURI();
-		str				getContentType();
 		size_t			getContentLen();
-		str				getMethod();
-		str				getStatus();
-		str				getHost();
-		str				getBoundary() const;
-		str				getRequest() const;
-		str				getTempFileName() const;
+		const str&		getFileURI() const;
+		const str&		getContentType() const;
+		const str&		getMethod() const;
+		const str&		getStatus() const;
+		const str&		getHost() const;
+		const str&		getBoundary() const;
+		const str&		getRequest() const;
+		const str&		getTempFileName() const;
 		std::fstream&	getBodyFile();
-		bool			isCGI() const;
 
 		/********************/
 		/*		setters		*/
@@ -101,6 +98,8 @@ class Request
 		void	setFullyReceived(const bool status);
 		void	setHeaderReceived(const bool status);
 		void	setTempFileName(const str file);
+
+		void	clearVector();
 
 		class	NoHostException: public std::exception
 		{

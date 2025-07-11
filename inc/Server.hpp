@@ -68,14 +68,12 @@ class Server: public BlockOBJ
 		~Server();
 
 		size_t					sent_bytes;
-		void					handleRequest(int& client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
-								std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
+		void					handleRequest(int& i, int client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
+								std::map<int, CGIinfo>& cgiProcesses);
 
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);
 		void					setDefault();
-		Socket*					init_listeners();
-		void 					handleError(str error_code);
 
 		/********************/
 		/*		getters		*/
@@ -98,7 +96,8 @@ class Server: public BlockOBJ
 		void	setFileFD(int fd_);
 		void	setState(ResponseState state);
 
-		bool					respond(int client_fd);
+		bool	respond(int client_fd);
+		bool	cgiRespond(CGIinfo* infoPtr);
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);

@@ -38,6 +38,10 @@
 <body>
 	<nav id="navbar">
 		<h1>Webserv Test</h1>
+		<!-- <form method="GET" action="./cgi-bin/time.php"> -->
+		<form method="GET" action="./cgi-bin/time.php">
+			<button type="submit">Check time</button>
+		</form>
 	</nav>
 
 	<main>
@@ -90,8 +94,8 @@
 
 		<section id="post-requests">
 			<h3>CGI Post Request</h3>
-			<form method="post" action="cgi-bin/post.php" enctype="multipart/form-data">
-				<input type="file" name="image">
+			<form method="post" action="cgi-bin/print_in.php" enctype="application/x-www-form-urlencoded">
+				<input placeholder="Enter name" type="text" name="name">
 				<input type="submit">
 			</form>
 		</section>

@@ -157,6 +157,8 @@ bool Response::isChunked() const
 
 bool Response::doneSending() const
 {
+	std::cout << std::boolalpha << "header sent: " << header_sent << "\nChunked: " << chunked 
+		<< "\nfd: " << fd << "\n";
 	return (header_sent && !chunked) || (chunked && fd == -1);
 }
 
@@ -228,3 +230,12 @@ void	Response::printResponse()
 	std::cout << this->body << "\n";
 }
 
+size_t	Response::getSentBytes() const
+{
+	return (this->sent_bytes);
+}
+
+void	Response::addSentBytes(size_t value)
+{
+	this->sent_bytes += value;
+}

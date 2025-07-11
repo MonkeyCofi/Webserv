@@ -4,5 +4,5 @@ file upload (currently blocking)
 of less importance: file upload in ram
 POST request handle header fields
 POST request handle json??
-
-least importance: 100% CPU
+loading another client while a cgi script is executing
+memory usage

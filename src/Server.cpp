@@ -413,8 +413,8 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		this->response[client_fd].setHeaderField("Location", path);
 }
 
-void Server::handleRequest(int& client_fd, Request *req, 
-	std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses)
+void Server::handleRequest(int& i, int client_fd, Request *req, 
+	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	struct stat 	s;
 	struct dirent*	entry;
@@ -425,7 +425,9 @@ void Server::handleRequest(int& client_fd, Request *req,
 	if (response.find(client_fd) == response.end())
 		response[client_fd] = Response();
 	response[client_fd].clear();
-	// std::cout << RED << ((this->response.keepAlive()) == true ? "Keep connection alive" : "End connection") << NL;
+	pollfds.at(i).events |= POLLOUT;
+	file = req->getFileURI();
+	std::cout << "Client fd: " << client_fd << "\n";
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), client_fd);
@@ -433,12 +435,19 @@ void Server::handleRequest(int& client_fd, Request *req,
 	}
 	else if (req->getMethod() == "GET")
 	{
-		file = req->getFileURI();
 		// pass the pollfds to the CGI handler
-		if (req->getFileURI().find("cgi") != str::npos)
+		if (file.find("cgi") != str::npos)
 		{
-			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiFds, cgiProcesses);
+			Cgi	cgi(file, this);
+			str cgi_status;
+			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			{
+				std::cout << "CGI script returned status: " << cgi_status << "\n";
+				handleError(cgi_status, client_fd);
+				return ;
+				// fileResponse(req, file, -1, client_fd);
+			}
+			pollfds.at(i).events &= ~POLLOUT;
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(req, file, client_fd);
@@ -447,10 +456,17 @@ void Server::handleRequest(int& client_fd, Request *req,
 	}
 	else if (req->getMethod() == "POST")
 	{
-		if (req->getFileURI().find("cgi") != str::npos)
+		if (file.find("cgi") != str::npos)
 		{
-			Cgi	cgi(req->getFileURI(), this);
-			cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiFds, cgiProcesses);
+			std::cout << "inside this one\n";
+			pollfds.at(i).events &= ~POLLOUT;
+			Cgi	cgi(file, this);
+			str	cgi_status;
+			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			{
+				handleError(cgi_status, client_fd);
+				return ;
+			}
 		}
 		else
 		{
@@ -539,6 +555,24 @@ Server::ResponseState	Server::getState() const
 	return (this->responseState);
 }
 
+bool	Server::cgiRespond(CGIinfo* infoPtr)
+{
+	std::cout << "In cgi respond function\n";
+	const int&	client_fd = infoPtr->getClientFd();
+	this->response[client_fd] = infoPtr->parseCgiResponse();
+	std::cout << "responding\n";
+	respond(client_fd);
+	if (this->response[client_fd].doneSending())
+	{
+		std::cout << "clearing response object for fd: " << client_fd << "\n";
+		this->response[client_fd].clear();
+		return (true);
+	}
+	return (false);
+	// send the response object to the client fd
+	// set the state as incomplete or complete based on whether send returns 0
+}
+
 bool Server::respond(int client_fd)
 {
 	bool	ret;
@@ -548,9 +582,19 @@ bool Server::respond(int client_fd)
 	char	buffer[BUFFER_SIZE + 1];
 
 	if (this->response[client_fd].doneSending())
-		return this->response[client_fd].keepAlive();
-	else
-		this->response[client_fd].printResponse();
+	{
+		// std::cout << RED << "Done sending" << RESET << "\n";
+		// this->response[client_fd].clear();
+		// return this->response[client_fd].keepAlive();
+
+		/* new addition */
+		std::cout << "Done responding to client fd: " << client_fd << "\n";
+		bool	keep_alive = this->response[client_fd].keepAlive();
+		this->response.erase(client_fd);
+		std::cout << "Removing response object for fd: " << client_fd << "\n";
+		return (keep_alive);
+		/* new addition */
+	}
 	file_fd = this->response[client_fd].getBodyFd();
 	header = this->response[client_fd].getHeader();
 	if (!this->response[client_fd].isChunked())
@@ -593,6 +637,8 @@ bool Server::respond(int client_fd)
 			std::cout << "--------\n";
 			std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
 			std::cout << "--------\n";
+			this->response.erase(client_fd);
+			std::cout << "Removing response object for fd: " << client_fd << "\n";
 			return (ret);
 		}
 		tmp = ssizeToStr(bytes) + "\r\n";

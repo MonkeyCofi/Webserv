@@ -32,14 +32,14 @@ class Cgi
 		Cgi	&operator=(const Cgi& copy);
 		Cgi(const str script_path, Server* server);	// constructor that takes path to cgi script
 
-		void		setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
-					std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
+		str			setupEnvAndRun(int& client_fd, Request* req, Server* serv, std::vector<struct pollfd>& pollfds,
+					std::map<int, CGIinfo>& cgiProcesses);
 
-		void    	runCGI(int& client_fd, Server* server, Request* req, 
-					std::vector<struct pollfd>& pollfds, std::map<int, int>& cgiFds, std::map<int, CGIinfo>& cgiProcesses);
+		str    		runCGI(int& client_fd, Server* server, Request* req, 
+					std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
 
 		char**   	envToChar();
-		bool    	validScriptAccess() const;
+		str    		validScriptAccess() const;
 };
 
 #endif
