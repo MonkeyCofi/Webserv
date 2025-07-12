@@ -355,90 +355,110 @@ void	ConnectionManager::parseBodyFile(Request* req)
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
-	char			buffer[BUFFER_SIZE + 1];
-	ssize_t			r;
-	std::string		_request;
-	std::fstream&	file = req->getBodyFile();
+	std::string	_request;
+	ssize_t		r;
+	char		buffer[BUFFER_SIZE + 1];
 
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r < 0)
 		return (INCOMPLETE);
 	if (r == 0)
 	{
-		// std::cout << "\033[31mRecv returned " << r << "\033[0m\n";
-		// std::cout << MAGENTA << "FD: " << client_fd << "\nIndex: " << index << RESET << "\n";
 		closeSocket(index);
 		return (INVALID);
 	}
 	buffer[r] = 0;
 	_request = buffer;
-	req->pushRequest(_request);
 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
 	{
-		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
-		str rq = req->getRequest();
-		req->parseRequest(rq);
-		std::cout << req->getRequest();
-		req->setHeaderReceived(true);
-		if (req->getContentLen() != 0)
-			req->setHasBody(true);
-		else
-		{
-			std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
-			return (FINISH);
-		}
-		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
-		{
-			size_t	endPos;
-			openTempFile(req, file);
-			endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
-			str	b(buffer);
-			b = b.substr(0, endPos);
-			std::cout << "Length of header part: " << b.length() << "\n";
-			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
-			{
-				std::cout << RED << "There is a body but it is not present in request" << NL;
-				return (INCOMPLETE);
-			}
-			std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
-			req->bytesReceived += r - endPos;
-			file.write(&buffer[endPos], r - endPos);
-			if (file.bad() || file.fail())
-				throw (std::runtime_error("Couldn't write data to temp file\n"));
-			if (req->bytesReceived == req->getContentLen())
-			{
-				parseBodyFile(req);
-				req->clearVector();
-				return (FINISH);
-			}
-		}
 	}
-	else
-	{
-		if (req->getHasBody())
-		{
-			str	buf = buffer;
-			req->bytesReceived += r;
-			file.write(&buffer[0], r);
-			if (req->bytesReceived == req->getContentLen())
-			{
-				std::cout << YELLOW << "Temp file size: " << file.tellp() << NL;
-				file.close();
-				parseBodyFile(req);
-				return (FINISH);
-			}
-			return (INCOMPLETE);
-		}
-	}
-	(void)state;
 	return (INCOMPLETE);
 }
+
+// ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
+// {
+// 	char			buffer[BUFFER_SIZE + 1];
+// 	ssize_t			r;
+// 	std::string		_request;
+// 	std::fstream&	file = req->getBodyFile();
+
+// 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+// 	if (r < 0)
+// 		return (INCOMPLETE);
+// 	if (r == 0)
+// 	{
+// 		closeSocket(index);
+// 		return (INVALID);
+// 	}
+// 	buffer[r] = 0;
+// 	_request = buffer;
+// 	req->pushRequest(_request);
+// 	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
+// 	{
+// 		std::cout << MAGENTA << "Found end of header for fd " << client_fd << NL;
+// 		str rq = req->getRequest();
+// 		req->parseRequest(rq);
+// 		std::cout << req->getRequest();
+// 		req->setHeaderReceived(true);
+// 		if (req->getContentLen() != 0)
+// 			req->setHasBody(true);
+// 		else
+// 		{
+// 			std::cout << CYAN << "Received request fully for fd " << client_fd << NL;
+// 			return (FINISH);
+// 		}
+// 		if (req->getHasBody() == true)	// if the header is already fully received AND the request contains a body
+// 		{
+// 			size_t	endPos;
+// 			openTempFile(req, file);
+// 			endPos = (_request.find("\r\n\r\n") != str::npos ? _request.find("\r\n\r\n") + 4 : str::npos);
+// 			str	b(buffer);
+// 			b = b.substr(0, endPos);
+// 			std::cout << "Length of header part: " << b.length() << "\n";
+// 			if (endPos == str::npos || static_cast<ssize_t>(endPos) == r)
+// 			{
+// 				std::cout << RED << "There is a body but it is not present in request" << NL;
+// 				return (INCOMPLETE);
+// 			}
+// 			std::cout << "Received " << r << " bytes total of which " << r - endPos << " bytes are for body\n";
+// 			req->bytesReceived += r - endPos;
+// 			file.write(&buffer[endPos], r - endPos);
+// 			if (file.bad() || file.fail())
+// 				throw (std::runtime_error("Couldn't write data to temp file\n"));
+// 			if (req->bytesReceived == req->getContentLen())
+// 			{
+// 				parseBodyFile(req);
+// 				req->clearVector();
+// 				return (FINISH);
+// 			}
+// 		}
+// 	}
+// 	else
+// 	{
+// 		if (req->getHasBody())
+// 		{
+// 			str	buf = buffer;
+// 			req->bytesReceived += r;
+// 			file.write(&buffer[0], r);
+// 			if (req->bytesReceived == req->getContentLen())
+// 			{
+// 				std::cout << YELLOW << "Temp file size: " << file.tellp() << NL;
+// 				file.close();
+// 				parseBodyFile(req);
+// 				return (FINISH);
+// 			}
+// 			return (INCOMPLETE);
+// 		}
+// 	}
+// 	(void)state;
+// 	return (INCOMPLETE);
+// }
 
 /// @brief handles all pollout events
 /// @param state the current state of the response
 /// @param i the index of the handling server
 /// @param requests the map of requests wherein the socket fd is the key and the request object is the value
-void	ConnectionManager:: handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
+void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
 	Server* handler = handlers[i];
 
@@ -514,7 +534,6 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 {
 	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
 	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
-	//Print here and inside of receiveRequest to know where it's stopping
 	if (it == requests.end())
 	{
 		std::cout << CYAN <<  "Creating a new request for fd " << sock_fds.at(i).fd << "\n" << RESET;
@@ -527,7 +546,6 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiProcesses);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 	}
-	//Print here and inside of receiveRequest to know where it's stopping
 }
 
 void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses)

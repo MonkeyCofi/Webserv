@@ -1,2 +1,0 @@
-https://www.bogotobogo.com/cplusplus/sockets_server_client.php
-https://www.javatpoint.com/socket-programming-in-c-or-cpp

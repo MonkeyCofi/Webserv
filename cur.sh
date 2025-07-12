@@ -1,1 +1,3 @@
 curl 127.0.0.1:1234 -H "Content-Type: multipart/form-data" -H "Content-Length: 100" -d 'hello there this is a test this is above the content length. This will contain a good amount of characters. this is to test whether recv is receiving bytes properly. before executing this script, i am going to reduce the BUFFER_SIZE macro found in the BlockOBJ.hpp file from 4096 bytes (4kb) down to 2 bytes' -X POST
+# echo -en 'GET / HTTP/1.1\r\nHost: none\r\nConnection: Keep-Alive\r\n\r\n' | nc 127.0.0.1 8000
+# echo -en 'POST / HTTP/1.1\r\nHost: none\r\nConnection: Keep-Alive\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nEmad & Pierce' | nc 127.0.0.1 8000

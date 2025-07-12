@@ -559,7 +559,8 @@ bool	Server::cgiRespond(CGIinfo* infoPtr)
 {
 	std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
-	this->response[client_fd] = infoPtr->parseCgiResponse();
+	if (this->response.find(client_fd) == this->response.end())
+		this->response[client_fd] = infoPtr->parseCgiResponse();
 	std::cout << "responding\n";
 	respond(client_fd);
 	if (this->response[client_fd].doneSending())
