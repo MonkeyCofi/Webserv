@@ -447,7 +447,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 				return ;
 				// fileResponse(req, file, -1, client_fd);
 			}
-			pollfds.at(i).events &= ~POLLOUT;
+			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
 			directoryResponse(req, file, client_fd);
@@ -458,8 +458,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	{
 		if (file.find("cgi") != str::npos)
 		{
-			std::cout << "inside this one\n";
-			pollfds.at(i).events &= ~POLLOUT;
+			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 			Cgi	cgi(file, this);
 			str	cgi_status;
 			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")

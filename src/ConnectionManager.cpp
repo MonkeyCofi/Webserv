@@ -53,6 +53,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 	}
 	for (unsigned int i = 0; i < reqs.size(); i++)
 		reqs[i] = "";
+	this->cgi_pipes[0] = this->cgi_pipes[1] = -1;
 }
 
 int ConnectionManager::setupSocket(str ip, str port)
@@ -376,11 +377,28 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		case -1:
 			return (INVALID);
 		case 1:
+			if (req->getContentLen() != 0)
+			{
+				if (req->getReceivedBytes() == req->getContentLen())
+				{
+					if (req->isCGI())
+					{
+						std::cerr << "COMPLETED RECEIVING BODY\n";
+						std::cerr << "closing fd: " << req->getCGIfd() << "\n";
+						close(req->getCGIfd());
+						req->setCGIfd(-1);
+					}
+					return (FINISH);
+				}
+				return (HEADER_FINISHED);
+			}
+			else if (req->getHeaderReceived())
+				return (FINISH);
 			// The header is fully received, the leftovers are saved in _request
 			// 1) Regular POST: Start sifting through the current and following _request strings for files to be saved as upload
 			// 2) CGI: Save this current leftover in whatever server will respond (how?), and after sending it to the subprocess immediately send following _request to the stdin of the subprocess
-			return (COMPLETE);
 	}
+	(void)state;
 	return (INCOMPLETE);
 }
 
@@ -502,7 +520,6 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>
 	CGIinfo* infoPtr = NULL;
 	int	pipe_fd = -1;
 
-	std::cout << "in CGI pollout\n";
 	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
 	{
 		// if the client fd is present in the map and the cgi script has finished executing
@@ -519,6 +536,7 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>
 		// std::cout << "There is no complete CGI response\n";
 		return (false);
 	}
+	std::cout << "in CGI pollout\n";
 
 	/* 
 		the handler is the server object that would contain the response map where: [key] = client_fd, 
@@ -549,7 +567,9 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
 		std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
 	}
-	if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
+	// if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
+	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
+	if (state == FINISH || state == HEADER_FINISHED)
 	{
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiProcesses);
@@ -648,11 +668,13 @@ void ConnectionManager::startConnections()
 			{
 				if (cgiProcesses.find(sock_fds.at(i).fd) != cgiProcesses.end())
 				{
+					std::cout << "in CGI pollin\n";
 					std::cout << "Found " << sock_fds.at(i).fd << " in the map of fds\n";
 					handleCGIread(i, cgiProcesses);
 				}
 				else
 				{
+					std::cout << "in normal POLLIN\n";
 					handlePollin(i, state, requests, cgiProcesses);
 					continue ;
 				}

@@ -26,6 +26,8 @@ Cgi::Cgi()
 	this->host = "";
 	this->pipe_fds[0] = -1;
 	this->pipe_fds[1] = -1;
+	this->stdin_fds[0] = -1;
+	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
 }
 
@@ -53,6 +55,8 @@ Cgi::Cgi(const str script_path, Server* server)
 	this->host = "";
 	this->pipe_fds[0] = -1;
 	this->pipe_fds[1] = -1;
+	this->stdin_fds[0] = -1;
+	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
 }
 
@@ -68,6 +72,8 @@ Cgi &Cgi::operator=(const Cgi& copy)
 	this->host = copy.host;
 	this->pipe_fds[0] = copy.pipe_fds[0];
 	this->pipe_fds[1] = copy.pipe_fds[1];
+	this->stdin_fds[0] = copy.stdin_fds[0];
+	this->stdin_fds[1] = copy.stdin_fds[1];
 	this->cgi_fd = copy.cgi_fd;
 	return (*this);
 }
@@ -128,25 +134,23 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		Request* req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	str access_status = validScriptAccess();
-
+	(void)req;
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
 	{
 		// if script is not accessible, respond with error page
 		return (access_status);
 	}
-
+	std::cout << "running cgi script\n";
 	if (pipe(this->pipe_fds) == -1)	// if pipe fails, internal server error
 	{
 		std::cout << "returning 500\n";
 		return ("500");
 	}
-	int	in_fd = -1;
-	if (method == "POST")
+	if (req->getMethod() == "POST")
 	{
-		// std::cerr << "Post method\n";
-		in_fd = open(req->getTempFileName().c_str(), O_RDONLY | O_CLOEXEC);
-		if (in_fd == -1)
-			throw (std::exception());
+		if (pipe(this->stdin_fds) == -1)
+			return ("500");
+		req->setCGIfd(this->stdin_fds[WRITE]);
 	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
@@ -155,12 +159,13 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		const char* cmd = "/usr/bin/php";
 		const char *const argv[3] = {cmd, script_path.c_str(), NULL};
 		char* const* envp = envToChar();
-		close(this->pipe_fds[READ]);
-		if (in_fd != -1)
+		if (this->stdin_fds[READ] != -1)
 		{
-			dup2(in_fd, STDIN_FILENO);
-			close(in_fd);
+			close(this->stdin_fds[WRITE]);
+			std::cerr << "Dup2\n";
+			dup2(this->stdin_fds[READ], STDIN_FILENO);
 		}
+		close(this->pipe_fds[READ]);
 		dup2(pipe_fds[WRITE], STDOUT_FILENO);
 		close(pipe_fds[WRITE]);
 
@@ -174,8 +179,8 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 	}
 	else
 	{
-		if (in_fd != -1)
-			close(in_fd);
+		if (this->stdin_fds[WRITE])
+			close(this->stdin_fds[WRITE]);
 		close(pipe_fds[WRITE]);
 		fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
 		fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);

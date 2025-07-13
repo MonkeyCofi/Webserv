@@ -24,6 +24,7 @@ class Cgi
 		str					method;
 		str					host;
 		int					pipe_fds[2];
+		int					stdin_fds[2];
 		pid_t				cgi_fd;
 		Cgi();	// make default constructor inaccessible
 	public:

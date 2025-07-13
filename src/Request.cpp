@@ -32,6 +32,8 @@ Request::Request()
 	this->bytesReceived = 0;
 	this->tempFileName = "";
 	this->isCGIrequest = false;
+	this->cgi_fd = -1;
+	this->received_body_bytes = 0;
 }
 
 Request::~Request()
@@ -71,6 +73,8 @@ Request	&Request::operator=(const Request& obj)
 	this->fullyReceived = obj.fullyReceived;
 	this->has_body = obj.has_body;
 	this->isCGIrequest = obj.isCGIrequest;
+	this->cgi_fd = -1;
+	this->received_body_bytes = 0;
 	return (*this);
 }
 
@@ -96,6 +100,7 @@ int	Request::pushRequest(str &req)
 		this->parseRequest(this->header);
 		if (this->method == "GET" || this->method == "DELETE")
 			return -1;
+		this->received_body_bytes += req.size();
 		this->headerReceived = true;
 		return 1;
 	}
@@ -147,7 +152,6 @@ bool Request::parseRequestLine(str &line)
 
 void Request::setRequestField(str &header_field, str &field_content)
 {
-	// std::cout << MAGENTA << "Header field being parsed: " << header_field << NL;
 	if (header_field == "host")
 		this->host = field_content;
 	if (header_field == "connection" && field_content == "close")
@@ -193,19 +197,21 @@ Request	&Request::parseRequest(str& request)
 			ignore = false;
 			continue;
 		}
-		if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
-			return (*this);
-		if (line.find("Content-Type") != std::string::npos)
-		{
-			for (str::iterator it = line.begin(); it < line.begin() + 12)
-				*it = std::tolower(*it);
-		}
-		else
-		{
-			for (str::iterator it = line.begin(); it < line.end())
-				*it = std::tolower(*it);
-		}
+		// if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
+		// 	return (*this);
+		// if (line.find("Content-Type") != std::string::npos)
+		// {
+		// 	for (str::iterator it = line.begin(); it < line.begin() + 12)
+		// 		*it = std::tolower(*it);
+		// }
+		// else
+		// {
+		// 	for (str::iterator it = line.begin(); it < line.end())
+		// 		*it = std::tolower(*it);
+		// }
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
+		for (str::iterator it = header_field.begin(); it != header_field.end(); it++)
+			*it = std::tolower(*it);
 		(void)i;
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
@@ -324,4 +330,24 @@ void	Request::setHasBody(const bool status)
 void	Request::setTempFileName(const str file)
 {
 	this->tempFileName = file;
+}
+
+bool	Request::isCGI() const
+{
+	return (this->isCGIrequest);
+}
+
+void	Request::setCGIfd(int fd)
+{
+	this->cgi_fd = fd;
+}
+
+size_t	Request::getReceivedBytes() const
+{
+	return (this->received_body_bytes);
+}
+
+int	Request::getCGIfd() const
+{
+	return (this->cgi_fd);
 }

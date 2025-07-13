@@ -53,6 +53,9 @@
 # define FLUSH "\033[0m" << std::endl;
 /* Colors */
 
+# define WRITE 1
+# define READ 0
+
 typedef std::string str;
 
 class ConnectionManager
@@ -63,8 +66,7 @@ class ConnectionManager
 		{
 			INVALID = -1,
 			INCOMPLETE,
-			CGI_INCOMPLETE,
-			CGI_FINISH,
+			HEADER_FINISHED,
 			FINISH
 		}	State;
 
@@ -80,6 +82,7 @@ class ConnectionManager
 		std::map<int, Request *>				requests;
 		std::string								request_header;
 		std::fstream							request_body;
+		int										cgi_pipes[2];
 		
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);

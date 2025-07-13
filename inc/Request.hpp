@@ -49,12 +49,14 @@ class Request
 		str					contentType;
 		bool				validRequest;
 		size_t				contentLength;
+		size_t				received_body_bytes;
 		bool				headerReceived;
 		str					body_boundary;
 		bool				fullyReceived;
 		str					tempFileName;
 		std::fstream		bodyFile;
 		str					request;
+		int					cgi_fd;
 		
 		static void	changeToLower(char &c);
 		bool		parseRequestLine(str &line);
@@ -92,7 +94,10 @@ class Request
 		const str&		getBoundary() const;
 		const str&		getRequest() const;
 		const str&		getTempFileName() const;
+		size_t			getReceivedBytes() const;
 		std::fstream&	getBodyFile();
+		int				getCGIfd() const;
+		bool			isCGI() const;
 
 		/********************/
 		/*		setters		*/
@@ -100,6 +105,7 @@ class Request
 		void	setFullyReceived(const bool status);
 		void	setHeaderReceived(const bool status);
 		void	setTempFileName(const str file);
+		void	setCGIfd(int fd);
 
 		void	clearVector();
 

@@ -1,0 +1,213 @@
+Server Ready!
+Server has 3 listeners
+Pushing back client fd 7 at index 3
+in normal POLLIN
+POLLIN fd: 7Index: 3
+[36mCreating a new request for fd 7
+[0mCreating a new request for fd 7
+[36mPassing request from fd 7 to server
+[0mClient fd: 7
+[31m1[0m
+[32mFileREsponsing In th3 d1r3ct0ry!
+[0mPassing request from fd 7 to server
+header sent: false
+Chunked: true
+fd: 8
+--------
+Sent bytes: 132 to fd 7
+--------
+[31mHeader sent hellbent!
+[34mDone sending header!
+[0mRead 3345 from body fd
+--------
+Sent bytes: 5 to fd 7
+--------
+--------
+Sent bytes: 3345 to fd 7
+--------
+--------
+Sent bytes: 2 to fd 7
+--------
+servers_per_ippp size: 4
+handlers size: 4
+defaults size: 4
+header sent: true
+Chunked: true
+fd: 8
+[34mDone sending header!
+[0mRead 0 from body fd
+Finished reading response from body file
+--------
+Sent bytes: 5 to fd 7
+--------
+Removing response object for fd: 7
+[31mRemoving request from map[0m
+servers_per_ippp size: 4
+handlers size: 4
+defaults size: 4
+in normal POLLIN
+POLLIN fd: 7Index: 3
+[36mCreating a new request for fd 7
+[0mCreating a new request for fd 7
+[36mPassing request from fd 7 to server
+[0mClient fd: 7
+Passing request from fd 7 to server
+header sent: false
+Chunked: true
+fd: 8
+--------
+Sent bytes: 96 to fd 7
+--------
+[31mHeader sent hellbent!
+[34mDone sending header!
+[0mRead 3345 from body fd
+--------
+Sent bytes: 5 to fd 7
+--------
+--------
+Sent bytes: 3345 to fd 7
+--------
+--------
+Sent bytes: 2 to fd 7
+--------
+servers_per_ippp size: 4
+handlers size: 4
+defaults size: 4
+header sent: true
+Chunked: true
+fd: 8
+[34mDone sending header!
+[0mRead 0 from body fd
+Finished reading response from body file
+--------
+Sent bytes: 5 to fd 7
+--------
+Removing response object for fd: 7
+[31mRemoving request from map[0m
+servers_per_ippp size: 4
+handlers size: 4
+defaults size: 4
+in normal POLLIN
+POLLIN fd: 7Index: 3
+[36mCreating a new request for fd 7
+[0mCreating a new request for fd 7
+[36mPassing request from fd 7 to server
+[0mClient fd: 7
+Passing request from fd 7 to server
+header sent: false
+Chunked: true
+fd: 8
+--------
+Sent bytes: 95 to fd 7
+--------
+[31mHeader sent hellbent!
+[34mDone sending header!
+[0mRead 496 from body fd
+--------
+Sent bytes: 5 to fd 7
+--------
+--------
+Sent bytes: 496 to fd 7
+--------
+--------
+Sent bytes: 2 to fd 7
+--------
+servers_per_ippp size: 4
+handlers size: 4
+defaults size: 4
+header sent: true
+Chunked: true
+fd: 8
+[34mDone sending header!
+[0mRead 0 from body fd
+Finished reading response from body file
+--------
+Sent bytes: 5 to fd 7
+--------
+Removing response object for fd: 7
+[31mRemoving request from map[0m
+servers_per_ippp size: 4
+handlers size: 4
+defaults size: 4
+in normal POLLIN
+POLLIN fd: 7Index: 3
+[36mCreating a new request for fd 7
+[0mCreating a new request for fd 7
+[36mPassing request from fd 7 to server
+[0mClient fd: 7
+Script file is found
+Script file is readable and executable
+running cgi script
+[36mPassing request from fd 7 to server
+[0mClient fd: 7
+Script file is found
+Script file is readable and executable
+running cgi script
+Pushing 8 into map for client 7
+Passing request from fd 7 to server
+Pushing back client fd 9 at index 5
+in CGI pollin
+Found 8 in the map of fds
+in CGI read
+Content-type: text/html
+
+<html><body>
+<p>
+</p>
+<h1>Done</h1></body></html>
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+in CGI pollin
+Found 8 in the map of fds
+in CGI read
+read 0 bytes
+Process pid: 23125
+Client fd: 7
+Response complete: false
+Response string: Content-type: text/html
+
+<html><body>
+<p>
+</p>
+<h1>Done</h1></body></html>
+
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+in CGI pollout
+In cgi respond function
+responding
+header sent: false
+Chunked: false
+fd: -1
+--------
+Sent bytes: 13 to fd 7
+--------
+[31mHeader sent hellbent!
+[34mDone responding!
+
+Sent:
+HTTP/1.1 
+
+
+
+[0mheader sent: true
+Chunked: false
+fd: -1
+clearing response object for fd: 7
+Closing client socket fd 7
+[31mClosing fd 7[0m
+Request exists and will now be deleted
+Closed socket
+
+Ending Server...
+[31mClosing fd 4[0m
+Not found
+[31mClosing fd 5[0m
+Not found
+[31mClosing fd 6[0m
+Not found
+[31mClosing fd 9[0m
+Not found
+Server closed!
