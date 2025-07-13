@@ -29,6 +29,7 @@
 # define CYAN "\033[36m"
 # define RESET "\033[0m"
 # define NL "\033[0m\n"
+# define MAX_HEADER_SIZE 5000
 
 typedef std::string str;
 
@@ -41,6 +42,7 @@ class Request
 		str					method;
 		str					status;
 		str					file_URI;
+		str					header;
 		bool				has_body;
 		bool				keepAlive;
 		bool				isCGIrequest;
@@ -69,7 +71,7 @@ class Request
 		str					body_boundaryEnd;
 
 		Request	&parseRequest(str& request);
-		void	pushRequest(std::string& req);
+		int	pushRequest(std::string& req);
 
 		bool			shouldKeepAlive();
 		bool			isValidRequest();

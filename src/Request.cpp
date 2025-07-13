@@ -15,6 +15,7 @@
 
 Request::Request()
 {
+	this->header = "";
 	this->method = "";
 	this->file_URI = "";
 	this->host = "";
@@ -40,48 +41,23 @@ Request::~Request()
 
 Request::Request(const Request& obj)
 {
-	std::cout << "request copy constructor called\n";
-	this->method = obj.method;
-	this->file_URI = obj.file_URI;
-	this->keepAlive = obj.keepAlive;
-	this->host = obj.host;
-	this->validRequest = obj.validRequest;
-	this->status = obj.status;
-	this->contentLength = obj.contentLength;
-	this->contentType = obj.contentType;
-	this->body_boundary = obj.body_boundary;
-	this->fullyReceived = obj.fullyReceived;
-	this->headerReceived = obj.headerReceived;
-	this->request = obj.request;
-	this->has_body = obj.has_body;
-	this->bytesReceived = obj.bytesReceived;
-	this->tempFileName = obj.tempFileName;
-	this->isCGIrequest = false;
+	*this = obj;
 }
 
 Request::Request(str request)
 {
 	*this = Request();
-	// this->method = "";
-	// this->file_URI = "";
-	// this->host = "";
-	// this->contentLength = 0;
-	// this->contentType = "";
-	// this->keepAlive = true;
-	// this->validRequest = false;
-	// this->status = "400";
-	// this->body_boundary = "";
-	// this->headerReceived = false;
-	// this->fullyReceived = false;
-	// this->has_body = false;
 	parseRequest(request);
 }
 
 Request	&Request::operator=(const Request& obj)
 {
-	std::cout << "request copy assignment called\n";
 	if (&obj == this)
 		return (*this);
+	this->header = obj.header;
+	this->request = obj.request;
+	this->bytesReceived = obj.bytesReceived;
+	this->tempFileName = obj.tempFileName;
 	this->method = obj.method;
 	this->file_URI = obj.file_URI;
 	this->keepAlive = obj.keepAlive;
@@ -93,8 +69,8 @@ Request	&Request::operator=(const Request& obj)
 	this->body_boundary = obj.body_boundary;
 	this->headerReceived = obj.headerReceived;
 	this->fullyReceived = obj.fullyReceived;
-	this->has_body = false;
-	this->isCGIrequest = false;
+	this->has_body = obj.has_body;
+	this->isCGIrequest = obj.isCGIrequest;
 	return (*this);
 }
 
@@ -103,21 +79,29 @@ const char*	Request::NoHostException::what() const throw()
 	return ("Request doesn't contain Host header");
 }
 
-void	Request::pushRequest(std::string& req)
+int	Request::pushRequest(str &req)
 {
-	request.append(req);
-	// request.push_back(req);
-}
+	size_t	pos;
 
-void Request::changeToLower(char &c)
-{
-	if (c >= 'A' && c <= 'Z')
-		c += 32;
-}
-
-bool is_digit(char c)
-{
-	return c >= '0' && c <= '9';
+	this->header += req;
+	if (this->header.length() > MAX_HEADER_SIZE)
+		return -1;
+	pos = this->header.find("\r\n\r\n");
+	if (pos == str::npos)
+		return 0;
+	if (pos != this->header.length() - 4)
+	{
+		req = this->header.substr(pos + 4);
+		this->header = this->header.substr(0, pos);
+		this->parseRequest(this->header);
+		if (this->method == "GET" || this->method == "DELETE")
+			return -1;
+		this->headerReceived = true;
+		return 1;
+	}
+	this->parseRequest(this->header);
+	this->headerReceived = true;
+	return 1;
 }
 
 bool Request::parseRequestLine(str &line)
@@ -143,7 +127,7 @@ bool Request::parseRequestLine(str &line)
 	this->file_URI = line.substr(0, line.find_first_of(" "));
 	if (file_URI.at(0) != '/' || this->file_URI.find_first_of("\t\r") != str::npos)
 		return false;
-	if (this->file_URI.find("cgi-bin/") != str::npos)
+	if (this->file_URI.find("cgi-bin/") != str::npos && this->file_URI.find("cgi-bin/") != this->file_URI.length() - 8)
 		this->isCGIrequest = true;
 	pos = this->file_URI.find("%20");
 	while (pos != str::npos)
@@ -207,29 +191,30 @@ Request	&Request::parseRequest(str& request)
 		if (ignore)
 		{
 			ignore = false;
-			std::cout << "Ignoring " << line << "\n";
 			continue;
 		}
 		if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
 			return (*this);
 		if (line.find("Content-Type") != std::string::npos)
-			std::for_each(line.begin(), line.begin() + std::string("Content-Type").length(), Request::changeToLower);
+		{
+			for (str::iterator it = line.begin(); it < line.begin() + 12)
+				*it = std::tolower(*it);
+		}
 		else
-			std::for_each(line.begin(), line.end(), Request::changeToLower);
+		{
+			for (str::iterator it = line.begin(); it < line.end())
+				*it = std::tolower(*it);
+		}
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
 		(void)i;
 		if (line.find_first_not_of(" \t\r", line.find(":") + 1) == str::npos && (header_field == "host" || header_field == "content-length"))
 			return (*this);
-		// std::cout << "line before: " << line << "\n"; 
 		line = line.substr(line.find_first_not_of(" \t\r", line.find(":") + 1));
-		// std::cout << "line now: " << line << "\n";
 		for (lnsp = line.length() - 1; lnsp > 0; lnsp--)
 		{
 			if (line[lnsp] != ' ' && line[lnsp] != '\t' && line[lnsp] != '\r')
 				break;
 		}
-		// if (lnsp < line.length() - 1)
-		// 	ignore = true;
 		field_value = line.substr(0, lnsp + 1);
 		if (field_value.find_first_not_of("0123456789") != str::npos && header_field == "content-length")
 			return (*this);

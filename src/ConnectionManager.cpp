@@ -357,6 +357,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 {
 	std::string	_request;
 	ssize_t		r;
+	int			outcome;
 	char		buffer[BUFFER_SIZE + 1];
 
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -368,9 +369,17 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		return (INVALID);
 	}
 	buffer[r] = 0;
-	_request = buffer;
-	if ((_request.find("\r\n\r\n") != std::string::npos && req->getHeaderReceived() == false))	// the buffer contains the end of the request header
+	_request = str(buffer);
+	outcome = req->pushRequest(_request);
+	switch (outcome)
 	{
+		case -1:
+			return (INVALID);
+		case 1:
+			// The header is fully received, the leftovers are saved in _request
+			// 1) Regular POST: Start sifting through the current and following _request strings for files to be saved as upload
+			// 2) CGI: Save this current leftover in whatever server will respond (how?), and after sending it to the subprocess immediately send following _request to the stdin of the subprocess
+			return (COMPLETE);
 	}
 	return (INCOMPLETE);
 }
