@@ -34,6 +34,7 @@ Request::Request()
 	this->isCGIrequest = false;
 	this->cgi_fd = -1;
 	this->received_body_bytes = 0;
+	this->partial_request = false;
 }
 
 Request::~Request()
@@ -73,8 +74,9 @@ Request	&Request::operator=(const Request& obj)
 	this->fullyReceived = obj.fullyReceived;
 	this->has_body = obj.has_body;
 	this->isCGIrequest = obj.isCGIrequest;
-	this->cgi_fd = -1;
-	this->received_body_bytes = 0;
+	this->cgi_fd = obj.cgi_fd;
+	this->received_body_bytes = obj.received_body_bytes;
+	this->partial_request = obj.partial_request;
 	return (*this);
 }
 
@@ -102,6 +104,7 @@ int	Request::pushRequest(str &req)
 			return -1;
 		this->received_body_bytes += req.size();
 		this->headerReceived = true;
+		this->request += req;
 		return 1;
 	}
 	this->parseRequest(this->header);
@@ -350,4 +353,14 @@ size_t	Request::getReceivedBytes() const
 int	Request::getCGIfd() const
 {
 	return (this->cgi_fd);
+}
+
+void	Request::setPartialRequest(bool cond)
+{
+	this->partial_request = cond;
+}
+
+bool	Request::isPartial() const
+{
+	return (this->partial_request);
 }

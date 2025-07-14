@@ -556,7 +556,7 @@ Server::ResponseState	Server::getState() const
 
 bool	Server::cgiRespond(CGIinfo* infoPtr)
 {
-	std::cout << "In cgi respond function\n";
+	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
 	if (this->response.find(client_fd) == this->response.end())
 		this->response[client_fd] = infoPtr->parseCgiResponse();

@@ -381,19 +381,14 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			{
 				if (req->getReceivedBytes() == req->getContentLen())
 				{
-					if (req->isCGI())
-					{
-						std::cerr << "COMPLETED RECEIVING BODY\n";
-						std::cerr << "closing fd: " << req->getCGIfd() << "\n";
-						close(req->getCGIfd());
-						req->setCGIfd(-1);
-					}
+					std::cerr << "Fully received body bytes\n";
 					return (FINISH);
 				}
-				return (HEADER_FINISHED);
+				std::cerr << "Partially received body bytes\n";
+				return (INCOMPLETE);
 			}
-			else if (req->getHeaderReceived())
-				return (FINISH);
+			std::cerr << "There is no body for this request\n";
+			return (FINISH);
 			// The header is fully received, the leftovers are saved in _request
 			// 1) Regular POST: Start sifting through the current and following _request strings for files to be saved as upload
 			// 2) CGI: Save this current leftover in whatever server will respond (how?), and after sending it to the subprocess immediately send following _request to the stdin of the subprocess
@@ -596,14 +591,14 @@ void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& c
 		int	status;
 
 		info.printInfo();
-		// pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
-		// std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
-		// std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
-		// if (res == info.getPid())
-		// {
-		// 	std::cout << "Script finished executing\n";
-		// 	info.completeResponse();
-		// }
+		pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
+		std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
+		std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
+		if (res == info.getPid())
+		{
+			std::cout << "Script finished executing\n";
+			info.completeResponse();
+		}
 		// kill(info.getPid(), SIGQUIT);
 		// in the pollfds vector, find the client fd's index and set its event field to fd.event |= POLLOUT
 		const int	client_fd = info.getClientFd();
@@ -619,7 +614,7 @@ void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& c
 		}
 		if (client_it != fds.end())
 			client_it->events |= POLLOUT;
-		info.completeResponse();
+		// info.completeResponse();
 		close(sock_fds.at(i).fd);
 		sock_fds.erase(sock_fds.begin() + i);
 		i--;

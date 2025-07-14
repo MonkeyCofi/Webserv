@@ -43,19 +43,20 @@ class Request
 		str					status;
 		str					file_URI;
 		str					header;
-		bool				has_body;
-		bool				keepAlive;
-		bool				isCGIrequest;
 		str					contentType;
-		bool				validRequest;
-		size_t				contentLength;
-		size_t				received_body_bytes;
-		bool				headerReceived;
+		str					request;
 		str					body_boundary;
-		bool				fullyReceived;
 		str					tempFileName;
 		std::fstream		bodyFile;
-		str					request;
+		size_t				contentLength;
+		size_t				received_body_bytes;
+		bool				keepAlive;
+		bool				isCGIrequest;
+		bool				has_body;
+		bool				validRequest;
+		bool				fullyReceived;
+		bool				headerReceived;
+		bool				partial_request;
 		int					cgi_fd;
 		
 		static void	changeToLower(char &c);
@@ -108,6 +109,9 @@ class Request
 		void	setCGIfd(int fd);
 
 		void	clearVector();
+
+		void	setPartialRequest(bool cond);
+		bool	isPartial() const;
 
 		class	NoHostException: public std::exception
 		{

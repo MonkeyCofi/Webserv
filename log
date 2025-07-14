@@ -1,6 +1,7 @@
 Server Ready!
 Server has 3 listeners
 Pushing back client fd 7 at index 3
+Pushing back client fd 8 at index 4
 in normal POLLIN
 POLLIN fd: 7Index: 3
 [36mCreating a new request for fd 7
@@ -8,45 +9,120 @@ POLLIN fd: 7Index: 3
 [36mPassing request from fd 7 to server
 [0mClient fd: 7
 [31m1[0m
+Passing request from fd 7 to server
+header sent: false
+Chunked: false
+fd: -1
+--------
+Sent bytes: 891 to fd 7
+--------
+[31mHeader sent hellbent!
+[34mDone responding!
+
+Sent:
+HTTP/1.1 200 OK
+Connection: Keep-Alive
+Content-Type: text/html
+Content-Length: 800
+
+<html><head><title>Index of /</title></head><body><h1>Index of /</h1><hr><a href="../">..</a> <br><a href="./.DS_Store">.DS_Store</a> <br><a href="./.git/">.git/</a> <br><a href="./.gitignore">.gitignore</a> <br><a href="./.vscode/">.vscode/</a> <br><a href="./base-site/">base-site/</a> <br><a href="./config/">config/</a> <br><a href="./cur.sh">cur.sh</a> <br><a href="./dotest.sh">dotest.sh</a> <br><a href="./games/">games/</a> <br><a href="./inc/">inc/</a> <br><a href="./leak.sh">leak.sh</a> <br><a href="./log">log</a> <br><a href="./Makefile">Makefile</a> <br><a href="./remtest.sh">remtest.sh</a> <br><a href="./setup.sh">setup.sh</a> <br><a href="./src/">src/</a> <br><a href="./storage/">storage/</a> <br><a href="./todo">todo</a> <br><a href="./webserv">webserv</a> <br><hr></body></html>
+
+
+[0mservers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+header sent: true
+Chunked: false
+fd: -1
+Done responding to client fd: 7
+Removing response object for fd: 7
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+header sent: false
+Chunked: false
+fd: -1
+--------
+Sent bytes: 19 to fd 7
+--------
+[31mHeader sent hellbent!
+[34mDone responding!
+
+Sent:
+HTTP/1.1 200 OK
+
+
+
+[0mservers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+header sent: true
+Chunked: false
+fd: -1
+Done responding to client fd: 7
+Removing response object for fd: 7
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+header sent: false
+Chunked: false
+fd: -1
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
+in normal POLLIN
+POLLIN fd: 7Index: 3
+in normal POLLIN
+POLLIN fd: 7Index: 3
+[31mClosing fd 7[0m
+Request exists and will now be deleted
+Pushing back client fd 7 at index 4
+in normal POLLIN
+POLLIN fd: 8Index: 3
+[36mCreating a new request for fd 8
+[0mCreating a new request for fd 8
+[36mPassing request from fd 8 to server
+[0mClient fd: 8
+[31m1[0m
 [32mFileREsponsing In th3 d1r3ct0ry!
-[0mPassing request from fd 7 to server
+[0mPassing request from fd 8 to server
 header sent: false
 Chunked: true
-fd: 8
+fd: 9
 --------
-Sent bytes: 132 to fd 7
+Sent bytes: 132 to fd 8
 --------
 [31mHeader sent hellbent!
 [34mDone sending header!
 [0mRead 3345 from body fd
 --------
-Sent bytes: 5 to fd 7
+Sent bytes: 5 to fd 8
 --------
 --------
-Sent bytes: 3345 to fd 7
+Sent bytes: 3345 to fd 8
 --------
 --------
-Sent bytes: 2 to fd 7
+Sent bytes: 2 to fd 8
 --------
-servers_per_ippp size: 4
-handlers size: 4
-defaults size: 4
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
 header sent: true
 Chunked: true
-fd: 8
+fd: 9
 [34mDone sending header!
 [0mRead 0 from body fd
 Finished reading response from body file
 --------
-Sent bytes: 5 to fd 7
+Sent bytes: 5 to fd 8
 --------
-Removing response object for fd: 7
+Removing response object for fd: 8
 [31mRemoving request from map[0m
-servers_per_ippp size: 4
-handlers size: 4
-defaults size: 4
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
 in normal POLLIN
-POLLIN fd: 7Index: 3
+POLLIN fd: 7Index: 4
 [36mCreating a new request for fd 7
 [0mCreating a new request for fd 7
 [36mPassing request from fd 7 to server
@@ -54,7 +130,7 @@ POLLIN fd: 7Index: 3
 Passing request from fd 7 to server
 header sent: false
 Chunked: true
-fd: 8
+fd: 9
 --------
 Sent bytes: 96 to fd 7
 --------
@@ -70,12 +146,12 @@ Sent bytes: 3345 to fd 7
 --------
 Sent bytes: 2 to fd 7
 --------
-servers_per_ippp size: 4
-handlers size: 4
-defaults size: 4
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
 header sent: true
 Chunked: true
-fd: 8
+fd: 9
 [34mDone sending header!
 [0mRead 0 from body fd
 Finished reading response from body file
@@ -84,11 +160,11 @@ Sent bytes: 5 to fd 7
 --------
 Removing response object for fd: 7
 [31mRemoving request from map[0m
-servers_per_ippp size: 4
-handlers size: 4
-defaults size: 4
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
 in normal POLLIN
-POLLIN fd: 7Index: 3
+POLLIN fd: 7Index: 4
 [36mCreating a new request for fd 7
 [0mCreating a new request for fd 7
 [36mPassing request from fd 7 to server
@@ -96,7 +172,7 @@ POLLIN fd: 7Index: 3
 Passing request from fd 7 to server
 header sent: false
 Chunked: true
-fd: 8
+fd: 9
 --------
 Sent bytes: 95 to fd 7
 --------
@@ -112,12 +188,12 @@ Sent bytes: 496 to fd 7
 --------
 Sent bytes: 2 to fd 7
 --------
-servers_per_ippp size: 4
-handlers size: 4
-defaults size: 4
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
 header sent: true
 Chunked: true
-fd: 8
+fd: 9
 [34mDone sending header!
 [0mRead 0 from body fd
 Finished reading response from body file
@@ -126,11 +202,11 @@ Sent bytes: 5 to fd 7
 --------
 Removing response object for fd: 7
 [31mRemoving request from map[0m
-servers_per_ippp size: 4
-handlers size: 4
-defaults size: 4
+servers_per_ippp size: 5
+handlers size: 5
+defaults size: 5
 in normal POLLIN
-POLLIN fd: 7Index: 3
+POLLIN fd: 7Index: 4
 [36mCreating a new request for fd 7
 [0mCreating a new request for fd 7
 [36mPassing request from fd 7 to server
@@ -138,38 +214,32 @@ POLLIN fd: 7Index: 3
 Script file is found
 Script file is readable and executable
 running cgi script
-[36mPassing request from fd 7 to server
-[0mClient fd: 7
-Script file is found
-Script file is readable and executable
-running cgi script
-Pushing 8 into map for client 7
+Pushing 9 into map for client 7
 Passing request from fd 7 to server
-Pushing back client fd 9 at index 5
 in CGI pollin
-Found 8 in the map of fds
+Found 9 in the map of fds
 in CGI read
 Content-type: text/html
 
 <html><body>
 <p>
-</p>
+name=321</p>
 <h1>Done</h1></body></html>
 servers_per_ippp size: 5
 handlers size: 5
 defaults size: 5
 in CGI pollin
-Found 8 in the map of fds
+Found 9 in the map of fds
 in CGI read
 read 0 bytes
-Process pid: 23125
+Process pid: 42551
 Client fd: 7
 Response complete: false
 Response string: Content-type: text/html
 
 <html><body>
 <p>
-</p>
+name=321</p>
 <h1>Done</h1></body></html>
 
 servers_per_ippp size: 5
@@ -208,6 +278,6 @@ Not found
 Not found
 [31mClosing fd 6[0m
 Not found
-[31mClosing fd 9[0m
+[31mClosing fd 8[0m
 Not found
 Server closed!
