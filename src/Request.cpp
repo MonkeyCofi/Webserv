@@ -12,6 +12,7 @@
 
 #include "Request.hpp"
 #include "ConnectionManager.hpp"
+#include "Cgi.hpp"
 
 Request::Request()
 {
@@ -32,9 +33,10 @@ Request::Request()
 	this->bytesReceived = 0;
 	this->tempFileName = "";
 	this->isCGIrequest = false;
-	this->cgi_fd = -1;
 	this->received_body_bytes = 0;
 	this->partial_request = false;
+	this->cgi_started = false;
+	this->cgi = NULL;
 }
 
 Request::~Request()
@@ -74,9 +76,10 @@ Request	&Request::operator=(const Request& obj)
 	this->fullyReceived = obj.fullyReceived;
 	this->has_body = obj.has_body;
 	this->isCGIrequest = obj.isCGIrequest;
-	this->cgi_fd = obj.cgi_fd;
 	this->received_body_bytes = obj.received_body_bytes;
 	this->partial_request = obj.partial_request;
+	this->cgi_started = obj.cgi_started;
+	this->cgi = NULL;
 	return (*this);
 }
 
@@ -256,7 +259,7 @@ bool Request::getHasBody() const
 
 bool	Request::getHeaderReceived() const
 {
-	return headerReceived;
+	return (headerReceived);
 }
 
 std::fstream&	Request::getBodyFile()
@@ -340,19 +343,9 @@ bool	Request::isCGI() const
 	return (this->isCGIrequest);
 }
 
-void	Request::setCGIfd(int fd)
-{
-	this->cgi_fd = fd;
-}
-
 size_t	Request::getReceivedBytes() const
 {
 	return (this->received_body_bytes);
-}
-
-int	Request::getCGIfd() const
-{
-	return (this->cgi_fd);
 }
 
 void	Request::setPartialRequest(bool cond)
@@ -363,4 +356,24 @@ void	Request::setPartialRequest(bool cond)
 bool	Request::isPartial() const
 {
 	return (this->partial_request);
+}
+
+bool	Request::isCompleteRequest() const
+{
+	return ((this->headerReceived && this->contentLength == this->received_body_bytes) || (this->headerReceived && !this->contentLength));
+}
+
+bool	Request::getCGIstarted() const
+{
+	return (this->cgi_started);
+}
+
+void	Request::setCGIstarted()
+{
+	this->cgi_started = true;
+}
+
+void	Request::setCgi(Cgi* _cgi)
+{
+	this->cgi = _cgi;
 }

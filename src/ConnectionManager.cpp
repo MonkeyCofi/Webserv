@@ -166,15 +166,13 @@ void ConnectionManager::printError(int revents)
 void ConnectionManager::passRequestToServer(int i, Request **req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
-	// std::cout << "servers per ippp size: " << servers_per_ippp.size() << " i: " << i << "\n";
+	std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
 	if ((*req)->isValidRequest())
 		handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, pollfds, cgiProcesses);
-	// delete *req;
-	// *req = NULL;
 }
 
 void	ConnectionManager::closeSocket(unsigned int& index)
@@ -362,6 +360,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	char		buffer[BUFFER_SIZE + 1];
 
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	// if (req->getMethod() == "POST")
+	// 	std::cerr << "Received " << r << " bytes\n";
 	if (r < 0)
 		return (INCOMPLETE);
 	if (r == 0)
@@ -379,13 +379,15 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		case 1:
 			if (req->getContentLen() != 0)
 			{
+				std::cerr << req->getRequest() << "\n";
 				if (req->getReceivedBytes() == req->getContentLen())
 				{
 					std::cerr << "Fully received body bytes\n";
 					return (FINISH);
 				}
 				std::cerr << "Partially received body bytes\n";
-				return (INCOMPLETE);
+				// if the header is finished receiving, pass the request to the server
+				return (req->getHeaderReceived() ? HEADER_FINISHED : INCOMPLETE);
 			}
 			std::cerr << "There is no body for this request\n";
 			return (FINISH);
@@ -562,7 +564,6 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
 		std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
 	}
-	// if ((state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state)) == FINISH)	// request has been fully received
 	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
 	if (state == FINISH || state == HEADER_FINISHED)
 	{

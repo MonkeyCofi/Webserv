@@ -427,6 +427,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	response[client_fd].clear();
 	pollfds.at(i).events |= POLLOUT;
 	file = req->getFileURI();
+	const bool	cgi = file.find("cgi") != std::string::npos;
 	std::cout << "Client fd: " << client_fd << "\n";
 	if (!req->isValidRequest())
 	{
@@ -436,8 +437,9 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	else if (req->getMethod() == "GET")
 	{
 		// pass the pollfds to the CGI handler
-		if (file.find("cgi") != str::npos)
+		if (cgi)
 		{
+			std::cerr << "Starting up GET CGI process\n";
 			Cgi	cgi(file, this);
 			str cgi_status;
 			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
@@ -456,16 +458,30 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	}
 	else if (req->getMethod() == "POST")
 	{
-		if (file.find("cgi") != str::npos)
+		if (cgi && req->getCGIstarted() == false)
 		{
+			// std::cerr << "Starting up POST CGI process\n";
+			// Cgi	cgi(file, this);
+			// str	cgi_status;
+			// if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			// {
+			// 	handleError(cgi_status, client_fd);
+			// 	return ;
+			// }
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
-			Cgi	cgi(file, this);
-			str	cgi_status;
-			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			Cgi	*cgi = new Cgi(file, this);
+			std::string	cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
+			if (cgi_status != "200")
 			{
 				handleError(cgi_status, client_fd);
 				return ;
 			}
+			req->setCgi(cgi);
+			req->setCGIstarted();
+		}
+		else if (cgi && req->getCGIstarted())
+		{
+			// write the received body bytes from the request object into the write pipe of the cgi process
 		}
 		else
 		{

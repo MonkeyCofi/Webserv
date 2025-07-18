@@ -29,24 +29,26 @@
 # define CYAN "\033[36m"
 # define RESET "\033[0m"
 # define NL "\033[0m\n"
+
 # define MAX_HEADER_SIZE 5000
 
 typedef std::string str;
 
 class	ConnectionManager;
+class	Cgi;
 
 class Request
 {
 	private:
-		str					host;
-		str					method;
-		str					status;
-		str					file_URI;
-		str					header;
-		str					contentType;
-		str					request;
-		str					body_boundary;
-		str					tempFileName;
+		std::string			host;
+		std::string			method;
+		std::string			status;
+		std::string			file_URI;
+		std::string			header;
+		std::string			contentType;
+		std::string			request;
+		std::string			body_boundary;
+		std::string			tempFileName;
 		std::fstream		bodyFile;
 		size_t				contentLength;
 		size_t				received_body_bytes;
@@ -57,23 +59,23 @@ class Request
 		bool				fullyReceived;
 		bool				headerReceived;
 		bool				partial_request;
-		int					cgi_fd;
-		
-		static void	changeToLower(char &c);
+		Cgi*				cgi;
+		bool				cgi_started;
+
 		bool		parseRequestLine(str &line);
-		void		setRequestField(str &header_field, str &field_conent);
+		void		setRequestField(str &header_field, std::string &field_conent);
 		
 		Request(const Request& obj);
 	public:
 		Request();
-		Request(str request);
+		Request(std::string request);
 		~Request();
 		Request		&operator=(const Request& obj);
 
 		size_t				bytesReceived;
-		str					body_boundaryEnd;
+		std::string					body_boundaryEnd;
 
-		Request	&parseRequest(str& request);
+		Request	&parseRequest(std::string& request);
 		int	pushRequest(std::string& req);
 
 		bool			shouldKeepAlive();
@@ -83,35 +85,39 @@ class Request
 		/********************/
 		/*		getters		*/
 		/********************/
-		bool			getFullyReceived() const;
-		bool			getHasBody() const;
-		bool			getHeaderReceived() const;
-		size_t			getContentLen();
-		const str&		getFileURI() const;
-		const str&		getContentType() const;
-		const str&		getMethod() const;
-		const str&		getStatus() const;
-		const str&		getHost() const;
-		const str&		getBoundary() const;
-		const str&		getRequest() const;
-		const str&		getTempFileName() const;
-		size_t			getReceivedBytes() const;
-		std::fstream&	getBodyFile();
-		int				getCGIfd() const;
-		bool			isCGI() const;
+		const std::string&		getFileURI() const;
+		const std::string&		getContentType() const;
+		const std::string&		getMethod() const;
+		const std::string&		getStatus() const;
+		const std::string&		getHost() const;
+		const std::string&		getBoundary() const;
+		const std::string&		getRequest() const;
+		const std::string&		getTempFileName() const;
+		std::fstream&			getBodyFile();
+		size_t					getContentLen();
+		size_t					getReceivedBytes() const;
+		bool					getFullyReceived() const;
+		bool					getHasBody() const;
+		bool					getHeaderReceived() const;
+		bool					isCGI() const;
+		int						getCGIfd() const;
 
 		/********************/
 		/*		setters		*/
 		/********************/
 		void	setFullyReceived(const bool status);
+		void	setTempFileName(const std::string file);
 		void	setHeaderReceived(const bool status);
-		void	setTempFileName(const str file);
-		void	setCGIfd(int fd);
+		void	setCgi(Cgi* _cgi);
+
+		bool	getCGIstarted() const;
+		void	setCGIstarted();
 
 		void	clearVector();
 
 		void	setPartialRequest(bool cond);
 		bool	isPartial() const;
+		bool	isCompleteRequest() const;
 
 		class	NoHostException: public std::exception
 		{

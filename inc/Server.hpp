@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
@@ -19,6 +20,7 @@
 # include <sys/socket.h>
 # include <map>
 # include <string>
+
 # include "CGIinfo.hpp"
 # include "BlockOBJ.hpp"
 # include "Location.hpp"
