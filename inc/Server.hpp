@@ -50,12 +50,11 @@ class Server: public BlockOBJ
 		std::vector<Location *>	locations;
 		ResponseState			responseState;
 
+		Location 		*matchLocation(const str &uri);
 		void			handleError(str error_code, int client_fd);
 		bool			validAddress(str address);
 		bool			handleAddress(str address);
-		str				reasonPhrase(str status);
 		str				fileType(str file_name);
-		str				errorPage(str status);
 		str				ssizeToStr(ssize_t x);
 		bool			isDirectory(const std::string& path);
 		// void			directoryResponse(str path, std::stringstream &resp);
@@ -69,6 +68,7 @@ class Server: public BlockOBJ
 		Server(const Server &copy);
 		~Server();
 
+		void					passValuesToLocations();
 		size_t					sent_bytes;
 		void					handleRequest(int& i, int client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
 								std::map<int, CGIinfo>& cgiProcesses);

@@ -247,6 +247,16 @@ void Server::setDefault()
 	names.push_back("_");
 }
 
+void Server::passValuesToLocations()
+{
+	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
+	{
+		(*it)->setAutoIndex(this->autoindex);
+		(*it)->setRoot(this->root);
+		(*it)->setIndexFiles(this->index_pages);
+	}
+}
+
 str	Server::fileType(str file_name)
 {
 	str	type;
@@ -342,7 +352,7 @@ void Server::directoryResponse(Request* req, str path, int client_fd)
 		path += "/";
 		redir = true;
 	}
-	full_path = root + path;
+	full_path = this->response[client_fd].getRoot() + path;
 	std::cout << RED << 1 << NL;
 	for (unsigned int i = 0; i < this->index.size(); i++)
 	{
@@ -397,7 +407,7 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		status = "302";
 	else
 	{
-		path = root + path;
+		path = this->response[client_fd].getRoot() + path;
 		file_fd = open(path.c_str(), O_RDONLY);
 	}
 	if (file_fd == -1)
@@ -413,9 +423,20 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		this->response[client_fd].setHeaderField("Location", path);
 }
 
+Location *Server::matchLocation(const str &uri)
+{
+	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
+	{
+		if ((*it)->matchURI(uri))
+			return *it;
+	}
+	return NULL;
+}
+
 void Server::handleRequest(int& i, int client_fd, Request *req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
+	Location		*loco;
 	struct stat 	s;
 	struct dirent*	entry;
 	unsigned int	len, count;
@@ -434,7 +455,18 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 		handleError(req->getStatus(), client_fd);
 		return ;
 	}
-	else if (req->getMethod() == "GET")
+	this->response[client_fd].setRoot(this->root);
+	loco = this->matchLocation(file);
+	if (loco)
+	{
+		this->response[client_fd].setRoot(loco->getRoot());
+		if (!loco->isAllowedMethod(req->getMethod()))
+		{
+			handleError("403", client_fd);
+			return ;
+		}
+	}
+	if (req->getMethod() == "GET")
 	{
 		// pass the pollfds to the CGI handler
 		if (cgi)
@@ -451,7 +483,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 			}
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 		}
-		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
+		else if (file.at(file.length() - 1) == '/' || isDirectory(this->response[client_fd].getRoot() + file))
 			directoryResponse(req, file, client_fd);
 		else
 			fileResponse(req, file, -1, client_fd);
@@ -504,7 +536,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 			handleError("409", client_fd);
 			return ;
 		}
-		uri = root + uri;
+		uri = this->response[client_fd].getRoot() + uri;
 		if (stat(uri.c_str(), &s) == 0) 
 		{
 			// Check if it's a directory

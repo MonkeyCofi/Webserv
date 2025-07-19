@@ -355,7 +355,7 @@ void	ConnectionManager::parseBodyFile(Request* req)
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	std::string	_request;
-	ssize_t		r;
+	ssize_t		r, barbenindex;
 	int			outcome;
 	char		buffer[BUFFER_SIZE + 1];
 
@@ -369,34 +369,72 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		closeSocket(index);
 		return (INVALID);
 	}
-	buffer[r] = 0;
-	_request = str(buffer);
-	outcome = req->pushRequest(_request);
-	switch (outcome)
+	// 1- Have a function like pushRequest that handles body parts (pushBody). For example discards the boundaries and body fields and saves the files.
+	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
+	if (!req->getHeaderReceived())
 	{
-		case -1:
-			return (INVALID);
-		case 1:
-			if (req->getContentLen() != 0)
-			{
-				std::cerr << req->getRequest() << "\n";
-				if (req->getReceivedBytes() == req->getContentLen())
+		buffer[r] = 0;
+		_request = str(buffer);
+		outcome = req->pushRequest(_request);
+		switch (outcome)
+		{
+			case -1:
+				return (INVALID);
+			case 1:
+				barbenindex = _request.find("\r\n\r\n") + 4;
+				if (barbenindex < r) // If there are left-overs
 				{
-					std::cerr << "Fully received body bytes\n";
-					return (FINISH);
+					if (!req->isCGI())
+					{
+						r = r - barbenindex;
+						std::memmove(buffer, buffer + barbenindex, r);
+						break ;
+					}
+					else
+					{
+						// Pierce handle this please, CGI left-overs send to fd
+					}
 				}
-				std::cerr << "Partially received body bytes\n";
-				// if the header is finished receiving, pass the request to the server
-				return (req->getHeaderReceived() ? HEADER_FINISHED : INCOMPLETE);
-			}
-			std::cerr << "There is no body for this request\n";
-			return (FINISH);
-			// The header is fully received, the leftovers are saved in _request
-			// 1) Regular POST: Start sifting through the current and following _request strings for files to be saved as upload
-			// 2) CGI: Save this current leftover in whatever server will respond (how?), and after sending it to the subprocess immediately send following _request to the stdin of the subprocess
+				if (req->getContentLen() != 0)
+				{
+					std::cerr << req->getRequest() << "\n";
+					if (req->getReceivedBytes() == req->getContentLen())
+					{
+						std::cerr << "Fully received body bytes\n";
+						return (FINISH);
+					}
+					std::cerr << "Partially received body bytes\n";
+					// if the header is finished receiving, pass the request to the server
+					return (req->getHeaderReceived() ? HEADER_FINISHED : INCOMPLETE);
+				}
+				std::cerr << "There is no body for this request\n";
+				return (FINISH);
+				// The header is fully received, the leftovers are saved in _request
+				// 1) Regular POST: Start sifting through the current and following _request strings for files to be saved as upload
+				// 2) CGI: Save this current leftover in whatever server will respond (how?), and after sending it to the subprocess immediately send following _request to the stdin of the subprocess
+			default:
+				return (INCOMPLETE);
+		}
 	}
+	if (req->getHeaderReceived() && req->getMethod() == "POST")
+	{
+		if (req->getBodyFd())
+			// open a new fd
+		outcome = req->pushBody(buffer, r);
+		switch(outcome)
+		{
+			case -1:
+				// > maxbodysize
+				// > contentlength
+				// No boundary
+			case 1:
+				return (FINISH);
+			default:
+				return (INCOMPLETE);
+		}
+	}
+	//
 	(void)state;
-	return (INCOMPLETE);
 }
 
 // ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)

@@ -46,7 +46,6 @@ class Request
 		std::string			file_URI;
 		std::string			header;
 		std::string			contentType;
-		std::string			request;
 		std::string			body_boundary;
 		std::string			tempFileName;
 		std::fstream		bodyFile;
@@ -55,12 +54,14 @@ class Request
 		bool				keepAlive;
 		bool				isCGIrequest;
 		bool				has_body;
+		bool				is_chunked;
 		bool				validRequest;
 		bool				fullyReceived;
 		bool				headerReceived;
 		bool				partial_request;
 		Cgi*				cgi;
 		bool				cgi_started;
+		int					bodyFd;
 
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, std::string &field_conent);
@@ -77,6 +78,7 @@ class Request
 
 		Request	&parseRequest(std::string& request);
 		int	pushRequest(std::string& req);
+		int	pushBody(char *buffer, size_t size);
 
 		bool			shouldKeepAlive();
 		bool			isValidRequest();
@@ -93,7 +95,7 @@ class Request
 		const std::string&		getBoundary() const;
 		const std::string&		getRequest() const;
 		const std::string&		getTempFileName() const;
-		std::fstream&			getBodyFile();
+		int						getBodyFd() const;
 		size_t					getContentLen();
 		size_t					getReceivedBytes() const;
 		bool					getFullyReceived() const;
@@ -118,6 +120,7 @@ class Request
 		void	setPartialRequest(bool cond);
 		bool	isPartial() const;
 		bool	isCompleteRequest() const;
+		bool	isChunked() const;
 
 		class	NoHostException: public std::exception
 		{

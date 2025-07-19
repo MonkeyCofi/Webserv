@@ -12,23 +12,36 @@ typedef std::string str;
 class Location: public BlockOBJ
 {
 	private:
-		int	ret_code;
-		str	alias, ret_str;
+		bool				perm_redir, auto_index;
+		str					root, redir_uri, save_folder;
 		const static str	directives[];
-		std::vector<Location *>	locations;
+		std::vector<str>	allowed_methods, indexfiles;
+
 
 	public:
 		Location();
 		Location(const Location &copy);
 		~Location();
 
-		bool		handleDirective(std::queue<str> opts);
+		bool	handleDirective(std::queue<str> opts);
+		bool	matchURI(str uri) const;
+		void	setRoot(const str& value);
+		str		getRoot() const;
+		bool getPermRedir() const;
+		bool getAutoIndex() const;
+		const str& getRedirUri() const;
+		const str& getSaveFolder() const;
+		bool isAllowedMethod(str method) const;
+		const std::vector<str>& getIndexFiles() const;
 		BlockOBJ	*handleBlock(std::queue<str> opts);
-
-		void	setAlias(const str &s);
-		str		getAlias() const;
-		str				getType();
-		std::vector<Location *>	getLocations();
+		str			getType();
+		void setPermRedir(bool value);
+		void setAutoIndex(bool value);
+		void setRoot(const str& value);
+		void setRedirUri(const str& value);
+		void setSaveFolder(const str& value);
+		void setAllowedMethods(const std::vector<str>& methods);
+		void setIndexFiles(const std::vector<str>& files);
 
 		const Location &operator =(const Location &copy);
 };

@@ -11,7 +11,7 @@ typedef std::string str;
 class Response
 {
 	private:
-		str					header, body, code;
+		str					header, body, code, root;
 		bool				chunked, header_sent, keep_alive;
 		int					fd;
 		std::map<str, str>	http_codes;
@@ -30,6 +30,8 @@ class Response
 		void	setHeaderSent(bool sent);
 		void	setKeepAlive(bool keepAlive);
 		bool	isChunked() const;
+		void	setRoot(const str &str);
+		str		getRoot() const;
 		bool	headerSent() const;
 		bool	keepAlive() const;
 		bool 	doneSending() const;

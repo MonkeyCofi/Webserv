@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(): header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), fd(-1)
+Response::Response(): root("/"), header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -19,6 +19,7 @@ Response::Response(): header(""), body(""), code("200"), chunked(false), header_
 
 Response::Response(const Response &copy)
 {
+	this->root = copy.root;
 	this->header = copy.header;
 	this->body = copy.body;
 	this->code = copy.code;
@@ -41,7 +42,7 @@ Response::Response(const Response &copy)
 	http_codes["505"] = "HTTP Version Not Supported";
 }
 
-Response::Response(str code): header(""), body(""), code(code), chunked(false), header_sent(false), keep_alive(false), fd(-1)
+Response::Response(str code): root("/"), header(""), body(""), code(code), chunked(false), header_sent(false), keep_alive(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -215,6 +216,16 @@ Response &Response::operator =(const Response &copy)
 	this->fd = copy.fd;
 	this->keep_alive = copy.keep_alive;
 	return (*this);
+}
+
+void Response::setRoot(const str &str)
+{
+	this->root = str;
+}
+
+str Response::getRoot() const
+{
+	return this->root;
 }
 
 Response::~Response()

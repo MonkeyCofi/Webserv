@@ -199,6 +199,7 @@ Engine *ConfigParser::parse(str &fn, bool defaultConf)
 	{
 		if ((*it)->getNames().size() == 0)
 			(*it)->setDefault();
+		(*it)->passValuesToLocations();
 	}
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
     {

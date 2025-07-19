@@ -22,6 +22,7 @@ Request::Request()
 	this->host = "";
 	this->contentLength = 0;
 	this->contentType = "";
+	this->is_chunked = false;
 	this->keepAlive = true;
 	this->validRequest = false;
 	this->status = "400";
@@ -37,6 +38,7 @@ Request::Request()
 	this->partial_request = false;
 	this->cgi_started = false;
 	this->cgi = NULL;
+	this->bodyFd = -1;
 }
 
 Request::~Request()
@@ -64,6 +66,8 @@ Request	&Request::operator=(const Request& obj)
 	this->bytesReceived = obj.bytesReceived;
 	this->tempFileName = obj.tempFileName;
 	this->method = obj.method;
+	this->is_chunked = obj.is_chunked;
+	this->bodyFd = obj.bodyFd;
 	this->file_URI = obj.file_URI;
 	this->keepAlive = obj.keepAlive;
 	this->host = obj.host;
@@ -90,29 +94,50 @@ const char*	Request::NoHostException::what() const throw()
 
 int	Request::pushRequest(str &req)
 {
+	// -1: invalid
+	//  0: header incomplete
+	//  1: header complete
 	size_t	pos;
 
 	this->header += req;
 	if (this->header.length() > MAX_HEADER_SIZE)
 		return -1;
 	pos = this->header.find("\r\n\r\n");
+
+	// Header incomplete
 	if (pos == str::npos)
 		return 0;
+
+	// Header read fully
 	if (pos != this->header.length() - 4)
 	{
+		// There are left-overs!
 		req = this->header.substr(pos + 4);
 		this->header = this->header.substr(0, pos);
 		this->parseRequest(this->header);
+		if (!this->isCGI() && this->isChunked())
+			return -1;
 		if (this->method == "GET" || this->method == "DELETE")
 			return -1;
-		this->received_body_bytes += req.size();
 		this->headerReceived = true;
-		this->request += req;
 		return 1;
 	}
+	// No left-overs!
 	this->parseRequest(this->header);
 	this->headerReceived = true;
 	return 1;
+}
+
+int	Request::pushBody(char *buffer, size_t size)
+{
+	if (this->bodyFd == -1)
+	{
+		char	tempnam[] = "upload_XXXXXXXXXX";
+		this->bodyFd = mkstemp(tempnam);
+		fcntl(this->bodyFd, F_SETFL, O_NONBLOCK);
+		fcntl(this->bodyFd, F_SETFD, FD_CLOEXEC);
+	}
+	if (size + this->received_body_bytes > this->contentLength || size + this->received_body_bytes > )
 }
 
 bool Request::parseRequestLine(str &line)
@@ -178,6 +203,8 @@ void Request::setRequestField(str &header_field, str &field_content)
 	}
 	if (header_field == "content-length")
 		this->contentLength = std::atoi(field_content.c_str());
+	if (header_field == "transfer-encoding" && field_content == "chunked")
+		this->is_chunked = true;
 }
 
 Request	&Request::parseRequest(str& request)
@@ -262,9 +289,14 @@ bool	Request::getHeaderReceived() const
 	return (headerReceived);
 }
 
-std::fstream&	Request::getBodyFile()
+bool	Request::isChunked() const
 {
-	return (this->bodyFile);
+	return (this->is_chunked);
+}
+
+int	Request::getBodyFd() const
+{
+	return (this->bodyFd);
 }
 
 
