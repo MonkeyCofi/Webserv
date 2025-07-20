@@ -163,16 +163,16 @@ void ConnectionManager::printError(int revents)
 }
 
 // if cgi is requested, don't erase the request for the client_fd
-void ConnectionManager::passRequestToServer(int i, Request **req, 
-	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
+void ConnectionManager::passRequestToServer(int i, Request **req)
 {
 	std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
+	if (!(*req)->isValidRequest())
+		handlers.at(i) = defaults.at(i);
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
-	if ((*req)->isValidRequest())
-		handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, pollfds, cgiProcesses);
+	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, this->sock_fds, cgiProcesses);
 }
 
 void	ConnectionManager::closeSocket(unsigned int& index)
@@ -215,7 +215,7 @@ void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 		strcpy(uniqueName, ".tempXXXXXX");
 		int tmp = mkstemp(uniqueName);
 		str filename = str(uniqueName);
-		req->setTempFileName(filename);
+		// req->setTempFileName(filename);
 		// req->tempFileName = filename;
 
 		std::cout << "Trying to open with filename " << filename << "\n";
@@ -378,26 +378,38 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		outcome = req->pushRequest(_request);
 		switch (outcome)
 		{
-			case -1:
+			case 400:
+				req->setStatus("400");
+			case 502:
+				if (outcome == 501)
+					req->setStatus("501");
+				req->setValid(false);
 				return (INVALID);
 			case 1:
+				if (!req->isValidRequest())
+					return (INVALID);
+				else
+				{
+					if (servers_per_ippp[index].find(req->getHost()) == servers_per_ippp[index].end())
+						handlers.at(index) = defaults.at(index);
+					else if(req->isValidRequest())
+						handlers.at(index) = servers_per_ippp[index][req->getHost()];
+					if (handlers.at(index)->checkRequestValidity(req) == false)
+					{
+						req->setStatus((req->getContentLen() > handlers.at(index)->getMaxBodySize()) ? "501" : "405");
+						req->setValid(false);
+						return (INVALID);
+					}
+				}
 				barbenindex = _request.find("\r\n\r\n") + 4;
 				if (barbenindex < r) // If there are left-overs
 				{
-					if (!req->isCGI())
-					{
-						r = r - barbenindex;
-						std::memmove(buffer, buffer + barbenindex, r);
-						break ;
-					}
-					else
-					{
-						// Pierce handle this please, CGI left-overs send to fd
-					}
+					r = r - barbenindex;
+					std::memmove(buffer, buffer + barbenindex, r);
+					break ;
 				}
 				if (req->getContentLen() != 0)
 				{
-					std::cerr << req->getRequest() << "\n";
 					if (req->getReceivedBytes() == req->getContentLen())
 					{
 						std::cerr << "Fully received body bytes\n";
@@ -416,10 +428,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				return (INCOMPLETE);
 		}
 	}
-	if (req->getHeaderReceived() && req->getMethod() == "POST")
+	if (req->getHeaderReceived() && req->getMethod() == "POST" && !req->isCGI() && r > 0)
 	{
-		if (req->getBodyFd())
-			// open a new fd
 		outcome = req->pushBody(buffer, r);
 		switch(outcome)
 		{
@@ -550,7 +560,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 	}
 }
 
-bool	ConnectionManager::handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses)
+bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 {
 	CGIinfo* infoPtr = NULL;
 	int	pipe_fd = -1;
@@ -591,8 +601,7 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>
 	return (true);
 }
 
-void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests,
-	std::map<int, CGIinfo>& cgiProcesses)
+void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests)
 {
 	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
 	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
@@ -603,15 +612,20 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		std::cout << "Creating a new request for fd " << sock_fds.at(i).fd << "\n";
 	}
 	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
+	if (state == INVALID)
+	{
+		this->sock_fds[i].events &= ~POLLIN;
+		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
+	}
 	if (state == FINISH || state == HEADER_FINISHED)
 	{
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
-		this->passRequestToServer(i, &requests[sock_fds.at(i).fd], sock_fds, cgiProcesses);
+		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
 	}
 }
 
-void	ConnectionManager::handleCGIread(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses)
+void	ConnectionManager::handleCGIread(unsigned int& i)
 {
 	ssize_t r;
 	char	buffer[BUFFER_SIZE + 1] = {0};
@@ -671,7 +685,6 @@ void ConnectionManager::startConnections()
 {
 	int						res;
 	State					state = INCOMPLETE;
-	std::map<int, CGIinfo>	cgiProcesses;	// key is read_end, value is CGIinfo object
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -704,18 +717,18 @@ void ConnectionManager::startConnections()
 				{
 					std::cout << "in CGI pollin\n";
 					std::cout << "Found " << sock_fds.at(i).fd << " in the map of fds\n";
-					handleCGIread(i, cgiProcesses);
+					handleCGIread(i);
 				}
 				else
 				{
 					std::cout << "in normal POLLIN\n";
-					handlePollin(i, state, requests, cgiProcesses);
+					handlePollin(i, state, requests);
 					continue ;
 				}
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				if (handleCGIPollout(i, cgiProcesses) == true)
+				if (handleCGIPollout(i) == true)
 					continue ;
 				handlePollout(state, i, requests);
 			}

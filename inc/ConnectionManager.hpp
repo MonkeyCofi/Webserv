@@ -81,6 +81,7 @@ class ConnectionManager
 		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::map<int, Request *>				requests;
+		std::map<int, CGIinfo>	 				cgiProcesses;
 		std::string								request_header;
 		std::fstream							request_body;
 		int										cgi_pipes[2];
@@ -96,7 +97,7 @@ class ConnectionManager
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 
-		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
+		void		passRequestToServer(int i, Request **req);
 		void		closeSocket(unsigned int& index);
 
 		void		openTempFile(Request* req, std::fstream& file);
@@ -105,12 +106,12 @@ class ConnectionManager
 
 		void		deleteTempFiles();
 
-		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, CGIinfo>& cgiProcesses);
+		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests);
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
 
-		bool		handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses);
+		bool		handleCGIPollout(unsigned int& i);
 
-		void		handleCGIread(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses);
+		void		handleCGIread(unsigned int& i);
 
 	public:
 		ConnectionManager(Http *protocol);

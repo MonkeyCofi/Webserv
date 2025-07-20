@@ -17,7 +17,7 @@ class Response
 		int					fd;
 		std::map<str, str>	http_codes;
 		size_t				sent_bytes;
-		std::vector<str>	index_files;
+		std::vector<str>	index_files, allowed_methods;
 
 	public:
 		Response();
@@ -33,6 +33,10 @@ class Response
 		void	setKeepAlive(bool keepAlive);
 		bool	isChunked() const;
 		void	setRoot(const str &str);
+		std::vector<str>	&getAllowedMethods();
+		/// @brief 
+		/// @param all 
+		void	setAllowedMethods(std::vector<str> &all);
 		str		getRoot() const;
 		void	setAutoIndex(bool autoidx);
 		bool	getAutoIndex() const;

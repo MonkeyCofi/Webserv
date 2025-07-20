@@ -180,6 +180,19 @@ bool Server::handleDirective(std::queue<str> opts)
 		min_del_depth = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
+	else if (opts.front() == "max_body_size" && opts.size() == 2)
+	{
+		opts.pop();
+		if (opts.front().length() > 10)
+			return false;
+		for (unsigned int i = 0; i < opts.front().length(); i++)
+		{
+			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
+				return false;
+		}
+		client_max_body = std::atoi(opts.front().c_str());
+		opts.pop();
+	}
 	else
 		return parent_ret;
 	return true;
@@ -286,11 +299,21 @@ void Server::handleError(str error_code, int client_fd)
 {
 	bool	keep;
 	int		fd;
+	str		s;
 
 	keep = this->response[client_fd].keepAlive();
 	this->response[client_fd].clear();
 	this->response[client_fd].setCode(error_code);
 	this->response[client_fd].setKeepAlive(keep);
+	if (error_code == "405")
+	{
+		s = "";
+		for (std::vector<str>::iterator it = this->response[client_fd].getAllowedMethods().begin(); it != this->response[client_fd].getAllowedMethods().end(); it++)
+			s += *it + ", ";
+		if (s.length() > 2)
+			s = s.substr(0, s.length() - 2);
+		this->response[client_fd].setHeaderField("Allow", s);
+	}
 	if (error_pages.find(error_code) == error_pages.end() || (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
 		this->response[client_fd].setBody(this->response[client_fd].errorPage(error_code), "text/html");
@@ -465,7 +488,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	{
 		if (!loco->isAllowedMethod(req->getMethod()))
 		{
-			handleError("403", client_fd);
+			handleError("405", client_fd);
 			return ;
 		}
 		this->response[client_fd].setRoot(loco->getRoot());
@@ -625,6 +648,8 @@ bool Server::checkRequestValidity(Request *req)
 
 	if (!req->isValidRequest())
 		return false;
+	if (req->getContentLen() > client_max_body)
+		return false;
 	loco = this->matchLocation(req->getFileURI());
 	if (loco)
 	{
@@ -774,6 +799,11 @@ bool Server::operator ==(Server &server2)
 		}
 	}
 	return same_name && same_ipport;
+}
+
+size_t	Server::getMaxBodySize() const
+{
+	return this->client_max_body;
 }
 
 // new functions

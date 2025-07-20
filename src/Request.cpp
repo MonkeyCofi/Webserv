@@ -100,7 +100,7 @@ int	Request::pushRequest(str &req)
 
 	this->header += req;
 	if (this->header.length() > MAX_HEADER_SIZE)
-		return -1;
+		return 400;
 	pos = this->header.find("\r\n\r\n");
 
 	// Header incomplete
@@ -115,9 +115,9 @@ int	Request::pushRequest(str &req)
 		this->header = this->header.substr(0, pos);
 		this->parseRequest(this->header);
 		if (!this->isCGI() && this->isChunked())
-			return -1;
+			return 501;
 		if (this->method == "GET" || this->method == "DELETE")
-			return -1;
+			return 400;
 		this->headerReceived = true;
 		return 1;
 	}
@@ -127,16 +127,105 @@ int	Request::pushRequest(str &req)
 	return 1;
 }
 
+
+
 int	Request::pushBody(char *buffer, size_t size)
 {
-	if (this->bodyFd == -1)
+	str		line, tmp;
+	bool	reading_content;
+
+	if (size + this->received_body_bytes > this->contentLength)
+		return 400;
+	line = str(buffer);
+	for (int i = 0; i < line.length(); i++)
+		line[i] = std::tolower(line[i]);
+	if (line.find("content-type: ") != str::npos)
 	{
-		char	tempnam[] = "upload_XXXXXXXXXX";
-		this->bodyFd = mkstemp(tempnam);
-		fcntl(this->bodyFd, F_SETFL, O_NONBLOCK);
-		fcntl(this->bodyFd, F_SETFD, FD_CLOEXEC);
+		// text/plain -> .txt
+		// image/x-icon -> .ico
+		// text/$$ -> .$$
+		// image/$$ -> .$$
+		// sound/$$ -> .$$
+		// video/$$ -> .$$
+		tmp = line.substr(line.find("content-type: ") + 14);
+		tmp = tmp.substr(0, tmp.find("\r\n"));
+		if (tmp.find("text/plain") != str::npos)
+			this->fileType = ".txt";
+		else if (tmp.find("image/x-icon") != str::npos)
+			this->fileType = ".ico";
+		else if (tmp.find("image/") != str::npos)
+			this->fileType = "." + tmp.substr(tmp.find("image/") + 6, tmp.find_first_of(" \t"));
+		else if (tmp.find("sound/") != str::npos)
+			this->fileType = "." + tmp.substr(tmp.find("sound/") + 6, tmp.find_first_of(" \t"));
+		else if (tmp.find("video/") != str::npos)
+			this->fileType = "." + tmp.substr(tmp.find("video/") + 6, tmp.find_first_of(" \t"));
+		else if (tmp.find("text/") != str::npos)
+			this->fileType = "." + tmp.substr(tmp.find("text/") + 5, tmp.find_first_of(" \t"));
+		reading_content = true;
 	}
-	// if (size + this->received_body_bytes > this->contentLength || size + this->received_body_bytes > )
+	if (line.find("content-disposition: ") != str::npos)
+		reading_content = true;
+	if (reading_content == true)
+	{
+		std::cout << "putting data to file\n";
+		if (this->bodyFd == -1)
+		{
+			char	tempnam[255] = "upload_XXXXXXXXXX";
+			for (int i = 0; i < 255 - 17 && i < this->fileType.length(); i++)
+				tempnam[17 + i] = this->fileType[i];
+			this->bodyFd = mkstemp(tempnam);
+			fcntl(this->bodyFd, F_SETFL, O_NONBLOCK);
+			fcntl(this->bodyFd, F_SETFD, FD_CLOEXEC);
+		}
+		if (size == 0)
+		{
+			if (prevBoundPos)
+				newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
+			break ;
+		}
+		total += r;
+		k = 0;
+		while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
+			k++;
+		if (k + prevBoundPos == boundary.length())
+		{
+			// handle found boundary
+			break ;
+		}
+		else if (prevBoundPos)
+		{
+			newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
+		}
+		prevBoundPos = 0;
+		i = 0;
+		for (; i < r; i++)
+		{
+			j = 0;
+			while (j < boundary.length() && i + j < r && buffer[i + j] == boundary[j])
+				j++;
+			if (j == boundary.length())	// this means some characters matched the boundary at the end of buffer
+			{
+				if (i > 0)
+				{
+					newFile.write(&buffer[0], i);
+				}
+				sheet = false;
+				break ;
+			}
+			if (i + j == r)	// this means some characters matched the boundary at the end of buffer
+			{
+				// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
+				prevBoundPos = j;
+				break;
+			}
+		}
+		if (i && sheet)
+			newFile.write(&buffer[0], i);
+		newFile.close();
+		tempFile.seekg(i);
+		reading_content = false;
+		(void)boundaryPosInFile;
+	}
 }
 
 bool Request::parseRequestLine(str &line)
@@ -291,6 +380,16 @@ bool	Request::getHeaderReceived() const
 bool	Request::isChunked() const
 {
 	return (this->is_chunked);
+}
+
+void Request::setStatus(const str &status)
+{
+	this->status = status;
+}
+
+void Request::setValid(bool valid)
+{
+	this->validRequest = valid;
 }
 
 int	Request::getBodyFd() const

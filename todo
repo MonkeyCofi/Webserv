@@ -6,3 +6,6 @@ POST request handle header fields
 POST request handle json??
 loading another client while a cgi script is executing
 memory usage
+
+
+DONE (!) Add a MUST-HAVE header field called "Accept" with the allowed HTTP methods in response to an invalid method

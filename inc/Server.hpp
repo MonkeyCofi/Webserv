@@ -40,6 +40,7 @@ class Server: public BlockOBJ
 			FINISH
 		}	ResponseState;
 
+		size_t					client_max_body;
 		str						root;
 		bool					autoindex;
 		unsigned int			min_del_depth;
@@ -89,6 +90,7 @@ class Server: public BlockOBJ
 		std::vector<str>			getPorts();
 		std::vector<Location *>		getLocations();
 		ResponseState				getState() const;
+		size_t						getMaxBodySize() const;
 
 		/********************/
 		/*		setters		*/

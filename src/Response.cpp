@@ -9,8 +9,12 @@ Response::Response(): root("/"), header(""), body(""), code("200"), chunked(fals
 	http_codes["301"] = "Redirect";
 	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
+	http_codes["307"] = "Temporary Redirect";
+	http_codes["308"] = "Permanent Redirect";
+	http_codes["400"] = "Bad Request";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
+	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
@@ -34,8 +38,12 @@ Response::Response(const Response &copy)
 	http_codes["301"] = "Redirect";
 	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
+	http_codes["307"] = "Temporary Redirect";
+	http_codes["308"] = "Permanent Redirect";
+	http_codes["400"] = "Bad Request";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
+	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
@@ -51,8 +59,12 @@ Response::Response(str code): root("/"), header(""), body(""), code(code), chunk
 	http_codes["301"] = "Redirect";
 	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
+	http_codes["307"] = "Temporary Redirect";
+	http_codes["308"] = "Permanent Redirect";
+	http_codes["400"] = "Bad Request";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
+	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
@@ -221,6 +233,16 @@ Response &Response::operator =(const Response &copy)
 void Response::setRoot(const str &str)
 {
 	this->root = str;
+}
+
+std::vector<str> &Response::getAllowedMethods()
+{
+    return allowed_methods;
+}
+
+void Response::setAllowedMethods(std::vector<str> &all)
+{
+	this->allowed_methods = all;
 }
 
 str Response::getRoot() const

@@ -48,7 +48,7 @@ class Request
 		std::string			header;
 		std::string			contentType;
 		std::string			body_boundary;
-		std::string			tempFileName;
+		std::string			fileType;
 		std::fstream		bodyFile;
 		size_t				contentLength;
 		size_t				received_body_bytes;
@@ -118,6 +118,8 @@ class Request
 		bool	isPartial() const;
 		bool	isCompleteRequest() const;
 		bool	isChunked() const;
+		void	setStatus(const str &status);
+		void	setValid(bool valid);
 
 		class	NoHostException: public std::exception
 		{
