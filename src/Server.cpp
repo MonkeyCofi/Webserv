@@ -253,7 +253,7 @@ void Server::passValuesToLocations()
 	{
 		(*it)->setAutoIndex(this->autoindex);
 		(*it)->setRoot(this->root);
-		(*it)->setIndexFiles(this->index_pages);
+		(*it)->setIndexFiles(this->index);
 	}
 }
 
@@ -340,11 +340,12 @@ bool Server::isDirectory(const std::string& path)
 
 void Server::directoryResponse(Request* req, str path, int client_fd)
 {
-	str				indexpath, full_path, filename, body;
-    DIR				*dir;
-	int				file_fd;
-	bool			redir;
-    struct dirent	*item;
+	str					indexpath, full_path, filename, body;
+    DIR					*dir;
+	int					file_fd;
+	bool				redir;
+    struct dirent		*item;
+	std::vector<str>	idx_pages;
 
 	redir = false;
 	if (path.at(path.length() - 1) != '/')
@@ -354,19 +355,20 @@ void Server::directoryResponse(Request* req, str path, int client_fd)
 	}
 	full_path = this->response[client_fd].getRoot() + path;
 	std::cout << RED << 1 << NL;
-	for (unsigned int i = 0; i < this->index.size(); i++)
+	idx_pages = this->response[client_fd].getIndexFiles();
+	for (unsigned int i = 0; i < idx_pages.size(); i++)
 	{
-		indexpath = full_path + index.at(i);
+		indexpath = full_path + idx_pages.at(i);
 		file_fd = open(indexpath.c_str(), O_RDONLY);
 		if (file_fd > -1)
 		{
 			std::cout << GREEN << "FileREsponsing In th3 d1r3ct0ry!\n" << RESET;
-			fileResponse(req, path + index.at(i), file_fd, client_fd);
+			fileResponse(req, path + idx_pages.at(i), file_fd, client_fd);
 			return ;
 		}
-		else if (i != index.size() - 1)
+		else if (i != idx_pages.size() - 1)
 			continue ;
-		else if (!autoindex)
+		else if (!this->response[client_fd].getAutoIndex())
 		{
 			handleError("403", client_fd);
 			return ;
@@ -456,13 +458,28 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 		return ;
 	}
 	this->response[client_fd].setRoot(this->root);
+	this->response[client_fd].setAutoIndex(this->autoindex);
+	this->response[client_fd].setIndexFiles(this->index);
 	loco = this->matchLocation(file);
 	if (loco)
 	{
-		this->response[client_fd].setRoot(loco->getRoot());
 		if (!loco->isAllowedMethod(req->getMethod()))
 		{
 			handleError("403", client_fd);
+			return ;
+		}
+		this->response[client_fd].setRoot(loco->getRoot());
+		this->response[client_fd].setAutoIndex(loco->getAutoIndex());
+		this->response[client_fd].setIndexFiles(loco->getIndexFiles());
+		uri = loco->getRedirUri();
+		if (uri != "")
+		{
+			if (loco->getPermRedir())
+				this->response[client_fd].setCode("308");
+			else
+				this->response[client_fd].setCode("307");
+			this->response[client_fd].setKeepAlive(req->shouldKeepAlive());
+			this->response[client_fd].setHeaderField("Location", uri);
 			return ;
 		}
 	}
@@ -602,7 +619,23 @@ Server::ResponseState	Server::getState() const
 	return (this->responseState);
 }
 
-bool	Server::cgiRespond(CGIinfo* infoPtr)
+bool Server::checkRequestValidity(Request *req)
+{
+	Location	*loco;
+
+	if (!req->isValidRequest())
+		return false;
+	loco = this->matchLocation(req->getFileURI());
+	if (loco)
+	{
+		if (!loco->isAllowedMethod(req->getMethod()))
+			return false;
+		req->setDestURI(loco->getSaveFolder());
+	}
+	return true;
+}
+
+bool Server::cgiRespond(CGIinfo* infoPtr)
 {
 	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();

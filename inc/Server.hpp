@@ -100,6 +100,7 @@ class Server: public BlockOBJ
 
 		bool	respond(int client_fd);
 		bool	cgiRespond(CGIinfo* infoPtr);
+		bool	checkRequestValidity(Request *req);
 
 		const Server	&operator =(const Server &copy);
 		bool			operator ==(Server &server2);

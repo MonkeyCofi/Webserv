@@ -228,6 +228,16 @@ str Response::getRoot() const
 	return this->root;
 }
 
+void Response::setAutoIndex(bool autoidx)
+{
+	this->autoindex = autoidx;
+}
+
+bool Response::getAutoIndex() const
+{
+	return this->autoindex;
+}
+
 Response::~Response()
 {
 
@@ -249,4 +259,12 @@ size_t	Response::getSentBytes() const
 void	Response::addSentBytes(size_t value)
 {
 	this->sent_bytes += value;
+}
+
+const std::vector<str>& Response::getIndexFiles() const {
+	return this->index_files;
+}
+
+void Response::setIndexFiles(const std::vector<str>& files) {
+	this->index_files = files;
 }

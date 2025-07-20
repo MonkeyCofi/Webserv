@@ -62,7 +62,6 @@ Request	&Request::operator=(const Request& obj)
 	if (&obj == this)
 		return (*this);
 	this->header = obj.header;
-	this->request = obj.request;
 	this->bytesReceived = obj.bytesReceived;
 	this->tempFileName = obj.tempFileName;
 	this->method = obj.method;
@@ -137,7 +136,7 @@ int	Request::pushBody(char *buffer, size_t size)
 		fcntl(this->bodyFd, F_SETFL, O_NONBLOCK);
 		fcntl(this->bodyFd, F_SETFD, FD_CLOEXEC);
 	}
-	if (size + this->received_body_bytes > this->contentLength || size + this->received_body_bytes > )
+	// if (size + this->received_body_bytes > this->contentLength || size + this->received_body_bytes > )
 }
 
 bool Request::parseRequestLine(str &line)
@@ -299,10 +298,14 @@ int	Request::getBodyFd() const
 	return (this->bodyFd);
 }
 
-
 const str& Request::getFileURI() const
 {
 	return file_URI;
+}
+
+const str& Request::getDestURI() const
+{
+	return destination_URI;
 }
 
 const str& Request::getMethod() const
@@ -335,11 +338,6 @@ size_t Request::getContentLen()
 	return contentLength;
 }
 
-const str&	Request::getRequest() const
-{
-	return (this->request);
-}
-
 const str&	Request::getTempFileName() const
 {
 	return (this->tempFileName);
@@ -350,11 +348,6 @@ void	Request::setFullyReceived(const bool status)
 	this->fullyReceived = status;
 }
 
-void	Request::clearVector()
-{
-	this->request.clear();
-}
-
 void	Request::setHeaderReceived(const bool status)
 {
 	this->headerReceived = status;
@@ -363,11 +356,6 @@ void	Request::setHeaderReceived(const bool status)
 void	Request::setHasBody(const bool status)
 {
 	this->has_body = status;
-}
-
-void	Request::setTempFileName(const str file)
-{
-	this->tempFileName = file;
 }
 
 bool	Request::isCGI() const
@@ -408,4 +396,9 @@ void	Request::setCGIstarted()
 void	Request::setCgi(Cgi* _cgi)
 {
 	this->cgi = _cgi;
+}
+
+void Request::setDestURI(const str &dest)
+{
+	this->destination_URI = dest;
 }

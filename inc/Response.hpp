@@ -2,6 +2,7 @@
 #define RESPONSE_HPP
 
 #include <sstream>
+#include <vector>
 #include <map>
 #include <iostream>
 #include <cstdlib>
@@ -12,10 +13,11 @@ class Response
 {
 	private:
 		str					header, body, code, root;
-		bool				chunked, header_sent, keep_alive;
+		bool				chunked, header_sent, keep_alive, autoindex;
 		int					fd;
 		std::map<str, str>	http_codes;
 		size_t				sent_bytes;
+		std::vector<str>	index_files;
 
 	public:
 		Response();
@@ -32,6 +34,8 @@ class Response
 		bool	isChunked() const;
 		void	setRoot(const str &str);
 		str		getRoot() const;
+		void	setAutoIndex(bool autoidx);
+		bool	getAutoIndex() const;
 		bool	headerSent() const;
 		bool	keepAlive() const;
 		bool 	doneSending() const;
@@ -42,6 +46,8 @@ class Response
 		void	clear();
 		size_t	getSentBytes() const;
 		void	addSentBytes(size_t value);
+		const std::vector<str>& getIndexFiles() const;
+		void setIndexFiles(const std::vector<str>& files);
 
 		Response	&operator =(const Response &copy);
 		~Response();

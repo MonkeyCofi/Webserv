@@ -42,6 +42,7 @@ class Request
 	private:
 		std::string			host;
 		std::string			method;
+		std::string			destination_URI;
 		std::string			status;
 		std::string			file_URI;
 		std::string			header;
@@ -93,7 +94,7 @@ class Request
 		const std::string&		getStatus() const;
 		const std::string&		getHost() const;
 		const std::string&		getBoundary() const;
-		const std::string&		getRequest() const;
+		const std::string&		getDestURI() const;
 		const std::string&		getTempFileName() const;
 		int						getBodyFd() const;
 		size_t					getContentLen();
@@ -107,16 +108,12 @@ class Request
 		/********************/
 		/*		setters		*/
 		/********************/
+		void	setDestURI(const str &dest);
 		void	setFullyReceived(const bool status);
-		void	setTempFileName(const std::string file);
 		void	setHeaderReceived(const bool status);
 		void	setCgi(Cgi* _cgi);
-
 		bool	getCGIstarted() const;
 		void	setCGIstarted();
-
-		void	clearVector();
-
 		void	setPartialRequest(bool cond);
 		bool	isPartial() const;
 		bool	isCompleteRequest() const;
