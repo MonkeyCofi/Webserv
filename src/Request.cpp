@@ -39,6 +39,8 @@ Request::Request()
 	this->cgi_started = false;
 	this->cgi = NULL;
 	this->bodyFd = -1;
+	this->left_overs = NULL;
+	this->left_over_size = 0;
 }
 
 Request::~Request()
@@ -83,6 +85,8 @@ Request	&Request::operator=(const Request& obj)
 	this->partial_request = obj.partial_request;
 	this->cgi_started = obj.cgi_started;
 	this->cgi = NULL;
+	this->left_overs = NULL;
+	this->left_over_size = 0;
 	return (*this);
 }
 
@@ -500,4 +504,27 @@ void	Request::setCgi(Cgi* _cgi)
 void Request::setDestURI(const str &dest)
 {
 	this->destination_URI = dest;
+}
+
+void	Request::setLeftOvers(char* buf, size_t r)
+{
+	if (buf == NULL)
+	{
+		this->left_overs = NULL;
+		return ;
+	}
+	this->left_overs = new char[r + 1];
+	for (size_t i = 0; i < r; i++)
+		this->left_overs[i] = buf[i];
+	this->left_over_size = r;
+}
+
+char*	Request::getLeftOvers() const
+{
+	return (this->left_overs);
+}
+
+size_t	Request::getLeftOverSize() const
+{
+	return (this->left_over_size);
 }

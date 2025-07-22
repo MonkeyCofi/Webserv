@@ -360,8 +360,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	char		buffer[BUFFER_SIZE + 1];
 
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
-	// if (req->getMethod() == "POST")
-	// 	std::cerr << "Received " << r << " bytes\n";
 	if (r < 0)
 		return (INCOMPLETE);
 	if (r == 0)
@@ -371,6 +369,10 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	// 1- Have a function like pushRequest that handles body parts (pushBody). For example discards the boundaries and body fields and saves the files.
 	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
+	if (req->getHeaderReceived())	// this means this was a partially received request
+	{
+
+	}
 	if (!req->getHeaderReceived())
 	{
 		buffer[r] = 0;
@@ -402,11 +404,13 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					}
 				}
 				barbenindex = _request.find("\r\n\r\n") + 4;
-				if (barbenindex < r) // If there are left-overs
+				if (barbenindex < r) // If there are left-overs.
 				{
 					r = r - barbenindex;
 					std::memmove(buffer, buffer + barbenindex, r);
-					break ;
+					req->setLeftOvers(buffer, r);	// add leftovers to the request object
+					if (!req->isCGI())
+						break ;
 				}
 				if (req->getContentLen() != 0)
 				{
@@ -443,7 +447,6 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				return (INCOMPLETE);
 		}
 	}
-	//
 	(void)state;
 }
 

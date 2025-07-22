@@ -44,6 +44,8 @@ class Cgi
 		char**   	envToChar();
 		std::string	validScriptAccess() const;
 		int*		get_stdin();
+		void		dupAndClose(int fd1, int fd2);
+		void		setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int events);
 };
 
 #endif

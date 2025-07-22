@@ -130,6 +130,24 @@ std::string	Cgi::validScriptAccess() const
 	return ("404");
 }
 
+void	Cgi::dupAndClose(int fd1, int fd2)
+{
+	dup2(fd1, fd2);
+	close(fd1);
+}
+
+void	Cgi::setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int events)
+{
+	struct pollfd	pfd;
+
+	pfd.fd = fd;
+	fcntl(pfd.fd, F_SETFD, FD_CLOEXEC);
+	fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
+	pfd.events = events;
+	pfd.revents = 0;
+	pollfds.push_back(pfd);
+}
+
 std::string	Cgi::runCGI(int& client_fd, Server* server, 
 		Request* req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
@@ -140,7 +158,6 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		// if script is not accessible, respond with error page
 		return (access_status);
 	}
-	std::cout << "running cgi script\n";
 	if (pipe(this->pipe_fds) == -1)	// if pipe fails, internal server error
 	{
 		std::cout << "returning 500\n";
@@ -150,7 +167,15 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 	{
 		if (pipe(this->stdin_fds) == -1)
 			return ("500");
-		std::cerr << "opened stdin pipese for CGI POST request\n";
+		setAndAddPollFd(this->stdin_fds[WRITE], pollfds, POLLIN);
+		std::cerr << "opened stdin pipes for CGI POST request\n";
+		// struct pollfd	in;
+		// fcntl(this->stdin_fds[WRITE], F_SETFD, FD_CLOEXEC);
+		// fcntl(this->stdin_fds[WRITE], F_SETFL, O_NONBLOCK);
+		// in.fd = this->stdin_fds[WRITE];
+		// in.events = POLLIN;
+		// in.revents = 0;
+		// pollfds.push_back(in);
 	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
@@ -159,15 +184,12 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		const char* cmd = "/usr/bin/php";
 		const char *const argv[3] = {cmd, script_path.c_str(), NULL};
 		char* const* envp = envToChar();
-		if (this->stdin_fds[READ] != -1)
-		{
+
+		if (this->stdin_fds[WRITE] != -1)
 			close(this->stdin_fds[WRITE]);
-			std::cerr << "Dup2\n";
-			dup2(this->stdin_fds[READ], STDIN_FILENO);
-		}
 		close(this->pipe_fds[READ]);
-		dup2(pipe_fds[WRITE], STDOUT_FILENO);
-		close(pipe_fds[WRITE]);
+		dupAndClose(this->stdin_fds[READ], STDIN_FILENO);
+		dupAndClose(this->pipe_fds[WRITE], STDOUT_FILENO);
 
 		// std::cout << "Executing script in child process\n";
 		execve(cmd, const_cast<char **>(argv), envp);
@@ -179,21 +201,19 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 	}
 	else
 	{
-		if (this->stdin_fds[WRITE] != -1)
-		{
-			write(this->stdin_fds[WRITE], req->getRequest().c_str(), req->getRequest().size());
-			close(this->stdin_fds[WRITE]);
-		}
+		if (this->stdin_fds[READ] != -1)
+			close(this->stdin_fds[READ]);
 		close(pipe_fds[WRITE]);
-		fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
-		fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);
+		setAndAddPollFd(pipe_fds[READ], pollfds, POLLIN);
+		// fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
+		// fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);
 
-		struct pollfd read_fd;
-		read_fd.events = POLLIN;
-		read_fd.revents = 0;
-		read_fd.fd = pipe_fds[READ];
-		std::cout << "Pushing " << read_fd.fd << " into map for client " << client_fd << "\n";
-		pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
+		// struct pollfd read_fd;
+		// read_fd.events = POLLIN;
+		// read_fd.revents = 0;
+		// read_fd.fd = pipe_fds[READ];
+		// std::cout << "Pushing " << read_fd.fd << " into map for client " << client_fd << "\n";
+		// pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
 	}
 	return ("200");

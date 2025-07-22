@@ -63,6 +63,8 @@ class Request
 		Cgi*				cgi;
 		bool				cgi_started;
 		int					bodyFd;
+		char				*left_overs;
+		size_t				left_over_size;
 
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, std::string &field_conent);
@@ -120,6 +122,9 @@ class Request
 		bool	isChunked() const;
 		void	setStatus(const str &status);
 		void	setValid(bool valid);
+		void	setLeftOvers(char* buf, size_t r);
+		char*	getLeftOvers() const;
+		size_t	getLeftOverSize() const;
 
 		class	NoHostException: public std::exception
 		{

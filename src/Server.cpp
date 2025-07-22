@@ -532,14 +532,6 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	{
 		if (cgi && req->getCGIstarted() == false)
 		{
-			// std::cerr << "Starting up POST CGI process\n";
-			// Cgi	cgi(file, this);
-			// str	cgi_status;
-			// if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
-			// {
-			// 	handleError(cgi_status, client_fd);
-			// 	return ;
-			// }
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 			Cgi	*cgi = new Cgi(file, this);
 			std::string	cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
@@ -550,6 +542,14 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 			}
 			req->setCgi(cgi);
 			req->setCGIstarted();
+			// if there are leftovers bytes, write them to the stdin_pipes of the cgi object
+			const char*	leftovers = req->getLeftOvers();
+			if (leftovers != NULL)
+			{
+				write(cgi->get_stdin()[WRITE], leftovers, req->getLeftOverSize());
+				delete req->getLeftOvers();
+				req->setLeftOvers(NULL, 0);
+			}
 		}
 		else if (cgi && req->getCGIstarted())
 		{
