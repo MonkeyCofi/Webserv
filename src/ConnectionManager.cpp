@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "ConnectionManager.hpp"
+#include "Cgi.hpp"
 
 unsigned int	ConnectionManager::number = 0;
 bool	g_quit = false;
@@ -198,11 +199,6 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
-// void	ConnectionManager::handleCGIfd()
-// {
-	
-// }
-
 void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
 {
 	// the filename is stored in the request object
@@ -352,6 +348,14 @@ void	ConnectionManager::parseBodyFile(Request* req)
 		std::remove(req->getTempFileName().c_str());
 }
 
+/*
+	this function is called in handlePollin
+	it returns a state which is either: INVALID, INCOMPLETE, HEADER_FINISHED, and FINISHED
+	INVALID typically means its an invalid request
+	INCOMPLETE means the request was partially received and there is still more to receive
+	HEADER_FINISHED means that the header has been received and parsed, so it should now be passed to the server. This is only possible if POST request
+	FINISHED means that the request has been fully received, with its headers parsed, and it is now ready to be sent to its appropriate handler
+*/
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	std::string	_request;
@@ -369,11 +373,16 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	// 1- Have a function like pushRequest that handles body parts (pushBody). For example discards the boundaries and body fields and saves the files.
 	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
-	if (req->getHeaderReceived())	// this means this was a partially received request
+	if (req->getHeaderReceived())
 	{
-
+		req->addReceivedBytes(r);
+		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
+		{
+			Cgi* cgi = req->getCgiObj();
+			cgi->writeToFd(cgi->get_stdin()[WRITE], buffer, r, req);
+		}
 	}
-	if (!req->getHeaderReceived())
+	else
 	{
 		buffer[r] = 0;
 		_request = str(buffer);
@@ -408,9 +417,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				{
 					r = r - barbenindex;
 					std::memmove(buffer, buffer + barbenindex, r);
-					req->setLeftOvers(buffer, r);	// add leftovers to the request object
 					if (!req->isCGI())
 						break ;
+					req->setLeftOvers(buffer, r);	// add leftovers to the request object
 				}
 				if (req->getContentLen() != 0)
 				{
@@ -620,7 +629,7 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		this->sock_fds[i].events &= ~POLLIN;
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
-	if (state == FINISH || state == HEADER_FINISHED)
+	if (state == FINISH || state == HEADER_FINISHED)	// HEADER_FINISHED indicates partial request
 	{
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);

@@ -28,6 +28,7 @@ class Cgi
 		int							pipe_fds[2];
 		int							stdin_fds[2];
 		pid_t						cgi_fd;
+		ssize_t						written_bytes;
 		Cgi();	// make default constructor inaccessible
 	public:
 		~Cgi();
@@ -46,6 +47,7 @@ class Cgi
 		int*		get_stdin();
 		void		dupAndClose(int fd1, int fd2);
 		void		setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int events);
+		void		writeToFd(int fd, char *buf, size_t r, Request* req);
 };
 
 #endif

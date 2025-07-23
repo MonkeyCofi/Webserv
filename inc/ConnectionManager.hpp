@@ -59,6 +59,8 @@
 
 typedef std::string str;
 
+class Cgi;
+
 class ConnectionManager
 {
 	private:

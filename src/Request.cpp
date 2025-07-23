@@ -528,3 +528,13 @@ size_t	Request::getLeftOverSize() const
 {
 	return (this->left_over_size);
 }
+
+void	Request::addReceivedBytes(size_t received)
+{
+	this->received_body_bytes += received;
+}
+
+Cgi*	Request::getCgiObj()
+{
+	return (this->cgi);
+}

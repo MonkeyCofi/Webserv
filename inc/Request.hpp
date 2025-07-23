@@ -124,7 +124,10 @@ class Request
 		void	setValid(bool valid);
 		void	setLeftOvers(char* buf, size_t r);
 		char*	getLeftOvers() const;
+		void	addReceivedBytes(size_t received);
 		size_t	getLeftOverSize() const;
+
+		Cgi*	getCgiObj();
 
 		class	NoHostException: public std::exception
 		{
