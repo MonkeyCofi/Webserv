@@ -166,7 +166,7 @@ void ConnectionManager::printError(int revents)
 // if cgi is requested, don't erase the request for the client_fd
 void ConnectionManager::passRequestToServer(int i, Request **req)
 {
-	std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
+	// std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (!(*req)->isValidRequest())
 		handlers.at(i) = defaults.at(i);
 	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
@@ -199,154 +199,154 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
-void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
-{
-	// the filename is stored in the request object
-	// store the temp files in a vector
-	// when the server is closed, delete every file in the vector
-	if (file.is_open() == false)	// open temp file for reading message body
-	{
+// void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
+// {
+// 	// the filename is stored in the request object
+// 	// store the temp files in a vector
+// 	// when the server is closed, delete every file in the vector
+// 	if (file.is_open() == false)	// open temp file for reading message body
+// 	{
 
-		char uniqueName[255] = {0};
-		strcpy(uniqueName, ".tempXXXXXX");
-		int tmp = mkstemp(uniqueName);
-		str filename = str(uniqueName);
-		// req->setTempFileName(filename);
-		// req->tempFileName = filename;
+// 		char uniqueName[255] = {0};
+// 		strcpy(uniqueName, ".tempXXXXXX");
+// 		int tmp = mkstemp(uniqueName);
+// 		str filename = str(uniqueName);
+// 		// req->setTempFileName(filename);
+// 		// req->tempFileName = filename;
 
-		std::cout << "Trying to open with filename " << filename << "\n";
-		close(tmp);
-		file.open(filename.c_str(), std::ios::binary | std::ios::out);
-		if (file.fail())
-		{
-			perror("Open");
-			throw (std::runtime_error("Couldn't open temp file\n"));
-		}
-		else if (file.good())
-		{
-			// this->tempFileNames.push_back(filename);
+// 		std::cout << "Trying to open with filename " << filename << "\n";
+// 		close(tmp);
+// 		file.open(filename.c_str(), std::ios::binary | std::ios::out);
+// 		if (file.fail())
+// 		{
+// 			perror("Open");
+// 			throw (std::runtime_error("Couldn't open temp file\n"));
+// 		}
+// 		else if (file.good())
+// 		{
+// 			// this->tempFileNames.push_back(filename);
 
-			std::cout << "Successfully opened " << filename << "\n";
-			return ;
-		}
-	}
-	std::cout << "Temp file is already opened\n";
-	(void)req;
-}
+// 			std::cout << "Successfully opened " << filename << "\n";
+// 			return ;
+// 		}
+// 	}
+// 	std::cout << "Temp file is already opened\n";
+// 	(void)req;
+// }
 
-void	ConnectionManager::parseBodyFile(Request* req)
-{
-	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
-	std::ifstream		tempFile;	// read from the temp file
-	std::ofstream		newFile;
-	str					line;
-	str					name = "";
-	bool				reading_content = false;
-	char				buffer[BUFFER_SIZE];
-	size_t				r, k;
-	size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
-	size_t				i = 0, j = 0, prevBoundPos = 0;
-	str					tempBdr;
-	size_t				boundaryPosInFile = 0;
-	const str 			boundary = "\r\n" + req->getBoundary();
-	bool				sheet;
+// void	ConnectionManager::parseBodyFile(Request* req)
+// {
+// 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
+// 	std::ifstream		tempFile;	// read from the temp file
+// 	std::ofstream		newFile;
+// 	str					line;
+// 	str					name = "";
+// 	bool				reading_content = false;
+// 	char				buffer[BUFFER_SIZE];
+// 	size_t				r, k;
+// 	size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
+// 	size_t				i = 0, j = 0, prevBoundPos = 0;
+// 	str					tempBdr;
+// 	size_t				boundaryPosInFile = 0;
+// 	const str 			boundary = "\r\n" + req->getBoundary();
+// 	bool				sheet;
 
-	tempFile.open(req->getTempFileName().c_str(), std::ios::in);
-	while (std::getline(tempFile, line))
-	{
-		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
-		// match it against the Content-Type in the next line for extra security
-		if (line.find("Content-Type: ") != str::npos)
-		{
-			std::getline(tempFile, line);
-			reading_content = true;
-		}
-		if (line.find("Content-Disposition: ") != str::npos)
-		{
-			std::cout << "Found content disposition\n";
-			size_t	fileNamePos = line.find("filename=\"");
-			if (fileNamePos != str::npos)
-			{
-				size_t	endDblquotePos = line.find_last_of('\"');
-				std::cout << "Found filename\n";
-				name = line.substr(fileNamePos + 10);
-				if (name.find("\"\r") != str::npos)
-					name.erase(name.find("\"\r"));
-				std::cout << "Filename: " << name << "\n";
-				size_t	dotPos = line.find_last_of('.');
-				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
-				std::cout << "Extension: " << file_extension << "\n";
-				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
-			}
-		}
-		if (reading_content == true)
-		{
-			std::cout << "putting data to file\n";
-			if (newFile.is_open() == false)
-			{
-				std::cerr << name << ": ";
-				throw (std::runtime_error("Couldn't open file to write"));
-			}
-			total = i = j = prevBoundPos = boundaryPosInFile = 0;
-			sheet = true;
-			while (sheet)
-			{
-				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
-				r = tempFile.gcount();
-				if (r == 0)
-				{
-					if (prevBoundPos)
-						newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
-					break ;
-				}
-				total += r;
-				k = 0;
-				while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
-					k++;
-				if (k + prevBoundPos == boundary.length())
-				{
-					// handle found boundary
-					break ;
-				}
-				else if (prevBoundPos)
-				{
-					newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
-				}
-				prevBoundPos = 0;
-				i = 0;
-				for (; i < r; i++)
-				{
-					j = 0;
-					while (j < boundary.length() && i + j < r && buffer[i + j] == boundary[j])
-						j++;
-					if (j == boundary.length())	// this means some characters matched the boundary at the end of buffer
-					{
-						if (i > 0)
-						{
-							newFile.write(&buffer[0], i);
-						}
-						sheet = false;
-						break ;
-					}
-					if (i + j == r)	// this means some characters matched the boundary at the end of buffer
-					{
-						// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
-						prevBoundPos = j;
-						break;
-					}
-				}
-				if (i && sheet)
-					newFile.write(&buffer[0], i);
-			}
-			newFile.close();
-			tempFile.seekg(i);
-			reading_content = false;
-			(void)boundaryPosInFile;
-		}
-	}
-	if (!access(req->getTempFileName().c_str(), F_OK))	// remove the temp file used for storing binary data0
-		std::remove(req->getTempFileName().c_str());
-}
+// 	tempFile.open(req->getTempFileName().c_str(), std::ios::in);
+// 	while (std::getline(tempFile, line))
+// 	{
+// 		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
+// 		// match it against the Content-Type in the next line for extra security
+// 		if (line.find("Content-Type: ") != str::npos)
+// 		{
+// 			std::getline(tempFile, line);
+// 			reading_content = true;
+// 		}
+// 		if (line.find("Content-Disposition: ") != str::npos)
+// 		{
+// 			std::cout << "Found content disposition\n";
+// 			size_t	fileNamePos = line.find("filename=\"");
+// 			if (fileNamePos != str::npos)
+// 			{
+// 				size_t	endDblquotePos = line.find_last_of('\"');
+// 				std::cout << "Found filename\n";
+// 				name = line.substr(fileNamePos + 10);
+// 				if (name.find("\"\r") != str::npos)
+// 					name.erase(name.find("\"\r"));
+// 				std::cout << "Filename: " << name << "\n";
+// 				size_t	dotPos = line.find_last_of('.');
+// 				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
+// 				std::cout << "Extension: " << file_extension << "\n";
+// 				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
+// 			}
+// 		}
+// 		if (reading_content == true)
+// 		{
+// 			std::cout << "putting data to file\n";
+// 			if (newFile.is_open() == false)
+// 			{
+// 				std::cerr << name << ": ";
+// 				throw (std::runtime_error("Couldn't open file to write"));
+// 			}
+// 			total = i = j = prevBoundPos = boundaryPosInFile = 0;
+// 			sheet = true;
+// 			while (sheet)
+// 			{
+// 				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
+// 				r = tempFile.gcount();
+// 				if (r == 0)
+// 				{
+// 					if (prevBoundPos)
+// 						newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
+// 					break ;
+// 				}
+// 				total += r;
+// 				k = 0;
+// 				while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
+// 					k++;
+// 				if (k + prevBoundPos == boundary.length())
+// 				{
+// 					// handle found boundary
+// 					break ;
+// 				}
+// 				else if (prevBoundPos)
+// 				{
+// 					newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
+// 				}
+// 				prevBoundPos = 0;
+// 				i = 0;
+// 				for (; i < r; i++)
+// 				{
+// 					j = 0;
+// 					while (j < boundary.length() && i + j < r && buffer[i + j] == boundary[j])
+// 						j++;
+// 					if (j == boundary.length())	// this means some characters matched the boundary at the end of buffer
+// 					{
+// 						if (i > 0)
+// 						{
+// 							newFile.write(&buffer[0], i);
+// 						}
+// 						sheet = false;
+// 						break ;
+// 					}
+// 					if (i + j == r)	// this means some characters matched the boundary at the end of buffer
+// 					{
+// 						// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
+// 						prevBoundPos = j;
+// 						break;
+// 					}
+// 				}
+// 				if (i && sheet)
+// 					newFile.write(&buffer[0], i);
+// 			}
+// 			newFile.close();
+// 			tempFile.seekg(i);
+// 			reading_content = false;
+// 			(void)boundaryPosInFile;
+// 		}
+// 	}
+// 	if (!access(req->getTempFileName().c_str(), F_OK))	// remove the temp file used for storing binary data0
+// 		std::remove(req->getTempFileName().c_str());
+// }
 
 /*
 	this function is called in handlePollin
@@ -368,6 +368,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		return (INCOMPLETE);
 	if (r == 0)
 	{
+		std::cerr << "Closing socket in receive request due to recv() returning 0\n";
 		closeSocket(index);
 		return (INVALID);
 	}
@@ -379,7 +380,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
 		{
 			Cgi* cgi = req->getCgiObj();
-			cgi->writeToFd(cgi->get_stdin()[WRITE], buffer, r, req);
+			cgi->writeToFd(cgi->get_stdin()[WRITE], buffer, r, req);	// this function will write to the fd and will close it if its done writing
 		}
 	}
 	else
@@ -443,7 +444,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	if (req->getHeaderReceived() && req->getMethod() == "POST" && !req->isCGI() && r > 0)
 	{
-		outcome = req->pushBody(buffer, r);
+		// outcome = req->pushBody(buffer, r);
+		outcome = 1;
 		switch(outcome)
 		{
 			case -1:
@@ -457,6 +459,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		}
 	}
 	(void)state;
+	return (FINISH);
 }
 
 // ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
@@ -563,11 +566,12 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		}
 		else if (keep_open == false && handler->getState() == Server::returnFinish())
 		{
-			std::cout << "Closing client socket fd " << sock_fds[i].fd << "\n";
+			std::cout << "Closing client socket fd " << sock_fds[i].fd << " because connection is NOT keep-alive\n";
 			closeSocket(i);
 			std::cout << "Closed socket\n";
 			return ;
 		}
+		std::cerr << RED << "INCOMPLETE" << NL;
 		handler->setState(Server::returnIncomplete());
 	}
 }
@@ -605,7 +609,7 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 
 	if (handler->cgiRespond(infoPtr) == true)	// if true, remove the cgiProcess from the map
 	{
-		std::cout << "Closing client socket fd " << this->sock_fds[i].fd << "\n";
+		std::cout << "Closing client socket fd " << this->sock_fds[i].fd << " in cgi pollout\n";
 		closeSocket(i);
 		std::cout << "Closed socket\n";
 		cgiProcesses.erase(pipe_fd);
@@ -626,11 +630,13 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
 	if (state == INVALID)
 	{
+		std::cerr << "STATE: " << "INVALID\n";
 		this->sock_fds[i].events &= ~POLLIN;
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
 	if (state == FINISH || state == HEADER_FINISHED)	// HEADER_FINISHED indicates partial request
 	{
+		std::cerr << "STATE: " << (state == FINISH ? "FINISH" : "HEADER_FINISHED") << "\n";
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 		std::cout << "Passing request from fd " << sock_fds.at(i).fd << " to server\n";
@@ -740,13 +746,11 @@ void ConnectionManager::startConnections()
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
+				std::cerr << "FD: " << this->sock_fds[i].fd << " is ready for POLLOUT\n";
 				if (handleCGIPollout(i) == true)
 					continue ;
 				handlePollout(state, i, requests);
 			}
-			std::cout << "servers_per_ippp size: " << servers_per_ippp.size() << "\n";
-			std::cout << "handlers size: " << handlers.size() << "\n";
-			std::cout << "defaults size: " << defaults.size() << "\n";
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
 				std::cout << "POLLHUP event\n";
@@ -781,6 +785,7 @@ void ConnectionManager::startConnections()
 				}
 				else
 				{
+					std::cerr << "Closing fd " << this->sock_fds.at(i).fd << " becuase POLLHUP\n";
 					printError(sock_fds.at(i).revents);
 					closeSocket(i);
 				}

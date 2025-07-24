@@ -59,7 +59,7 @@ Cgi::Cgi(const str script_path, Server* server)
 	this->stdin_fds[0] = -1;
 	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
-	this->wrtiten_bytes = 0;
+	this->written_bytes = 0;
 }
 
 Cgi &Cgi::operator=(const Cgi& copy)
@@ -85,8 +85,10 @@ void	Cgi::writeToFd(int fd, char *buf, size_t r, Request* req)
 {
 	ssize_t	written = write(fd, buf, r);
 	this->written_bytes += written;
-	if (written == req->getContentLen()) // all bytes written: close write pipe
+	if (written == (ssize_t)req->getContentLen()) // all bytes written: close write pipe
 		close(this->stdin_fds[WRITE]);
+	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
+		;
 }
 
 str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 

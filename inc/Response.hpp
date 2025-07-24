@@ -12,7 +12,7 @@ typedef std::string str;
 class Response
 {
 	private:
-		str					header, body, code, root;
+		str					root, header, body, code;
 		bool				chunked, header_sent, keep_alive, autoindex;
 		int					fd;
 		std::map<str, str>	http_codes;

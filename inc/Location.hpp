@@ -25,7 +25,6 @@ class Location: public BlockOBJ
 
 		bool	handleDirective(std::queue<str> opts);
 		bool	matchURI(str uri) const;
-		void	setRoot(const str& value);
 		str		getRoot() const;
 		bool getPermRedir() const;
 		bool getAutoIndex() const;

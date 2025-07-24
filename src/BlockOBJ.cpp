@@ -17,7 +17,7 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 	if (opts.front() == "root" && opts.size() == 2)
 	{
 		opts.pop();
-		root_dir = opts.front();
+		// root_dir = opts.front();
 	}
 	else if (opts.front() == "index" && opts.size() > 1)
 	{
@@ -26,7 +26,7 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 		{
 			if (opts.front().length() == 0)
 				return false;
-			index_pages.push_back(opts.front());
+			// index_pages.push_back(opts.front());
 			opts.pop();
 		}
 	}
@@ -56,7 +56,7 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 			if (opts.front()[i] < '0' || opts.front()[i] > '9')
 				return false;
 		}
-		client_max_body = atoi(opts.front().c_str());
+		// client_max_body = atoi(opts.front().c_str());
 	}
 	else if (opts.front() == "min_delete_depth" && opts.size() == 2)
 	{
@@ -66,7 +66,7 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 			if (opts.front()[i] < '0' || opts.front()[i] > '9')
 				return false;
 		}
-		min_del_depth = atoi(opts.front().c_str());
+		// min_del_depth = atoi(opts.front().c_str());
 	}
 	else if (opts.front() == "autoindex" && opts.size() == 2)
 	{
@@ -74,9 +74,11 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 		if (opts.front() != "on" && opts.front() != "off")
 			return false;
 		else if (opts.front() == "on")
-			autoindex = true;
+			;
+			// autoindex = true;
 		else
-			autoindex = false;
+			;
+			// autoindex = false;
 	}
 	else
 		return false;

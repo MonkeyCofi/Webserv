@@ -97,7 +97,6 @@ class Request
 		const std::string&		getHost() const;
 		const std::string&		getBoundary() const;
 		const std::string&		getDestURI() const;
-		const std::string&		getTempFileName() const;
 		int						getBodyFd() const;
 		size_t					getContentLen();
 		size_t					getReceivedBytes() const;

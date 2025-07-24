@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(): root("/"), header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), fd(-1)
+Response::Response(): root("/"), header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), autoindex(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -50,7 +50,7 @@ Response::Response(const Response &copy)
 	http_codes["505"] = "HTTP Version Not Supported";
 }
 
-Response::Response(str code): root("/"), header(""), body(""), code(code), chunked(false), header_sent(false), keep_alive(false), fd(-1)
+Response::Response(str code): root("/"), header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), autoindex(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -69,6 +69,7 @@ Response::Response(str code): root("/"), header(""), body(""), code(code), chunk
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
 	http_codes["505"] = "HTTP Version Not Supported";
+	(void)code;
 }
 
 void Response::setHeaderField(str field, str value)

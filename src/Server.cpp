@@ -717,7 +717,10 @@ bool Server::respond(int client_fd)
 	}
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
+	{
 		std::cout << BLUE << "Done responding!\n\nSent:\n" << header << "\n\n" << RESET;
+		setState(FINISH);
+	}
 	else
 	{
 		std::cout << BLUE << "Done sending header!\n" << RESET;

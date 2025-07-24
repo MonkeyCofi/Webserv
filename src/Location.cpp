@@ -136,13 +136,13 @@ const Location &Location::operator =(const Location &copy)
 	return *this;
 }
 
-BlockOBJ	*handleBlock(std::queue<str> opts)
+BlockOBJ	*Location::handleBlock(std::queue<str> opts)
 {
 	(void)opts;
 	return NULL;
 }
 
-str			getType()
+str			Location::getType()
 {
 	return "location";
 }
