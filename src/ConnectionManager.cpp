@@ -554,7 +554,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		bool keep_open = handler->respond(sock_fds[i].fd);
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
-			sock_fds.at(i).events &= ~POLLOUT;
+			sock_fds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from the FD
 			std::cerr << "Finished responding to request\n";
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{

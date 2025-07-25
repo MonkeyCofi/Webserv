@@ -531,3 +531,8 @@ Cgi*	Request::getCgiObj()
 {
 	return (this->cgi);
 }
+
+const std::string&	Request::getHeader() const
+{
+	return (this->header);
+}

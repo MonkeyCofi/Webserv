@@ -9,3 +9,9 @@ memory usage
 
 
 DONE (!) Add a MUST-HAVE header field called "Accept" with the allowed HTTP methods in response to an invalid method
+
+NEW TODO:
+    segfault. potential reasons: recv() call from receive request receives 0 and closes the socket which deletes its corresponding request object,
+        which is then accessed by passRequestToServer
+    body upload in non blocking manner
+    cgi request handling
