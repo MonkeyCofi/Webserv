@@ -83,10 +83,15 @@ Cgi &Cgi::operator=(const Cgi& copy)
 
 void	Cgi::writeToFd(int fd, char *buf, size_t r, Request* req)
 {
+	std::cout << "writing " << buf << " to stdin fd\n";
 	ssize_t	written = write(fd, buf, r);
 	this->written_bytes += written;
-	if (written == (ssize_t)req->getContentLen()) // all bytes written: close write pipe
+	std::cout << "Wrote " << this->written_bytes << " so far\n";
+	if (this->written_bytes == (ssize_t)req->getContentLen()) // all bytes written: close write pipe
+	{
+		std::cout << "Body has been fully written\n";
 		close(this->stdin_fds[WRITE]);
+	}
 	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
 		;
 }
@@ -176,19 +181,20 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		std::cout << "returning 500\n";
 		return ("500");
 	}
+	if (pipe(this->stdin_fds) == -1)
+		return ("500");
 	if (req->getMethod() == "POST")
 	{
-		if (pipe(this->stdin_fds) == -1)
-			return ("500");
 		setAndAddPollFd(this->stdin_fds[WRITE], pollfds, POLLIN);
 		std::cerr << "opened stdin pipes for CGI POST request\n";
-		// struct pollfd	in;
-		// fcntl(this->stdin_fds[WRITE], F_SETFD, FD_CLOEXEC);
-		// fcntl(this->stdin_fds[WRITE], F_SETFL, O_NONBLOCK);
-		// in.fd = this->stdin_fds[WRITE];
-		// in.events = POLLIN;
-		// in.revents = 0;
-		// pollfds.push_back(in);
+		const char*	leftovers = req->getLeftOvers();
+		if (leftovers != NULL)
+		{
+			writeToFd(this->stdin_fds[WRITE], const_cast<char *>(leftovers), req->getLeftOverSize(), req);
+			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
+			delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
+			req->setLeftOvers(NULL, 0);
+		}
 	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
@@ -204,7 +210,6 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		dupAndClose(this->stdin_fds[READ], STDIN_FILENO);
 		dupAndClose(this->pipe_fds[WRITE], STDOUT_FILENO);
 
-		// std::cout << "Executing script in child process\n";
 		execve(cmd, const_cast<char **>(argv), envp);
 		std::cerr << "Unable to execute cmd\n";
 		perror("Why");
@@ -218,15 +223,6 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 			close(this->stdin_fds[READ]);
 		close(pipe_fds[WRITE]);
 		setAndAddPollFd(pipe_fds[READ], pollfds, POLLIN);
-		// fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
-		// fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);
-
-		// struct pollfd read_fd;
-		// read_fd.events = POLLIN;
-		// read_fd.revents = 0;
-		// read_fd.fd = pipe_fds[READ];
-		// std::cout << "Pushing " << read_fd.fd << " into map for client " << client_fd << "\n";
-		// pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
 	}
 	return ("200");

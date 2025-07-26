@@ -72,9 +72,7 @@ class ConnectionManager
 			HEADER_FINISHED,
 			FINISH
 		}	State;
-
-		
-
+	
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
@@ -102,9 +100,9 @@ class ConnectionManager
 		void		passRequestToServer(int i, Request **req);
 		void		closeSocket(unsigned int& index);
 
-		void		openTempFile(Request* req, std::fstream& file);
+		// void		openTempFile(Request* req, std::fstream& file);
 
-		void		parseBodyFile(Request* req);
+		// void		parseBodyFile(Request* req);
 
 		void		deleteTempFiles();
 
@@ -112,8 +110,12 @@ class ConnectionManager
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
 
 		bool		handleCGIPollout(unsigned int& i);
-
 		void		handleCGIread(unsigned int& i);
+		void		handleCgiPollhup(unsigned int i);
+
+		void		reapProcesses();
+
+		void		deleteRequest(unsigned int i);
 
 	public:
 		ConnectionManager(Http *protocol);

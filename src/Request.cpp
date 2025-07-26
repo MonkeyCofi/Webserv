@@ -506,7 +506,8 @@ void	Request::setLeftOvers(char* buf, size_t r)
 		this->left_overs = NULL;
 		return ;
 	}
-	this->left_overs = new char[r + 1];
+	std::cout << BLUE << "Buf to copy: " << buf << NL;
+	this->left_overs = new char[r + 1]();
 	for (size_t i = 0; i < r; i++)
 		this->left_overs[i] = buf[i];
 	this->left_over_size = r;

@@ -512,15 +512,16 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 		if (cgi)
 		{
 			std::cerr << "Starting up GET CGI process\n";
-			Cgi	cgi(file, this);
-			str cgi_status;
-			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			Cgi	*cgi = new Cgi(file, this);
+			str cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
+			if (cgi_status != "200")
 			{
 				std::cout << "CGI script returned status: " << cgi_status << "\n";
 				handleError(cgi_status, client_fd);
 				return ;
 				// fileResponse(req, file, -1, client_fd);
 			}
+			req->setCgi(cgi);
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 		}
 		else if (file.at(file.length() - 1) == '/' || isDirectory(this->response[client_fd].getRoot() + file))
@@ -543,13 +544,16 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 			req->setCgi(cgi);
 			req->setCGIstarted();
 			// if there are leftovers bytes, write them to the stdin_pipes of the cgi object
-			const char*	leftovers = req->getLeftOvers();
-			if (leftovers != NULL)
-			{
-				write(cgi->get_stdin()[WRITE], leftovers, req->getLeftOverSize());
-				delete req->getLeftOvers();
-				req->setLeftOvers(NULL, 0);
-			}
+			// const char*	leftovers = req->getLeftOvers();
+			// if (leftovers != NULL)
+			// {
+			// 	std::cout << "Leftovers; " << leftovers << "\n";
+			// 	write(cgi->get_stdin()[WRITE], leftovers, req->getLeftOverSize());
+			// 	delete req->getLeftOvers();
+			// 	req->setLeftOvers(NULL, 0);
+			// }
+			// else
+			// 	std::cout << "there are no leftovers\n";
 		}
 		else if (cgi && req->getCGIstarted())
 		{
@@ -664,8 +668,9 @@ bool Server::cgiRespond(CGIinfo* infoPtr)
 {
 	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
-	if (this->response.find(client_fd) == this->response.end())
-		this->response[client_fd] = infoPtr->parseCgiResponse();
+	// if (this->response.find(client_fd) == this->response.end())
+	// 	this->response[client_fd] = infoPtr->parseCgiResponse();
+	this->response[client_fd] = infoPtr->parseCgiResponse();
 	std::cout << "responding\n";
 	respond(client_fd);
 	if (this->response[client_fd].doneSending())
