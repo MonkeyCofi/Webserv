@@ -1,17 +1,13 @@
-cgi
+[ ] file upload (currently blocking)
+[ ] of less importance: file upload in ram
+[ ] loading another client while a cgi script is executing
+[ ] memory usage
+[ ] cgi GET handling
+[ ] cgi POST handling
+[ ] cgi DELETE handling
+[ ] segfault. potential reasons: recv() call from receive request receives 0 and closes the socket which deletes its corresponding request object,
+	which is then accessed by passRequestToServer
+[ ] stress test locations
+[ ] user provided tester
 
-file upload (currently blocking)
-of less importance: file upload in ram
-POST request handle header fields
-POST request handle json??
-loading another client while a cgi script is executing
-memory usage
-
-
-DONE (!) Add a MUST-HAVE header field called "Accept" with the allowed HTTP methods in response to an invalid method
-
-NEW TODO:
-    segfault. potential reasons: recv() call from receive request receives 0 and closes the socket which deletes its corresponding request object,
-        which is then accessed by passRequestToServer
-    body upload in non blocking manner
-    cgi request handling
+[X] Add a MUST-HAVE header field called "Accept" with the allowed HTTP methods in response to an invalid method
