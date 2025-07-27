@@ -105,7 +105,7 @@ str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv,
 	this->path_info = "PATH_INFO=" + str(serv->getRoot() + uri);
 	this->path_info = path_info.substr(0, path_info.find_first_of('?'));
 	this->query_string = "QUERY_STRING=" + uri.substr(uri.find_first_of('?') + 1, str::npos);
-	this->method = "METHOD=" + req->getMethod();
+	this->method = "REQUEST_METHOD=" + req->getMethod();
 	this->content_type = "CONTENT_TYPE=" + req->getContentType();
 	this->host = "HTTP_HOST=" + req->getHost();
 	length << req->getContentLen();
@@ -170,7 +170,7 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		Request* req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	std::string access_status = validScriptAccess();
-	(void)req;
+
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
 	{
 		// if script is not accessible, respond with error page

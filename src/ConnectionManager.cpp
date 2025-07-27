@@ -779,7 +779,7 @@ void ConnectionManager::startConnections()
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				std::cerr << "FD: " << this->sock_fds[i].fd << " is ready for POLLOUT\n";
+				// std::cerr << "FD: " << this->sock_fds[i].fd << " is ready for POLLOUT\n";
 				if (handleCGIPollout(i) == true)
 					continue ;
 				handlePollout(state, i, requests);

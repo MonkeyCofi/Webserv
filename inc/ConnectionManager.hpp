@@ -100,10 +100,6 @@ class ConnectionManager
 		void		passRequestToServer(int i, Request **req);
 		void		closeSocket(unsigned int& index);
 
-		// void		openTempFile(Request* req, std::fstream& file);
-
-		// void		parseBodyFile(Request* req);
-
 		void		deleteTempFiles();
 
 		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests);
