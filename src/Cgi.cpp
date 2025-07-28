@@ -134,6 +134,7 @@ char**   Cgi::envToChar()
 
 std::string	Cgi::validScriptAccess() const
 {
+	std::cout << "Attempting to access path: " << this->cgiPath << "\n";
 	if (access(this->cgiPath.c_str(), F_OK | R_OK) == 0)    // the file is found
 	{
 		std::cout << "Script file is found\n";

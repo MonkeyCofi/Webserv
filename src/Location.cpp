@@ -32,6 +32,7 @@ bool Location::handleDirective(std::queue<str> opts)
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
 	parent_ret = BlockOBJ::handleDirective(opts);
+	std::cout << "Handling location directive\n";
 	if (opts.front() == "root" && opts.size() == 2)
 	{
 		opts.pop();
@@ -84,6 +85,7 @@ bool Location::handleDirective(std::queue<str> opts)
 	}
 	else
 		return parent_ret;
+	printLocation();
 	return true;
 }
 
@@ -173,4 +175,24 @@ void Location::setAllowedMethods(const std::vector<str>& methods) {
 
 void Location::setIndexFiles(const std::vector<str>& files) {
 	indexfiles = files;
+}
+
+void	Location::printLocation() const
+{
+	std::cout << "Permanent redirect: " << std::boolalpha << this->perm_redir << "\n";
+	std::cout << "autoindex: " << std::boolalpha << auto_index << "\n";
+	std::cout << "root: " << root << "\n";
+	std::cout << "redirect url: " << redir_uri << "\n";
+	std::cout << "save folder: " << save_folder << "\n";
+	std::cout << "allowed methods: ";
+	for (std::vector<std::string>::const_iterator it = allowed_methods.begin(); it != allowed_methods.end(); it++)
+	{
+		std::cout << *it << " ";
+	}
+	std::cout << "\n";
+	std::cout << "index files: ";
+	for (std::vector<std::string>::const_iterator it = indexfiles.begin(); it != indexfiles.end(); it++)
+	{
+		std::cout << *it << " ";
+	}
 }

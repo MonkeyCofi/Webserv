@@ -13,6 +13,7 @@ class Location: public BlockOBJ
 {
 	private:
 		bool				perm_redir, auto_index;
+		std::string			match_uri;
 		str					root, redir_uri, save_folder;
 		const static str	directives[];
 		std::vector<str>	allowed_methods, indexfiles;
@@ -43,6 +44,8 @@ class Location: public BlockOBJ
 		void setIndexFiles(const std::vector<str>& files);
 
 		const Location &operator =(const Location &copy);
+
+		void	printLocation() const;
 };
 
 #endif

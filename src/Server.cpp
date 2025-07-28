@@ -92,6 +92,7 @@ bool Server::handleDirective(std::queue<str> opts)
 
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
+	std::cout << "Handling server directive\n";
 	parent_ret = BlockOBJ::handleDirective(opts);
 	if (opts.front() == "listen" && opts.size() == 2)
 	{
@@ -450,8 +451,10 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 
 Location *Server::matchLocation(const str &uri)
 {
+	std::cout << "number of locations: " << this->locations.size() << "\n";
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
+		std::cout << "uri: " << uri << " root: " << (*it)->getRoot() << "\n";
 		if ((*it)->matchURI(uri))
 			return *it;
 	}
@@ -478,6 +481,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), client_fd);
+		std::cout << "this return 0\n";
 		return ;
 	}
 	this->response[client_fd].setRoot(this->root);
@@ -489,6 +493,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 		if (!loco->isAllowedMethod(req->getMethod()))
 		{
 			handleError("405", client_fd);
+			std::cout <<"this return 1\n";
 			return ;
 		}
 		this->response[client_fd].setRoot(loco->getRoot());
@@ -503,6 +508,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 				this->response[client_fd].setCode("307");
 			this->response[client_fd].setKeepAlive(req->shouldKeepAlive());
 			this->response[client_fd].setHeaderField("Location", uri);
+			std::cout << "this return 2\n";
 			return ;
 		}
 	}

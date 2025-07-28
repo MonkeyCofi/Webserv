@@ -167,7 +167,9 @@ void ConnectionManager::printError(int revents)
 void ConnectionManager::passRequestToServer(int i, Request **req)
 {
 	if (!(*req))
+	{
 		return ;
+	}
 	// std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (!(*req)->isValidRequest())
 		handlers.at(i) = defaults.at(i);
@@ -197,12 +199,17 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 		deleteRequest(index);
 		// delete requests[(sock_fds.at(index).fd)];
 	}
-	sock_fds.erase(sock_fds.begin() + index);
-	if (index < reqs.size())
+	std::cout << RED << "closing at index: " << index << NL;
+	// if (index < sock_fds.size() - 1)
+		sock_fds.erase(sock_fds.begin() + index);
+	// if (index < reqs.size())
 		reqs.erase(reqs.begin() + index);
-	handlers.erase(handlers.begin() + index);
-	defaults.erase(defaults.begin() + index);
-	servers_per_ippp.erase(servers_per_ippp.begin() + index);
+	// if (handlers.size() - 1 < index)
+		handlers.erase(handlers.begin() + index);
+	// if (defaults.size() - 1 < index)
+		defaults.erase(defaults.begin() + index);
+	// if (servers_per_ippp.size() - 1 < index)
+		servers_per_ippp.erase(servers_per_ippp.begin() + index);
 	index--;
 }
 
@@ -406,6 +413,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				if (outcome == 501)
 					req->setStatus("501");
 				req->setValid(false);
+				std::cout << "Invalid here\n";
 				return (INVALID);
 			case 1:
 				if (!req->isValidRequest())
@@ -420,6 +428,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					{
 						req->setStatus((req->getContentLen() > handlers.at(index)->getMaxBodySize()) ? "501" : "405");
 						req->setValid(false);
+						std::cout << "Invalid here2\n";
 						return (INVALID);
 					}
 				}
@@ -581,6 +590,13 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		std::cerr << RED << "INCOMPLETE" << NL;
 		handler->setState(Server::returnIncomplete());
 	}
+	else if (state == INVALID)
+	{
+		sock_fds[i].events &= ~POLLOUT;
+		handler->respond(sock_fds[i].fd);
+		handler->setState(Server::returnIncomplete());
+	}
+	(void)state;
 }
 
 bool	ConnectionManager::handleCGIPollout(unsigned int& i)
@@ -740,6 +756,8 @@ void ConnectionManager::startConnections()
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, sigint_handle);
 	std::cout << "Server has " << main_listeners << " listeners\n";
+	(void)res;
+	(void)state;
 	while (g_quit != true)
 	{
 		res = poll(&sock_fds[0], sock_fds.size(), -1);

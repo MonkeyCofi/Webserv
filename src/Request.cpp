@@ -351,6 +351,7 @@ Request	&Request::parseRequest(str& request)
 	}
 	status = "200";
 	validRequest = true;
+	std::cout << BLUE << this->header << NL;
 	return (*this);
 }
 
