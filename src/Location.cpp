@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "", "limit_except" };
+const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "allowed_methods", "" };
 
 Location::Location(): BlockOBJ()
 {
@@ -131,7 +131,7 @@ bool Location::matchURI(str uri) const
 	// return whether the matchUri is found in the uri string
 	std::cout << "uri: " << uri << "\n";
 	std::cout << "to match: " << this->match_uri << "\n";
-	return (uri.find(this->match_uri) != std::string::npos);
+	return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
 	// return (this->root.find(uri) == 0);
 }
 

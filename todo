@@ -1,5 +1,4 @@
 [ ] file upload (currently blocking)
-[ ] of less importance: file upload in ram
 [ ] loading another client while a cgi script is executing
 [ ] memory usage
 [ ] cgi GET handling

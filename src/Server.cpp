@@ -92,7 +92,6 @@ bool Server::handleDirective(std::queue<str> opts)
 
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
-	std::cout << "Handling server directive\n";
 	parent_ret = BlockOBJ::handleDirective(opts);
 	if (opts.front() == "listen" && opts.size() == 2)
 	{
@@ -204,6 +203,8 @@ BlockOBJ *Server::handleBlock(std::queue<str> opts)
 	if (opts.size() < 2 || opts.front() != "location")
 		return NULL;
 	locations.push_back(new Location());
+	opts.pop();
+	locations.back()->setMatchUri(opts.front());
 	return locations.back();
 }
 
@@ -457,6 +458,7 @@ Location *Server::matchLocation(const str &uri)
 		if ((*it)->matchURI(uri))
 		{
 			std::cout << "Matching location found for " << uri << "\n";
+			std::cout << "Root for found location block: " << (*it)->getRoot() << "\n";
 			return *it;
 		}
 	}
@@ -678,13 +680,14 @@ bool Server::cgiRespond(CGIinfo* infoPtr)
 	const int&	client_fd = infoPtr->getClientFd();
 	// if (this->response.find(client_fd) == this->response.end())
 	// 	this->response[client_fd] = infoPtr->parseCgiResponse();
-	this->response[client_fd] = infoPtr->parseCgiResponse();
+	if (std::find(this->response.begin(), this->response.end(), client_fd) == this->response.end())
+		this->response[client_fd] = infoPtr->parseCgiResponse();
 	std::cout << "responding\n";
 	respond(client_fd);
 	if (this->response[client_fd].doneSending())
 	{
 		std::cout << "clearing response object for fd: " << client_fd << "\n";
-		this->response[client_fd].clear();
+		this->response.erase(client_fd);
 		return (true);
 	}
 	return (false);
