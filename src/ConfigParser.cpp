@@ -5,6 +5,8 @@ const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name
 ConfigParser::ConfigParser(): webserv(NULL), err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
 	webserv = new Engine();
+	location_uri = "";
+	location_found = false;
 }
 
 bool ConfigParser::validFilename(str &fn) const
@@ -135,14 +137,31 @@ bool ConfigParser::handleNext(str &word)
 					}
 					blocks.push(ptr);
 				}
+				// else if ((this->location_uri.empty() == false || word[0] == ';') && blocks.size() > 0)
 				else if (word[0] == ';' && blocks.size() > 0)
 				{
 					if (!blocks.top()->handleDirective(parsed_opts))
 						return false;
+					this->location_uri.clear();
 				}
 			}
-			while (parsed_opts.size() > 0)
-				parsed_opts.pop();
+			// while (parsed_opts.size() > 0)
+			// {
+			// 	if (parsed_opts.front() == "location")
+			// 	{
+			// 		Location* lptr = dynamic_cast<Location *>(blocks.top());
+			// 		if (lptr)
+			// 		{
+			// 			parsed_opts.pop();
+			// 			std::cout << "Setting match uri to " << parsed_opts.front() << "\n";
+			// 			if (parsed_opts.size() > 1)
+			// 				return false;
+			// 			lptr->setMatchUri(parsed_opts.front());
+			// 		}
+			// 	}
+			// 	else
+			// 		parsed_opts.pop();
+			// }
 		}
 		if (word == "}")
 			blocks.pop();
@@ -199,6 +218,7 @@ Engine *ConfigParser::parse(str &fn, bool defaultConf)
 	{
 		if ((*it)->getNames().size() == 0)
 			(*it)->setDefault();
+		(*it)->passValuesToLocations();
 	}
 	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
     {

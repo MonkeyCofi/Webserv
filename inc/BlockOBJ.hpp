@@ -15,11 +15,6 @@ typedef std::string str;
 class BlockOBJ
 {
 	protected:
-		std::vector<std::string>			index_pages;
-		std::map<std::string, std::string>	error_pages;
-		int			min_del_depth, client_max_body;
-		str			root_dir;
-		bool		autoindex;
 		bool		inDirectives(const str &dir, const str *dirs)	const;
 
 	public:

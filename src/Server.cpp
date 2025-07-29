@@ -180,6 +180,19 @@ bool Server::handleDirective(std::queue<str> opts)
 		min_del_depth = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
+	else if (opts.front() == "max_body_size" && opts.size() == 2)
+	{
+		opts.pop();
+		if (opts.front().length() > 10)
+			return false;
+		for (unsigned int i = 0; i < opts.front().length(); i++)
+		{
+			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
+				return false;
+		}
+		client_max_body = std::atoi(opts.front().c_str());
+		opts.pop();
+	}
 	else
 		return parent_ret;
 	return true;
@@ -190,6 +203,8 @@ BlockOBJ *Server::handleBlock(std::queue<str> opts)
 	if (opts.size() < 2 || opts.front() != "location")
 		return NULL;
 	locations.push_back(new Location());
+	opts.pop();
+	locations.back()->setMatchUri(opts.front());
 	return locations.back();
 }
 
@@ -247,6 +262,16 @@ void Server::setDefault()
 	names.push_back("_");
 }
 
+void Server::passValuesToLocations()
+{
+	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
+	{
+		(*it)->setAutoIndex(this->autoindex);
+		(*it)->setRoot(this->root);
+		(*it)->setIndexFiles(this->index);
+	}
+}
+
 str	Server::fileType(str file_name)
 {
 	str	type;
@@ -276,11 +301,21 @@ void Server::handleError(str error_code, int client_fd)
 {
 	bool	keep;
 	int		fd;
+	str		s;
 
 	keep = this->response[client_fd].keepAlive();
 	this->response[client_fd].clear();
 	this->response[client_fd].setCode(error_code);
 	this->response[client_fd].setKeepAlive(keep);
+	if (error_code == "405")
+	{
+		s = "";
+		for (std::vector<str>::iterator it = this->response[client_fd].getAllowedMethods().begin(); it != this->response[client_fd].getAllowedMethods().end(); it++)
+			s += *it + ", ";
+		if (s.length() > 2)
+			s = s.substr(0, s.length() - 2);
+		this->response[client_fd].setHeaderField("Allow", s);
+	}
 	if (error_pages.find(error_code) == error_pages.end() || (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
 		this->response[client_fd].setBody(this->response[client_fd].errorPage(error_code), "text/html");
@@ -330,11 +365,12 @@ bool Server::isDirectory(const std::string& path)
 
 void Server::directoryResponse(Request* req, str path, int client_fd)
 {
-	str				indexpath, full_path, filename, body;
-    DIR				*dir;
-	int				file_fd;
-	bool			redir;
-    struct dirent	*item;
+	str					indexpath, full_path, filename, body;
+    DIR					*dir;
+	int					file_fd;
+	bool				redir;
+    struct dirent		*item;
+	std::vector<str>	idx_pages;
 
 	redir = false;
 	if (path.at(path.length() - 1) != '/')
@@ -342,21 +378,22 @@ void Server::directoryResponse(Request* req, str path, int client_fd)
 		path += "/";
 		redir = true;
 	}
-	full_path = root + path;
+	full_path = this->response[client_fd].getRoot() + path;
 	std::cout << RED << 1 << NL;
-	for (unsigned int i = 0; i < this->index.size(); i++)
+	idx_pages = this->response[client_fd].getIndexFiles();
+	for (unsigned int i = 0; i < idx_pages.size(); i++)
 	{
-		indexpath = full_path + index.at(i);
+		indexpath = full_path + idx_pages.at(i);
 		file_fd = open(indexpath.c_str(), O_RDONLY);
 		if (file_fd > -1)
 		{
 			std::cout << GREEN << "FileREsponsing In th3 d1r3ct0ry!\n" << RESET;
-			fileResponse(req, path + index.at(i), file_fd, client_fd);
+			fileResponse(req, path + idx_pages.at(i), file_fd, client_fd);
 			return ;
 		}
-		else if (i != index.size() - 1)
+		else if (i != idx_pages.size() - 1)
 			continue ;
-		else if (!autoindex)
+		else if (!this->response[client_fd].getAutoIndex())
 		{
 			handleError("403", client_fd);
 			return ;
@@ -397,7 +434,7 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		status = "302";
 	else
 	{
-		path = root + path;
+		path = this->response[client_fd].getRoot() + path;
 		file_fd = open(path.c_str(), O_RDONLY);
 	}
 	if (file_fd == -1)
@@ -413,9 +450,25 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		this->response[client_fd].setHeaderField("Location", path);
 }
 
+Location *Server::matchLocation(const str &uri)
+{
+	std::cout << "number of locations: " << this->locations.size() << "\n";
+	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
+	{
+		if ((*it)->matchURI(uri))
+		{
+			std::cout << "Matching location found for " << uri << "\n";
+			std::cout << "Root for found location block: " << (*it)->getRoot() << "\n";
+			return *it;
+		}
+	}
+	return NULL;
+}
+
 void Server::handleRequest(int& i, int client_fd, Request *req, 
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
+	Location		*loco;
 	struct stat 	s;
 	struct dirent*	entry;
 	unsigned int	len, count;
@@ -427,46 +480,94 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	response[client_fd].clear();
 	pollfds.at(i).events |= POLLOUT;
 	file = req->getFileURI();
+	const bool	cgi = file.find("cgi") != std::string::npos;
 	std::cout << "Client fd: " << client_fd << "\n";
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), client_fd);
+		std::cout << "this return 0\n";
 		return ;
 	}
-	else if (req->getMethod() == "GET")
+	this->response[client_fd].setRoot(this->root);
+	this->response[client_fd].setAutoIndex(this->autoindex);
+	this->response[client_fd].setIndexFiles(this->index);
+	loco = this->matchLocation(file);
+	if (loco)
+	{
+		if (!loco->isAllowedMethod(req->getMethod()))
+		{
+			handleError("405", client_fd);
+			std::cout <<"this return 1\n";
+			return ;
+		}
+		this->response[client_fd].setRoot(loco->getRoot());
+		this->response[client_fd].setAutoIndex(loco->getAutoIndex());
+		this->response[client_fd].setIndexFiles(loco->getIndexFiles());
+		uri = loco->getRedirUri();
+		if (uri != "")
+		{
+			if (loco->getPermRedir())
+				this->response[client_fd].setCode("308");
+			else
+				this->response[client_fd].setCode("307");
+			this->response[client_fd].setKeepAlive(req->shouldKeepAlive());
+			this->response[client_fd].setHeaderField("Location", uri);
+			std::cout << "this return 2\n";
+			return ;
+		}
+	}
+	if (req->getMethod() == "GET")
 	{
 		// pass the pollfds to the CGI handler
-		if (file.find("cgi") != str::npos)
+		if (cgi)
 		{
-			Cgi	cgi(file, this);
-			str cgi_status;
-			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			std::cerr << "Starting up GET CGI process\n";
+			Cgi	*cgi = new Cgi(file, this);
+			str cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
+			if (cgi_status != "200")
 			{
 				std::cout << "CGI script returned status: " << cgi_status << "\n";
 				handleError(cgi_status, client_fd);
 				return ;
 				// fileResponse(req, file, -1, client_fd);
 			}
-			pollfds.at(i).events &= ~POLLOUT;
+			req->setCgi(cgi);
+			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 		}
-		else if (file.at(file.length() - 1) == '/' || isDirectory(root + file))
+		else if (file.at(file.length() - 1) == '/' || isDirectory(this->response[client_fd].getRoot() + file))
 			directoryResponse(req, file, client_fd);
 		else
 			fileResponse(req, file, -1, client_fd);
 	}
 	else if (req->getMethod() == "POST")
 	{
-		if (file.find("cgi") != str::npos)
+		if (cgi && req->getCGIstarted() == false)
 		{
-			std::cout << "inside this one\n";
-			pollfds.at(i).events &= ~POLLOUT;
-			Cgi	cgi(file, this);
-			str	cgi_status;
-			if ((cgi_status = cgi.setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses)) != "200")
+			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
+			Cgi	*cgi = new Cgi(file, this);
+			std::string	cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
+			if (cgi_status != "200")
 			{
 				handleError(cgi_status, client_fd);
 				return ;
 			}
+			req->setCgi(cgi);
+			req->setCGIstarted();
+			// if there are leftovers bytes, write them to the stdin_pipes of the cgi object
+			// const char*	leftovers = req->getLeftOvers();
+			// if (leftovers != NULL)
+			// {
+			// 	std::cout << "Leftovers; " << leftovers << "\n";
+			// 	write(cgi->get_stdin()[WRITE], leftovers, req->getLeftOverSize());
+			// 	delete req->getLeftOvers();
+			// 	req->setLeftOvers(NULL, 0);
+			// }
+			// else
+			// 	std::cout << "there are no leftovers\n";
+		}
+		else if (cgi && req->getCGIstarted())
+		{
+			// write the received body bytes from the request object into the write pipe of the cgi process
 		}
 		else
 		{
@@ -489,7 +590,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 			handleError("409", client_fd);
 			return ;
 		}
-		uri = root + uri;
+		uri = this->response[client_fd].getRoot() + uri;
 		if (stat(uri.c_str(), &s) == 0) 
 		{
 			// Check if it's a directory
@@ -555,18 +656,38 @@ Server::ResponseState	Server::getState() const
 	return (this->responseState);
 }
 
-bool	Server::cgiRespond(CGIinfo* infoPtr)
+bool Server::checkRequestValidity(Request *req)
 {
-	std::cout << "In cgi respond function\n";
+	Location	*loco;
+
+	if (!req->isValidRequest())
+		return false;
+	if (req->getContentLen() > client_max_body)
+		return false;
+	loco = this->matchLocation(req->getFileURI());
+	if (loco)
+	{
+		if (!loco->isAllowedMethod(req->getMethod()))
+			return false;
+		req->setDestURI(loco->getSaveFolder());
+	}
+	return true;
+}
+
+bool Server::cgiRespond(CGIinfo* infoPtr)
+{
+	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
-	if (this->response.find(client_fd) == this->response.end())
+	// if (this->response.find(client_fd) == this->response.end())
+	// 	this->response[client_fd] = infoPtr->parseCgiResponse();
+	if (std::find(this->response.begin(), this->response.end(), client_fd) == this->response.end())
 		this->response[client_fd] = infoPtr->parseCgiResponse();
 	std::cout << "responding\n";
 	respond(client_fd);
 	if (this->response[client_fd].doneSending())
 	{
 		std::cout << "clearing response object for fd: " << client_fd << "\n";
-		this->response[client_fd].clear();
+		this->response.erase(client_fd);
 		return (true);
 	}
 	return (false);
@@ -612,7 +733,10 @@ bool Server::respond(int client_fd)
 	}
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
+	{
 		std::cout << BLUE << "Done responding!\n\nSent:\n" << header << "\n\n" << RESET;
+		setState(FINISH);
+	}
 	else
 	{
 		std::cout << BLUE << "Done sending header!\n" << RESET;
@@ -694,6 +818,11 @@ bool Server::operator ==(Server &server2)
 		}
 	}
 	return same_name && same_ipport;
+}
+
+size_t	Server::getMaxBodySize() const
+{
+	return this->client_max_body;
 }
 
 // new functions

@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(): header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), fd(-1)
+Response::Response(): root("/"), header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), autoindex(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -9,8 +9,12 @@ Response::Response(): header(""), body(""), code("200"), chunked(false), header_
 	http_codes["301"] = "Redirect";
 	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
+	http_codes["307"] = "Temporary Redirect";
+	http_codes["308"] = "Permanent Redirect";
+	http_codes["400"] = "Bad Request";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
+	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
@@ -19,6 +23,7 @@ Response::Response(): header(""), body(""), code("200"), chunked(false), header_
 
 Response::Response(const Response &copy)
 {
+	this->root = copy.root;
 	this->header = copy.header;
 	this->body = copy.body;
 	this->code = copy.code;
@@ -33,15 +38,19 @@ Response::Response(const Response &copy)
 	http_codes["301"] = "Redirect";
 	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
+	http_codes["307"] = "Temporary Redirect";
+	http_codes["308"] = "Permanent Redirect";
+	http_codes["400"] = "Bad Request";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
+	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
 	http_codes["505"] = "HTTP Version Not Supported";
 }
 
-Response::Response(str code): header(""), body(""), code(code), chunked(false), header_sent(false), keep_alive(false), fd(-1)
+Response::Response(str code): root("/"), header(""), body(""), code("200"), chunked(false), header_sent(false), keep_alive(false), autoindex(false), fd(-1)
 {
 	http_codes["200"] = "OK";
 	http_codes["201"] = "Created";
@@ -50,12 +59,17 @@ Response::Response(str code): header(""), body(""), code(code), chunked(false), 
 	http_codes["301"] = "Redirect";
 	http_codes["302"] = "Found";
 	http_codes["304"] = "Not Modified";
+	http_codes["307"] = "Temporary Redirect";
+	http_codes["308"] = "Permanent Redirect";
+	http_codes["400"] = "Bad Request";
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
+	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
 	http_codes["505"] = "HTTP Version Not Supported";
+	(void)code;
 }
 
 void Response::setHeaderField(str field, str value)
@@ -217,6 +231,36 @@ Response &Response::operator =(const Response &copy)
 	return (*this);
 }
 
+void Response::setRoot(const str &str)
+{
+	this->root = str;
+}
+
+std::vector<str> &Response::getAllowedMethods()
+{
+    return allowed_methods;
+}
+
+void Response::setAllowedMethods(std::vector<str> &all)
+{
+	this->allowed_methods = all;
+}
+
+str Response::getRoot() const
+{
+	return this->root;
+}
+
+void Response::setAutoIndex(bool autoidx)
+{
+	this->autoindex = autoidx;
+}
+
+bool Response::getAutoIndex() const
+{
+	return this->autoindex;
+}
+
 Response::~Response()
 {
 
@@ -238,4 +282,12 @@ size_t	Response::getSentBytes() const
 void	Response::addSentBytes(size_t value)
 {
 	this->sent_bytes += value;
+}
+
+const std::vector<str>& Response::getIndexFiles() const {
+	return this->index_files;
+}
+
+void Response::setIndexFiles(const std::vector<str>& files) {
+	this->index_files = files;
 }

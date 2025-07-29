@@ -26,7 +26,10 @@ Cgi::Cgi()
 	this->host = "";
 	this->pipe_fds[0] = -1;
 	this->pipe_fds[1] = -1;
+	this->stdin_fds[0] = -1;
+	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
+	this->written_bytes = 0;
 }
 
 Cgi::~Cgi()
@@ -53,7 +56,10 @@ Cgi::Cgi(const str script_path, Server* server)
 	this->host = "";
 	this->pipe_fds[0] = -1;
 	this->pipe_fds[1] = -1;
+	this->stdin_fds[0] = -1;
+	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
+	this->written_bytes = 0;
 }
 
 Cgi &Cgi::operator=(const Cgi& copy)
@@ -68,23 +74,43 @@ Cgi &Cgi::operator=(const Cgi& copy)
 	this->host = copy.host;
 	this->pipe_fds[0] = copy.pipe_fds[0];
 	this->pipe_fds[1] = copy.pipe_fds[1];
+	this->stdin_fds[0] = copy.stdin_fds[0];
+	this->stdin_fds[1] = copy.stdin_fds[1];
 	this->cgi_fd = copy.cgi_fd;
+	this->written_bytes = copy.written_bytes;
 	return (*this);
+}
+
+void	Cgi::writeToFd(int fd, char *buf, size_t r, Request* req)
+{
+	std::cout << "writing " << buf << " to stdin fd\n";
+	ssize_t	written = write(fd, buf, r);
+	this->written_bytes += written;
+	std::cout << "Wrote " << this->written_bytes << " so far\n";
+	if (this->written_bytes == (ssize_t)req->getContentLen()) // all bytes written: close write pipe
+	{
+		std::cout << "Body has been fully written\n";
+		close(this->stdin_fds[WRITE]);
+	}
+	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
+	{
+		;
+	}
 }
 
 str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
 		std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	const str& uri = req->getFileURI();
-    std::ostringstream  length;
+	std::ostringstream  length;
 
 	this->path_info = "PATH_INFO=" + str(serv->getRoot() + uri);
 	this->path_info = path_info.substr(0, path_info.find_first_of('?'));
 	this->query_string = "QUERY_STRING=" + uri.substr(uri.find_first_of('?') + 1, str::npos);
-	this->method = "METHOD=" + req->getMethod();
+	this->method = "REQUEST_METHOD=" + req->getMethod();
 	this->content_type = "CONTENT_TYPE=" + req->getContentType();
 	this->host = "HTTP_HOST=" + req->getHost();
-    length << req->getContentLen();
+	length << req->getContentLen();
 	this->content_length = "CONTENT_LENGTH=" + length.str();   // incomplete
 	this->env.push_back(path_info);
 	this->env.push_back(query_string);
@@ -108,8 +134,9 @@ char**   Cgi::envToChar()
 	return (envp);
 }
 
-str    Cgi::validScriptAccess() const
+std::string	Cgi::validScriptAccess() const
 {
+	std::cout << "Attempting to access path: " << this->cgiPath << "\n";
 	if (access(this->cgiPath.c_str(), F_OK | R_OK) == 0)    // the file is found
 	{
 		std::cout << "Script file is found\n";
@@ -124,29 +151,53 @@ str    Cgi::validScriptAccess() const
 	return ("404");
 }
 
-str   Cgi::runCGI(int& client_fd, Server* server, 
+void	Cgi::dupAndClose(int fd1, int fd2)
+{
+	dup2(fd1, fd2);
+	close(fd1);
+}
+
+void	Cgi::setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int events)
+{
+	struct pollfd	pfd;
+
+	pfd.fd = fd;
+	fcntl(pfd.fd, F_SETFD, FD_CLOEXEC);
+	fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
+	pfd.events = events;
+	pfd.revents = 0;
+	pollfds.push_back(pfd);
+}
+
+std::string	Cgi::runCGI(int& client_fd, Server* server, 
 		Request* req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
-	str access_status = validScriptAccess();
+	std::string access_status = validScriptAccess();
 
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
 	{
 		// if script is not accessible, respond with error page
 		return (access_status);
 	}
-
 	if (pipe(this->pipe_fds) == -1)	// if pipe fails, internal server error
 	{
 		std::cout << "returning 500\n";
 		return ("500");
 	}
-	int	in_fd = -1;
-	if (method == "POST")
+	if (pipe(this->stdin_fds) == -1)
+		return ("500");
+	if (req->getMethod() == "POST")
 	{
-		// std::cerr << "Post method\n";
-		in_fd = open(req->getTempFileName().c_str(), O_RDONLY | O_CLOEXEC);
-		if (in_fd == -1)
-			throw (std::exception());
+		setAndAddPollFd(this->stdin_fds[WRITE], pollfds, POLLIN);
+		std::cerr << "opened stdin pipes for CGI POST request\n";
+		const char*	leftovers = req->getLeftOvers();
+		if (leftovers != NULL)
+		{
+			writeToFd(this->stdin_fds[WRITE], const_cast<char *>(leftovers), req->getLeftOverSize(), req);
+			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
+			delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
+			req->setLeftOvers(NULL, 0);
+		}
 	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
@@ -155,16 +206,13 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 		const char* cmd = "/usr/bin/php";
 		const char *const argv[3] = {cmd, script_path.c_str(), NULL};
 		char* const* envp = envToChar();
-		close(this->pipe_fds[READ]);
-		if (in_fd != -1)
-		{
-			dup2(in_fd, STDIN_FILENO);
-			close(in_fd);
-		}
-		dup2(pipe_fds[WRITE], STDOUT_FILENO);
-		close(pipe_fds[WRITE]);
 
-		// std::cout << "Executing script in child process\n";
+		if (this->stdin_fds[WRITE] != -1)
+			close(this->stdin_fds[WRITE]);
+		close(this->pipe_fds[READ]);
+		dupAndClose(this->stdin_fds[READ], STDIN_FILENO);
+		dupAndClose(this->pipe_fds[WRITE], STDOUT_FILENO);
+
 		execve(cmd, const_cast<char **>(argv), envp);
 		std::cerr << "Unable to execute cmd\n";
 		perror("Why");
@@ -174,20 +222,17 @@ str   Cgi::runCGI(int& client_fd, Server* server,
 	}
 	else
 	{
-		if (in_fd != -1)
-			close(in_fd);
+		if (this->stdin_fds[READ] != -1)
+			close(this->stdin_fds[READ]);
 		close(pipe_fds[WRITE]);
-		fcntl(pipe_fds[READ], F_SETFD, fcntl(pipe_fds[READ], F_GETFD) | FD_CLOEXEC);
-		fcntl(pipe_fds[READ], F_SETFL, fcntl(pipe_fds[READ], F_GETFL) | O_NONBLOCK);
-
-		struct pollfd read_fd;
-		read_fd.events = POLLIN;
-		read_fd.revents = 0;
-		read_fd.fd = pipe_fds[READ];
-		std::cout << "Pushing " << read_fd.fd << " into map for client " << client_fd << "\n";
-		pollfds.push_back(read_fd); // add the read end of the pipe to the pollfds
+		setAndAddPollFd(pipe_fds[READ], pollfds, POLLIN);
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
 	}
 	return ("200");
 	(void)server;
+}
+
+int*		Cgi::get_stdin()
+{
+	return (this->stdin_fds);
 }

@@ -31,12 +31,13 @@
 # include <map>
 # include <set>
 # include <cstdio>
+
 # include "BlockOBJ.hpp"
 # include "Http.hpp"
 # include "Server.hpp"
 # include "Request.hpp"
 
-# include "Cgi.hpp"
+// # include "Cgi.hpp"
 # include "CGIinfo.hpp"
 
 // # define BUFFER_SIZE 4096	// 4 kb
@@ -53,7 +54,12 @@
 # define FLUSH "\033[0m" << std::endl;
 /* Colors */
 
+# define WRITE 1
+# define READ 0
+
 typedef std::string str;
+
+class Cgi;
 
 class ConnectionManager
 {
@@ -61,15 +67,13 @@ class ConnectionManager
 		static unsigned int	number;
 		typedef enum
 		{
-			INVALID = -1,
+			IGNORE = -1,
+			INVALID,
 			INCOMPLETE,
-			CGI_INCOMPLETE,
-			CGI_FINISH,
+			HEADER_FINISHED,
 			FINISH
 		}	State;
-
-		
-
+	
 		unsigned int							main_listeners;
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
@@ -78,8 +82,10 @@ class ConnectionManager
 		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::map<int, Request *>				requests;
+		std::map<int, CGIinfo>	 				cgiProcesses;
 		std::string								request_header;
 		std::fstream							request_body;
+		int										cgi_pipes[2];
 		
 		ConnectionManager();
 		ConnectionManager(const ConnectionManager &obj);
@@ -92,21 +98,21 @@ class ConnectionManager
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 
-		void		passRequestToServer(int i, Request **req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
+		void		passRequestToServer(int i, Request **req);
 		void		closeSocket(unsigned int& index);
-
-		void		openTempFile(Request* req, std::fstream& file);
-
-		void		parseBodyFile(Request* req);
 
 		void		deleteTempFiles();
 
-		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests, std::map<int, CGIinfo>& cgiProcesses);
+		void		handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests);
 		void		handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests);
 
-		bool		handleCGIPollout(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses);
+		bool		handleCGIPollout(unsigned int& i);
+		void		handleCGIread(unsigned int& i);
+		void		handleCgiPollhup(unsigned int i);
 
-		void		handleCGIread(unsigned int& i, std::map<int, CGIinfo>& cgiProcesses);
+		void		reapProcesses();
+
+		void		deleteRequest(unsigned int i);
 
 	public:
 		ConnectionManager(Http *protocol);
