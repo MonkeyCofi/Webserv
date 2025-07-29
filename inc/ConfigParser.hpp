@@ -26,6 +26,8 @@ class ConfigParser
 		const static str		directives[];
 		Engine					*webserv;
 		str						err_msg;
+		str						location_uri;
+		bool					location_found;
 		int						inBlock;
 		e_next					expected;
 		std::queue<str>			parsed_opts;

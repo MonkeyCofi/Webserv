@@ -454,9 +454,11 @@ Location *Server::matchLocation(const str &uri)
 	std::cout << "number of locations: " << this->locations.size() << "\n";
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
-		std::cout << "uri: " << uri << " root: " << (*it)->getRoot() << "\n";
 		if ((*it)->matchURI(uri))
+		{
+			std::cout << "Matching location found for " << uri << "\n";
 			return *it;
+		}
 	}
 	return NULL;
 }

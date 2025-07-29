@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "" };
+const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "", "limit_except" };
 
 Location::Location(): BlockOBJ()
 {
@@ -9,6 +9,7 @@ Location::Location(): BlockOBJ()
 	root = "";
 	redir_uri = "";
 	save_folder = "";
+	match_uri = "";
 }
 
 Location::Location(const Location &copy): BlockOBJ(copy), root(copy.getRoot())
@@ -32,7 +33,6 @@ bool Location::handleDirective(std::queue<str> opts)
 	if (opts.size() == 0 || !inDirectives(opts.front(), directives))
 		return false;
 	parent_ret = BlockOBJ::handleDirective(opts);
-	std::cout << "Handling location directive\n";
 	if (opts.front() == "root" && opts.size() == 2)
 	{
 		opts.pop();
@@ -85,7 +85,6 @@ bool Location::handleDirective(std::queue<str> opts)
 	}
 	else
 		return parent_ret;
-	printLocation();
 	return true;
 }
 
@@ -129,7 +128,11 @@ const std::vector<str>& Location::getIndexFiles() const {
 
 bool Location::matchURI(str uri) const
 {
-	return (this->root.find(uri) == 0);
+	// return whether the matchUri is found in the uri string
+	std::cout << "uri: " << uri << "\n";
+	std::cout << "to match: " << this->match_uri << "\n";
+	return (uri.find(this->match_uri) != std::string::npos);
+	// return (this->root.find(uri) == 0);
 }
 
 const Location &Location::operator =(const Location &copy)
@@ -141,6 +144,7 @@ const Location &Location::operator =(const Location &copy)
 BlockOBJ	*Location::handleBlock(std::queue<str> opts)
 {
 	(void)opts;
+	std::cout << "\033[31mHANDLE BLOCK\033[0m\n";
 	return NULL;
 }
 
@@ -175,6 +179,11 @@ void Location::setAllowedMethods(const std::vector<str>& methods) {
 
 void Location::setIndexFiles(const std::vector<str>& files) {
 	indexfiles = files;
+}
+
+void	Location::setMatchUri(const std::string& uri)
+{
+	this->match_uri = uri;
 }
 
 void	Location::printLocation() const

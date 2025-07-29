@@ -93,7 +93,9 @@ void	Cgi::writeToFd(int fd, char *buf, size_t r, Request* req)
 		close(this->stdin_fds[WRITE]);
 	}
 	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
+	{
 		;
+	}
 }
 
 str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 

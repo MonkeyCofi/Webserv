@@ -5,6 +5,7 @@
 #include <exception>
 #include <string>
 #include <queue>
+#include <algorithm>
 #include "BlockOBJ.hpp"
 
 typedef std::string str;
@@ -46,6 +47,7 @@ class Location: public BlockOBJ
 		const Location &operator =(const Location &copy);
 
 		void	printLocation() const;
+		void	setMatchUri(const std::string& uri);
 };
 
 #endif

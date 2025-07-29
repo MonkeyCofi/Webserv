@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/07/09 23:50:50 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/07/28 23:30:37 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -409,6 +409,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		{
 			case 400:
 				req->setStatus("400");
+				// fallthrough
 			case 502:
 				if (outcome == 501)
 					req->setStatus("501");

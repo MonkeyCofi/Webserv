@@ -77,7 +77,9 @@ bool BlockOBJ::handleDirective(std::queue<str> opts)
 			;
 			// autoindex = true;
 		else
+		{
 			;
+		}
 			// autoindex = false;
 	}
 	else
