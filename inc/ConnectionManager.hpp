@@ -98,7 +98,7 @@ class ConnectionManager
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 
-		void		passRequestToServer(int i, Request **req);
+		void		passRequestToServer(unsigned int& i, Request **req);
 		void		closeSocket(unsigned int& index);
 
 		void		deleteTempFiles();
@@ -121,6 +121,11 @@ class ConnectionManager
 		void	startConnections();
 
 		std::vector<struct pollfd>& getPollFds();
+
+		void debugVectorSizes(const std::string& location);
+
+		
+		void	addFdtoPoll(unsigned int i, struct pollfd fd);
 
 		~ConnectionManager();
 

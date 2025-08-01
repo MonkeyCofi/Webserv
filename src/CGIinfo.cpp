@@ -6,6 +6,7 @@ CGIinfo::CGIinfo()
     this->response_str.clear();
     this->client_fd = -1;
     this->child_pid = -1;
+    this->parsed = false;
 }
 
 CGIinfo::~CGIinfo()
@@ -19,6 +20,7 @@ CGIinfo::CGIinfo(int _client, pid_t _child)
     this->child_pid = _child;
     this->response_str.clear();
     this->response_complete = false;
+    this->parsed = false;
 }
 
 CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
@@ -27,6 +29,7 @@ CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
     this->client_fd = obj.client_fd;
     this->response_complete = obj.response_complete;
     this->response_str = obj.response_str;
+    this->parsed = obj.parsed;
     return (*this);
 }
 
@@ -37,6 +40,7 @@ CGIinfo::CGIinfo(const CGIinfo& obj)
     this->response_complete = obj.response_complete;
     this->response_str.clear();
     this->response_str = obj.response_str;
+    this->parsed = obj.parsed;
 }
 
 void    CGIinfo::concatBuffer(std::string str)
@@ -122,4 +126,14 @@ Response    CGIinfo::parseCgiResponse()
     (void)content_type_iter;
     (void)content_type;
     return (r);
+}
+
+bool    CGIinfo::getParsed() const
+{
+    return (this->parsed);
+}
+
+void    CGIinfo::setParsed(bool parsed)
+{
+    this->parsed = parsed;
 }

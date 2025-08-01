@@ -145,23 +145,8 @@ bool ConfigParser::handleNext(str &word)
 					this->location_uri.clear();
 				}
 			}
-			// while (parsed_opts.size() > 0)
-			// {
-			// 	if (parsed_opts.front() == "location")
-			// 	{
-			// 		Location* lptr = dynamic_cast<Location *>(blocks.top());
-			// 		if (lptr)
-			// 		{
-			// 			parsed_opts.pop();
-			// 			std::cout << "Setting match uri to " << parsed_opts.front() << "\n";
-			// 			if (parsed_opts.size() > 1)
-			// 				return false;
-			// 			lptr->setMatchUri(parsed_opts.front());
-			// 		}
-			// 	}
-			// 	else
-			// 		parsed_opts.pop();
-			// }
+			while (parsed_opts.size())
+				parsed_opts.pop();
 		}
 		if (word == "}")
 			blocks.pop();

@@ -1,5 +1,5 @@
 #include "Cgi.hpp"
-
+#include "ConnectionManager.hpp"
 /*
 	* Check if the request URI contains the word cgi or the folder: cgi-bin.
 	* if request method is GET, then the query for the GET request is stored in an environment variable called QUERY_STRING
@@ -98,7 +98,7 @@ void	Cgi::writeToFd(int fd, char *buf, size_t r, Request* req)
 	}
 }
 
-str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv, 
+str	Cgi::setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, ConnectionManager& cm, Server* serv, 
 		std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	const str& uri = req->getFileURI();
@@ -120,7 +120,7 @@ str	Cgi::setupEnvAndRun(int& client_fd, Request* req, Server* serv,
 	this->env.push_back(content_length);
 	this->env.push_back("SCRIPT_NAME=" + this->scriptName);
 
-	return (runCGI(client_fd, serv, req, pollfds, cgiProcesses));
+	return (runCGI(i, client_fd, serv, req, cm, pollfds, cgiProcesses));
 }
 
 char**   Cgi::envToChar()
@@ -157,7 +157,7 @@ void	Cgi::dupAndClose(int fd1, int fd2)
 	close(fd1);
 }
 
-void	Cgi::setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int events)
+void	Cgi::setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, int events)
 {
 	struct pollfd	pfd;
 
@@ -166,11 +166,13 @@ void	Cgi::setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int event
 	fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
 	pfd.events = events;
 	pfd.revents = 0;
-	pollfds.push_back(pfd);
+	(void)pollfds;
+	std::cout << "Adding fd " << pfd.fd << " to pollfds at index " << i << "\n";
+	cm.addFdtoPoll(i, pfd);
 }
 
-std::string	Cgi::runCGI(int& client_fd, Server* server, 
-		Request* req, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
+std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, 
+		Request* req, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	std::string access_status = validScriptAccess();
 
@@ -188,14 +190,14 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		return ("500");
 	if (req->getMethod() == "POST")
 	{
-		setAndAddPollFd(this->stdin_fds[WRITE], pollfds, POLLIN);
+		setAndAddPollFd(i, this->stdin_fds[WRITE], cm, pollfds, POLLIN);
 		std::cerr << "opened stdin pipes for CGI POST request\n";
 		const char*	leftovers = req->getLeftOvers();
 		if (leftovers != NULL)
 		{
 			writeToFd(this->stdin_fds[WRITE], const_cast<char *>(leftovers), req->getLeftOverSize(), req);
 			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
-			delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
+			// delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
 			req->setLeftOvers(NULL, 0);
 		}
 	}
@@ -225,7 +227,7 @@ std::string	Cgi::runCGI(int& client_fd, Server* server,
 		if (this->stdin_fds[READ] != -1)
 			close(this->stdin_fds[READ]);
 		close(pipe_fds[WRITE]);
-		setAndAddPollFd(pipe_fds[READ], pollfds, POLLIN);
+		setAndAddPollFd(i, pipe_fds[READ], cm, pollfds, POLLIN);
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
 	}
 	return ("200");

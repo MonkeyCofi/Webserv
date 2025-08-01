@@ -13,6 +13,8 @@
 # define WRITE 1
 # define CHLDPROC 0
 
+class ConnectionManager;
+
 class Cgi
 {
 	private:
@@ -36,17 +38,17 @@ class Cgi
 		Cgi	&operator=(const Cgi& copy);
 		Cgi(const std::string script_path, Server* server);	// constructor that takes path to cgi script
 
-		std::string	setupEnvAndRun(int& client_fd, Request* req, Server* serv, std::vector<struct pollfd>& pollfds,
-					std::map<int, CGIinfo>& cgiProcesses);
+		std::string	setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, ConnectionManager& cm,Server* serv,
+			std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
 
-		std::string	runCGI(int& client_fd, Server* server, Request* req, 
+		std::string	runCGI(unsigned int& i, int& client_fd, Server* server, Request* req, ConnectionManager& cm, 
 					std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
 
 		char**   	envToChar();
 		std::string	validScriptAccess() const;
 		int*		get_stdin();
 		void		dupAndClose(int fd1, int fd2);
-		void		setAndAddPollFd(int fd, std::vector<struct pollfd>& pollfds, int events);
+		void		setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, int events);
 		void		writeToFd(int fd, char *buf, size_t r, Request* req);
 };
 

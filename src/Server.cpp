@@ -465,7 +465,7 @@ Location *Server::matchLocation(const str &uri)
 	return NULL;
 }
 
-void Server::handleRequest(int& i, int client_fd, Request *req, 
+void Server::handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm,
 	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
 {
 	Location		*loco;
@@ -476,7 +476,10 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 	DIR* 			dir;
 
 	if (response.find(client_fd) == response.end())
+	{
+		std::cout << "Creating a request object for client fd: " << client_fd << "\n";
 		response[client_fd] = Response();
+	}
 	response[client_fd].clear();
 	pollfds.at(i).events |= POLLOUT;
 	file = req->getFileURI();
@@ -523,7 +526,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 		{
 			std::cerr << "Starting up GET CGI process\n";
 			Cgi	*cgi = new Cgi(file, this);
-			str cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
+			str cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this, pollfds, cgiProcesses);
 			if (cgi_status != "200")
 			{
 				std::cout << "CGI script returned status: " << cgi_status << "\n";
@@ -545,7 +548,7 @@ void Server::handleRequest(int& i, int client_fd, Request *req,
 		{
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 			Cgi	*cgi = new Cgi(file, this);
-			std::string	cgi_status = cgi->setupEnvAndRun(client_fd, req, this, pollfds, cgiProcesses);
+			std::string	cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this, pollfds, cgiProcesses);
 			if (cgi_status != "200")
 			{
 				handleError(cgi_status, client_fd);
@@ -678,14 +681,20 @@ bool Server::cgiRespond(CGIinfo* infoPtr)
 {
 	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
-	// if (this->response.find(client_fd) == this->response.end())
-	// 	this->response[client_fd] = infoPtr->parseCgiResponse();
-	if (std::find(this->response.begin(), this->response.end(), client_fd) == this->response.end())
+	/*
+		response object will already exist because it was created when calling
+		handleRequest on the request object. if it does exist,
+	*/
+	if (infoPtr->getParsed() == false)
+	{
 		this->response[client_fd] = infoPtr->parseCgiResponse();
-	std::cout << "responding\n";
+		infoPtr->setParsed(true);
+	}
+	std::cout << "responding to cgi client: " << client_fd << "\n";
 	respond(client_fd);
 	if (this->response[client_fd].doneSending())
 	{
+		infoPtr->getBuffer().clear();
 		std::cout << "clearing response object for fd: " << client_fd << "\n";
 		this->response.erase(client_fd);
 		return (true);
@@ -731,6 +740,7 @@ bool Server::respond(int client_fd)
 		this->response[client_fd].setHeaderSent(true);
 		std::cout << RED << "Header sent hellbent!\n";
 	}
+	response[client_fd].printResponse();
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
 	{

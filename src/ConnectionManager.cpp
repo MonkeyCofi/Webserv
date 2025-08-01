@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/07/28 23:30:37 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/01 00:07:07 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,14 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
 }
 
+void	ConnectionManager::addFdtoPoll(unsigned int i, struct pollfd fd)
+{
+	this->sock_fds.push_back(fd);
+	handlers.push_back(NULL);
+	defaults.push_back(defaults.at(i));
+	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
+}
+
 void ConnectionManager::printError(int revents)
 {
 	if (revents & POLLHUP)
@@ -164,8 +172,10 @@ void ConnectionManager::printError(int revents)
 }
 
 // if cgi is requested, don't erase the request for the client_fd
-void ConnectionManager::passRequestToServer(int i, Request **req)
+void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 {
+	if (!req || !(*req))
+		return ;
 	// std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (!(*req)->isValidRequest())
 		handlers.at(i) = defaults.at(i);
@@ -173,7 +183,8 @@ void ConnectionManager::passRequestToServer(int i, Request **req)
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
-	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, this->sock_fds, cgiProcesses);
+	sock_fds.at(i).events &= ~POLLIN;
+	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, *this, this->sock_fds, cgiProcesses);
 }
 
 void	ConnectionManager::deleteRequest(unsigned int i)
@@ -185,19 +196,18 @@ void	ConnectionManager::deleteRequest(unsigned int i)
 
 void	ConnectionManager::closeSocket(unsigned int& index)
 {
-	close(sock_fds.at(index).fd);
 	std::cout << "\033[31mClosing fd " << sock_fds.at(index).fd << "\033[0m\n";
+	close(sock_fds.at(index).fd);
 	if (requests.find(sock_fds.at(index).fd) == requests.end())
-		std::cout << "Not found\n";
+		std::cout << "Request for fd " << sock_fds.at(index).fd << " is not found\n";
 	else
 	{
-		std::cout << "Request exists and will now be deleted\n";
+		std::cout << "Request for fd " << sock_fds.at(index).fd << " exists and will now be deleted\n";
 		deleteRequest(index);
 		// delete requests[(sock_fds.at(index).fd)];
 	}
 	std::cout << RED << "closing at index: " << index << NL;
 	sock_fds.erase(sock_fds.begin() + index);
-	reqs.erase(reqs.begin() + index);
 	handlers.erase(handlers.begin() + index);
 	defaults.erase(defaults.begin() + index);
 	servers_per_ippp.erase(servers_per_ippp.begin() + index);
@@ -361,6 +371,18 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	HEADER_FINISHED means that the header has been received and parsed, so it should now be passed to the server. This is only possible if POST request
 	FINISHED means that the request has been fully received, with its headers parsed, and it is now ready to be sent to its appropriate handler
 */
+
+void ConnectionManager::debugVectorSizes(const std::string& location)
+{
+    std::cerr << "=== Vector sizes at " << location << " ===\n";
+    std::cerr << "sock_fds.size(): " << sock_fds.size() << "\n";
+    std::cerr << "handlers.size(): " << handlers.size() << "\n";
+    std::cerr << "defaults.size(): " << defaults.size() << "\n";
+    std::cerr << "servers_per_ippp.size(): " << servers_per_ippp.size() << "\n";
+    std::cerr << "main_listeners: " << main_listeners << "\n";
+    std::cerr << "==========================================\n";
+}
+
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	std::string	_request;
@@ -369,12 +391,18 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	int			outcome;
 	char		buffer[BUFFER_SIZE + 1];
 
+	if (!req)
+	{
+		std::cerr << "REQUEST DONT EXIST\n";
+		return (IGNORE);
+	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r < 0)
 		return (INCOMPLETE);
 	if (r == 0)
 	{
-		std::cerr << "Closing socket in receive request due to recv() returning 0\n";
+		std::cerr << "Closing fd " << sock_fds.at(index).fd << " in receive request due to recv() returning 0\n";
+		std::cout << "Ignoring fd " << this->sock_fds[index].fd << " due to recv() returning 0\n";
 		closeSocket(index);
 		return (IGNORE);
 	}
@@ -412,7 +440,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					return (INVALID);
 				else
 				{
-					if (servers_per_ippp[index].find(req->getHost()) == servers_per_ippp[index].end())
+					debugVectorSizes("receiveRequest");
+					std::cout << "trying to access " << index << "th handler\n";
+					if (servers_per_ippp.at(index).find(req->getHost()) == servers_per_ippp.at(index).end())
 						handlers.at(index) = defaults.at(index);
 					else if(req->isValidRequest())
 						handlers.at(index) = servers_per_ippp[index][req->getHost()];
@@ -484,6 +514,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
 			sock_fds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from the FD
+			sock_fds.at(i).events |= POLLIN;
 			std::cerr << "Finished responding to request\n";
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{
@@ -519,7 +550,7 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 
 	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
 	{
-		// if the client fd is present in the map and the cgi script has finished executing
+		// if the client fd is present in the map and finished reading the response
 		if (it->second.getClientFd() == sock_fds.at(i).fd && it->second.isComplete())
 		{
 			infoPtr = &it->second;
@@ -542,12 +573,13 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 	if (handler->cgiRespond(infoPtr) == true)	// if true, remove the cgiProcess from the map
 	{
 		std::cout << "Closing client socket fd " << this->sock_fds[i].fd << " in cgi pollout\n";
-		// closeSocket(i);
-		close(this->sock_fds[i].fd);
-		this->sock_fds.erase(this->sock_fds.begin() + i);
-		i--;
-		std::cout << "Closed socket\n";
-		cgiProcesses.erase(pipe_fd);
+		closeSocket(i);
+		// close(this->sock_fds[i].fd);
+		// this->sock_fds.erase(this->sock_fds.begin() + i);
+		// i--;
+		if (pipe_fd > -1)
+			cgiProcesses.erase(pipe_fd);
+	
 	}
 	return (true);
 }
@@ -559,13 +591,15 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 	if (it == requests.end())
 	{
 		std::cout << CYAN <<  "Creating a new request for fd " << sock_fds.at(i).fd << "\n" << RESET;
-		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request));
+		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request()));
 	}
 	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
+	if (state == IGNORE)
+		return ;
 	if (state == INVALID)
 	{
 		std::cerr << "STATE: " << "INVALID\n";
-		this->sock_fds[i].events &= ~POLLIN;
+		this->sock_fds[i].events &= ~POLLIN;	// removing POLLIN; unsure why
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
 	if (state == FINISH || state == HEADER_FINISHED)	// HEADER_FINISHED indicates partial request
@@ -579,10 +613,12 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 {
 	ssize_t r;
 	char	buffer[BUFFER_SIZE + 1] = {0};
+	// CGIinfo& cgi_info = cgiProcesses[sock_fds.at(i).fd];
+	CGIinfo& cgi_info = cgiProcesses.at(sock_fds.at(i).fd);
 
 	std::cout << "in CGI read\n";
 	r = read(sock_fds.at(i).fd, buffer, BUFFER_SIZE);
-	if (r == -1)
+	if (r == -1)	// should be handled
 	{
 		std::cerr << "EXITING SERVER\n";
 		exit(1);
@@ -590,28 +626,26 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 	else if (r == 0)
 	{
 		std::cout << "read 0 bytes\n";
-		CGIinfo& info = cgiProcesses[sock_fds.at(i).fd];
 		int	status;
 
-		pid_t	res = waitpid(info.getPid(), &status, WNOHANG);
-		std::cout << "Attempting to wait for pid: " << info.getPid() << "\n";
-		std::cout << "Res: " << res << " pid: " << info.getPid() << "\n";
-		if (res == info.getPid())
+		pid_t	res = waitpid(cgi_info.getPid(), &status, WNOHANG);
+		std::cout << "Attempting to wait for pid: " << cgi_info.getPid() << "\n";
+		std::cout << "Res: " << res << " pid: " << cgi_info.getPid() << "\n";
+		if (res == cgi_info.getPid())
 		{
 			// the cgi pid can safely be cleaned up
 			std::cout << "Script finished executing\n";
 		}	// else cleanup will happen later
-		info.completeResponse();	// once read returns 0, that means its all good to respond to
+		cgi_info.completeResponse();	// once read returns 0, that means its all good to respond to
 
 		// in the pollfds vector, find the client fd's index and set its event field to fd.event |= POLLOUT
-		const int	client_fd = info.getClientFd();
-		std::vector<struct pollfd>&	fds = this->sock_fds;
-		for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); it++)
+		const int	client_fd = cgi_info.getClientFd();
+		for (std::vector<struct pollfd>::iterator it = this->sock_fds.begin(); it != this->sock_fds.end(); it++)
 		{
 			if (it->fd == client_fd)
 			{
-				std::cout << "Setting cgi fd " << info.getClientFd() << "'s client fd " << it->fd << " to POLLOUT\n";
-				it->events |= POLLOUT;
+				std::cout << "Setting cgi fd " << cgi_info.getClientFd() << "'s client fd " << it->fd << " to POLLOUT\n";
+				it->events |= POLLOUT;	// add pollout to the cgi client fd
 				break ;
 			}
 		}
@@ -623,17 +657,29 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 	else
 	{
 		buffer[r] = 0;
-		cgiProcesses[sock_fds.at(i).fd].concatBuffer(std::string(buffer));
+		cgi_info.concatBuffer(std::string(buffer));
+		std::cout << "Concatenating\n";
 	}
 	std::cout << buffer << "\n";
 }
 
 void	ConnectionManager::reapProcesses()
 {
+	std::cout << "In reap processes function\n";
 	for(std::map<int, CGIinfo>::iterator it = this->cgiProcesses.begin(); it != this->cgiProcesses.end(); it++)
 	{
+		std::cout << YELLOW;
+		it->second.printInfo();
+		std::cout << RESET;
 		int	s;
-		if (waitpid(it->second.getPid(), &s, WNOHANG) > 0)
+		pid_t	pid = waitpid(it->second.getPid(), &s, WNOHANG);
+		if (pid < 0)
+		{
+			perror("reapProcesses");
+			continue ;
+		}
+		std::cout << "attempting to reap pid: " << pid << "\n";
+		if (pid > 0)
 		{
 			std::cout << "Reaping pid: " << it->second.getPid() << "\n";
 			this->cgiProcesses.erase(it);
@@ -646,11 +692,12 @@ void	ConnectionManager::handleCgiPollhup(unsigned int i)
 	int	status;
 
 	CGIinfo& info = cgiProcesses[sock_fds.at(i).fd];
-	pid_t	pid = waitpid(info.getPid(), &status, 0);
+	pid_t	pid = waitpid(info.getPid(), &status, WNOHANG);
 	std::cout << "pid: " << pid << "\n";
 	info.completeResponse();
 
 	const int& client_fd = info.getClientFd();
+	// find the cgi object's client fd
 	for (std::vector<struct pollfd>::iterator it = this->sock_fds.begin(); it != this->sock_fds.end(); it++)
 	{
 		if (it->fd == client_fd)
@@ -671,6 +718,10 @@ void ConnectionManager::startConnections()
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, sigint_handle);
 	std::cout << "Server has " << main_listeners << " listeners\n";
+	std::cout << "Listener fds: ";
+	for (unsigned int i = 0; i < main_listeners; i++)
+		std::cout << sock_fds.at(i).fd << " ";
+	std::cout << "\n";
 	(void)res;
 	(void)state;
 	while (g_quit != true)
@@ -702,6 +753,7 @@ void ConnectionManager::startConnections()
 					std::cout << "in CGI pollin\n";
 					std::cout << "Found " << sock_fds.at(i).fd << " in the map of fds\n";
 					handleCGIread(i);
+					continue ;
 				}
 				else
 				{
@@ -716,20 +768,22 @@ void ConnectionManager::startConnections()
 				if (handleCGIPollout(i) == true)
 					continue ;
 				handlePollout(state, i, requests);
+				continue ;
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{
-				std::cout << "POLLHUP event\n";
 				if (cgiProcesses.find(sock_fds.at(i).fd) != cgiProcesses.end())
 				{
 					std::cout << "POLLHUP CGI event\n";
 					handleCgiPollhup(i);
-					close(sock_fds.at(i).fd);
-					sock_fds.erase(sock_fds.begin() + i);
-					i--;
+					closeSocket(i);
+					// close(sock_fds.at(i).fd);
+					// sock_fds.erase(sock_fds.begin() + i);
+					// i--;
 				}
 				else
 				{
+					std::cout << "POLLHUP event\n";
 					std::cerr << "Closing fd " << this->sock_fds.at(i).fd << " becuase POLLHUP\n";
 					printError(sock_fds.at(i).revents);
 					closeSocket(i);

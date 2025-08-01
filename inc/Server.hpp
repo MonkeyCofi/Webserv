@@ -71,7 +71,7 @@ class Server: public BlockOBJ
 
 		void					passValuesToLocations();
 		size_t					sent_bytes;
-		void					handleRequest(int& i, int client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
+		void					handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, 
 								std::map<int, CGIinfo>& cgiProcesses);
 
 		bool					handleDirective(std::queue<str> opts);
