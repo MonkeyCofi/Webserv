@@ -147,7 +147,7 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	client.revents = 0;
 	std::cout << "Pushing back client fd " << client.fd << " at index " << sock_fds.size() << "\n";
 	sock_fds.push_back(client);
-	reqs.push_back("");
+	// reqs.push_back("");
 	handlers.push_back(NULL);
 	defaults.push_back(defaults.at(i));
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
@@ -179,10 +179,10 @@ void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 	// std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (!(*req)->isValidRequest())
 		handlers.at(i) = defaults.at(i);
-	if (servers_per_ippp[i].find((*req)->getHost()) == servers_per_ippp[i].end())
+	if (servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
-		handlers.at(i) = servers_per_ippp[i][(*req)->getHost()];
+		handlers.at(i) = servers_per_ippp.at(i).at((*req)->getHost());
 	sock_fds.at(i).events &= ~POLLIN;
 	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, *this, this->sock_fds, cgiProcesses);
 }
@@ -649,9 +649,10 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 				break ;
 			}
 		}
-		close(sock_fds.at(i).fd);	// close the read end of the cgi pipe
-		sock_fds.erase(sock_fds.begin() + i);	// remove the fd from the pollfds
-		i--;
+		// close(sock_fds.at(i).fd);	// close the read end of the cgi pipe
+		// sock_fds.erase(sock_fds.begin() + i);	// remove the fd from the pollfds
+		// i--;
+		closeSocket(i);
 		(void)status;
 	}
 	else
@@ -743,7 +744,7 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
-			reapProcesses();
+			// reapProcesses();
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)

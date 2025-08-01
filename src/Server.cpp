@@ -685,6 +685,13 @@ bool Server::cgiRespond(CGIinfo* infoPtr)
 		response object will already exist because it was created when calling
 		handleRequest on the request object. if it does exist,
 	*/
+	std::cout << &this->response << "!@#@!#!@#!@#@!#@!#@!#!@#!@#@!\n";
+	if (this->response.find(client_fd) == this->response.end())
+	{
+		this->response[client_fd] = Response();
+		std::cout << RED << "IN HERE" << NL;
+	}
+
 	if (infoPtr->getParsed() == false)
 	{
 		this->response[client_fd] = infoPtr->parseCgiResponse();
