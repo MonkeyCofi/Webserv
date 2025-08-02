@@ -12,6 +12,8 @@ Server::Server() : BlockOBJ()
 	autoindex = false;
 	min_del_depth = 0;
 	sent_bytes = 0;
+	client_max_body = 10000000;
+	responseState = INCOMPLETE;
 }
 
 Server::Server(const Server &copy): BlockOBJ(copy)
@@ -22,12 +24,22 @@ Server::Server(const Server &copy): BlockOBJ(copy)
 	min_del_depth = 0;
 	(void)copy;
 	sent_bytes = 0;
+	client_max_body = copy.client_max_body;
+	responseState = copy.responseState;
 }
 
 Server::~Server()
 {
 	for(std::vector<Location *>::iterator it = locations.begin(); it != locations.end(); it++)
 		delete *it;
+	for (std::map<int, Response>::iterator it = response.begin(); it != response.end(); it++)
+	{
+		if (it->second.getFileFD() != -1)
+		{
+			close(it->second.getFileFD());
+			it->second.setFileFD(-1);
+		}
+	}
 }
 
 bool Server::validAddress(str address)
@@ -384,7 +396,7 @@ void Server::directoryResponse(Request* req, str path, int client_fd)
 	for (unsigned int i = 0; i < idx_pages.size(); i++)
 	{
 		indexpath = full_path + idx_pages.at(i);
-		file_fd = open(indexpath.c_str(), O_RDONLY);
+		file_fd = open(indexpath.c_str(), O_RDONLY | O_CLOEXEC);
 		if (file_fd > -1)
 		{
 			std::cout << GREEN << "FileREsponsing In th3 d1r3ct0ry!\n" << RESET;
@@ -435,7 +447,7 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 	else
 	{
 		path = this->response[client_fd].getRoot() + path;
-		file_fd = open(path.c_str(), O_RDONLY);
+		file_fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 	}
 	if (file_fd == -1)
 	{
@@ -677,6 +689,7 @@ bool Server::checkRequestValidity(Request *req)
 	return true;
 }
 
+// should return whether its keep-alive or not
 bool Server::cgiRespond(CGIinfo* infoPtr)
 {
 	// std::cout << "In cgi respond function\n";
@@ -694,19 +707,21 @@ bool Server::cgiRespond(CGIinfo* infoPtr)
 
 	if (infoPtr->getParsed() == false)
 	{
+		std::cout << "Setting response object\n";
 		this->response[client_fd] = infoPtr->parseCgiResponse();
 		infoPtr->setParsed(true);
 	}
 	std::cout << "responding to cgi client: " << client_fd << "\n";
-	respond(client_fd);
+	bool keep_alive = respond(client_fd);
 	if (this->response[client_fd].doneSending())
 	{
+		infoPtr->setFinishedResponding();
 		infoPtr->getBuffer().clear();
 		std::cout << "clearing response object for fd: " << client_fd << "\n";
 		this->response.erase(client_fd);
-		return (true);
+		return (keep_alive);
 	}
-	return (false);
+	return (keep_alive);
 	// send the response object to the client fd
 	// set the state as incomplete or complete based on whether send returns 0
 }

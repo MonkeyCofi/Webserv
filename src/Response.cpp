@@ -171,8 +171,8 @@ bool Response::isChunked() const
 
 bool Response::doneSending() const
 {
-	std::cout << std::boolalpha << "header sent: " << header_sent << "\nChunked: " << chunked 
-		<< "\nfd: " << fd << "\n";
+	// std::cout << std::boolalpha << "header sent: " << header_sent << "\nChunked: " << chunked 
+	// 	<< "\nfd: " << fd << "\n";
 	return (header_sent && !chunked) || (chunked && fd == -1);
 }
 
@@ -263,7 +263,11 @@ bool Response::getAutoIndex() const
 
 Response::~Response()
 {
-
+	if (this->fd != -1)
+	{
+		close(this->fd);
+		this->fd = -1;
+	}
 }
 
 void	Response::printResponse()
@@ -290,4 +294,14 @@ const std::vector<str>& Response::getIndexFiles() const {
 
 void Response::setIndexFiles(const std::vector<str>& files) {
 	this->index_files = files;
+}
+
+void Response::setFileFD(int fd)
+{
+	this->fd = fd;
+}
+
+int Response::getFileFD() const
+{
+	return this->fd;
 }

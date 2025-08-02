@@ -7,6 +7,9 @@ CGIinfo::CGIinfo()
     this->client_fd = -1;
     this->child_pid = -1;
     this->parsed = false;
+    this->finished_responding = false;
+    this->header.clear();
+    this->response_str.clear();
 }
 
 CGIinfo::~CGIinfo()
@@ -21,6 +24,9 @@ CGIinfo::CGIinfo(int _client, pid_t _child)
     this->response_str.clear();
     this->response_complete = false;
     this->parsed = false;
+    this->finished_responding = false;
+    this->header.clear();
+    this->response_str.clear();
 }
 
 CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
@@ -30,6 +36,9 @@ CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
     this->response_complete = obj.response_complete;
     this->response_str = obj.response_str;
     this->parsed = obj.parsed;
+    this->header = obj.header;
+    this->response_str = obj.response_str;
+    this->finished_responding = obj.finished_responding;
     return (*this);
 }
 
@@ -41,6 +50,9 @@ CGIinfo::CGIinfo(const CGIinfo& obj)
     this->response_str.clear();
     this->response_str = obj.response_str;
     this->parsed = obj.parsed;
+    this->header = obj.header;
+    this->response_str = obj.response_str;
+    this->finished_responding = obj.finished_responding;
 }
 
 void    CGIinfo::concatBuffer(std::string str)
@@ -136,4 +148,14 @@ bool    CGIinfo::getParsed() const
 void    CGIinfo::setParsed(bool parsed)
 {
     this->parsed = parsed;
+}
+
+bool    CGIinfo::getResponseStatus() const
+{
+    return (this->finished_responding);
+}
+
+void    CGIinfo::setFinishedResponding()
+{
+    this->finished_responding = true;
 }

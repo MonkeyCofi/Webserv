@@ -108,7 +108,7 @@ class ConnectionManager
 
 		bool		handleCGIPollout(unsigned int& i);
 		void		handleCGIread(unsigned int& i);
-		void		handleCgiPollhup(unsigned int i);
+		void		handleCgiPollhup(unsigned int& i);
 
 		void		reapProcesses();
 

@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/01 00:07:07 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/02 20:57:36 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,8 +174,6 @@ void ConnectionManager::printError(int revents)
 // if cgi is requested, don't erase the request for the client_fd
 void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 {
-	if (!req || !(*req))
-		return ;
 	// std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (!(*req)->isValidRequest())
 		handlers.at(i) = defaults.at(i);
@@ -389,8 +387,15 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	ssize_t		r;
 	size_t		barbenindex;
 	int			outcome;
-	char		buffer[BUFFER_SIZE + 1];
+	char		buffer[BUFFER_SIZE + 1] = {0};
 
+	// if the cient fd is a cgi pipe, then we don't want to receive a request from it
+	if (cgiProcesses.find(client_fd) != cgiProcesses.end())
+	{
+		std::cout << "Ignoring fd " << client_fd << " because it is a CGI pipe\n";
+		return (IGNORE);
+	}
+	std::cout << "In receive request\n";
 	if (!req)
 	{
 		std::cerr << "REQUEST DONT EXIST\n";
@@ -398,7 +403,11 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r < 0)
+	{
+		std::cout << "uwu\n";
+		// sock_fds.at(index).events &= ~POLLIN;
 		return (INCOMPLETE);
+	}
 	if (r == 0)
 	{
 		std::cerr << "Closing fd " << sock_fds.at(index).fd << " in receive request due to recv() returning 0\n";
@@ -413,8 +422,9 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		req->addReceivedBytes(r);
 		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
 		{
+			std::cout << "in here writing\n";
 			Cgi* cgi = req->getCgiObj();
-			cgi->writeToFd(cgi->get_stdin()[WRITE], buffer, r, req);	// this function will write to the fd and will close it if its done writing
+			cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
 		}
 	}
 	else
@@ -477,6 +487,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				// 1) Regular POST: Start sifting through the current and following _request strings for files to be saved as upload
 				// 2) CGI: Save this current leftover in whatever server will respond (how?), and after sending it to the subprocess immediately send following _request to the stdin of the subprocess
 			default:
+				std::cerr << "Incomplete request\n";
 				return (INCOMPLETE);
 		}
 	}
@@ -570,16 +581,24 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 	*/
 	Server* handler = handlers[i];
 
-	if (handler->cgiRespond(infoPtr) == true)	// if true, remove the cgiProcess from the map
+	bool keep_alive = handler->cgiRespond(infoPtr);
+	if (infoPtr->getResponseStatus() == true) // response has been fully sent
 	{
-		std::cout << "Closing client socket fd " << this->sock_fds[i].fd << " in cgi pollout\n";
-		closeSocket(i);
-		// close(this->sock_fds[i].fd);
-		// this->sock_fds.erase(this->sock_fds.begin() + i);
-		// i--;
+		if (!keep_alive)
+		{
+			std::cout << "Closing client socket fd " << this->sock_fds[i].fd << " in cgi pollout\n";
+			closeSocket(i);
+		}
 		if (pipe_fd > -1)
 			cgiProcesses.erase(pipe_fd);
-	
+		// delete request object and cgi object
+		// if (requests.find(sock_fds.at(i).fd) != requests.end())
+		// {
+		// 	std::cout << "\033[31mRemoving request from map\033[0m\n";
+		// 	Request* temp = requests[sock_fds.at(i).fd];
+		// 	requests.erase(sock_fds.at(i).fd);
+		// 	delete temp;
+		// }
 	}
 	return (true);
 }
@@ -595,7 +614,10 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 	}
 	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
 	if (state == IGNORE)
+	{
+		std::cout << "Ignoring fd " << sock_fds.at(i).fd << " due to recv() returning 0\n";
 		return ;
+	}
 	if (state == INVALID)
 	{
 		std::cerr << "STATE: " << "INVALID\n";
@@ -613,15 +635,14 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 {
 	ssize_t r;
 	char	buffer[BUFFER_SIZE + 1] = {0};
-	// CGIinfo& cgi_info = cgiProcesses[sock_fds.at(i).fd];
 	CGIinfo& cgi_info = cgiProcesses.at(sock_fds.at(i).fd);
 
 	std::cout << "in CGI read\n";
 	r = read(sock_fds.at(i).fd, buffer, BUFFER_SIZE);
 	if (r == -1)	// should be handled
 	{
-		std::cerr << "EXITING SERVER\n";
-		exit(1);
+		std::cerr << "handle cgi pollin read -1\n";
+		return ;
 	}
 	else if (r == 0)
 	{
@@ -645,13 +666,11 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 			if (it->fd == client_fd)
 			{
 				std::cout << "Setting cgi fd " << cgi_info.getClientFd() << "'s client fd " << it->fd << " to POLLOUT\n";
+				it->events &= ~POLLIN;
 				it->events |= POLLOUT;	// add pollout to the cgi client fd
 				break ;
 			}
 		}
-		// close(sock_fds.at(i).fd);	// close the read end of the cgi pipe
-		// sock_fds.erase(sock_fds.begin() + i);	// remove the fd from the pollfds
-		// i--;
 		closeSocket(i);
 		(void)status;
 	}
@@ -659,7 +678,6 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 	{
 		buffer[r] = 0;
 		cgi_info.concatBuffer(std::string(buffer));
-		std::cout << "Concatenating\n";
 	}
 	std::cout << buffer << "\n";
 }
@@ -688,12 +706,12 @@ void	ConnectionManager::reapProcesses()
 	}
 }
 
-void	ConnectionManager::handleCgiPollhup(unsigned int i)
+void	ConnectionManager::handleCgiPollhup(unsigned int& i)
 {
 	int	status;
 
 	CGIinfo& info = cgiProcesses[sock_fds.at(i).fd];
-	pid_t	pid = waitpid(info.getPid(), &status, WNOHANG);
+	pid_t	pid = waitpid(info.getPid(), &status, 0);
 	std::cout << "pid: " << pid << "\n";
 	info.completeResponse();
 
@@ -704,7 +722,8 @@ void	ConnectionManager::handleCgiPollhup(unsigned int i)
 		if (it->fd == client_fd)
 		{
 			std::cout << it->fd << " event getting OR'd with POLLOUT\n";
-			it->events |= POLLOUT;
+			it->events |= POLLOUT;	// set the client fd's event to POLLOUT
+			it->events &= ~POLLIN;	// remove POLLIN from the client fd
 			break ;
 		}
 	}

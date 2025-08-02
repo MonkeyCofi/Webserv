@@ -81,7 +81,7 @@ Cgi &Cgi::operator=(const Cgi& copy)
 	return (*this);
 }
 
-void	Cgi::writeToFd(int fd, char *buf, size_t r, Request* req)
+void	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
 {
 	std::cout << "writing " << buf << " to stdin fd\n";
 	ssize_t	written = write(fd, buf, r);
@@ -195,10 +195,10 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server,
 		const char*	leftovers = req->getLeftOvers();
 		if (leftovers != NULL)
 		{
-			writeToFd(this->stdin_fds[WRITE], const_cast<char *>(leftovers), req->getLeftOverSize(), req);
+			writeToFd(this->stdin_fds[WRITE], leftovers, req->getLeftOverSize(), req);
 			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
+			req->deleteLeftOvers();
 			// delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
-			req->setLeftOvers(NULL, 0);
 		}
 	}
 	this->cgi_fd = fork();

@@ -49,7 +49,7 @@ class Cgi
 		int*		get_stdin();
 		void		dupAndClose(int fd1, int fd2);
 		void		setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, int events);
-		void		writeToFd(int fd, char *buf, size_t r, Request* req);
+		void		writeToFd(int fd, const char *buf, size_t r, Request* req);
 };
 
 #endif
