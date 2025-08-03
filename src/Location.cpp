@@ -1,11 +1,12 @@
 #include "Location.hpp"
 
-const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "allowed_methods", "" };
+const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "allowed_methods", "cgi_pass", "" };
 
 Location::Location(): BlockOBJ()
 {
 	perm_redir = false;
 	auto_index = false;
+	cgi = false;
 	root = "";
 	redir_uri = "";
 	save_folder = "";
@@ -16,6 +17,7 @@ Location::Location(const Location &copy): BlockOBJ(copy), root(copy.getRoot())
 {
 	perm_redir = copy.perm_redir;
 	auto_index = copy.auto_index;
+	cgi = copy.cgi;
 	root = copy.root;
 	redir_uri = copy.redir_uri;
 	save_folder = copy.save_folder;
@@ -83,6 +85,11 @@ bool Location::handleDirective(std::queue<str> opts)
 		// check valid uri
 		this->save_folder = opts.front();
 	}
+	else if (opts.front() == "cgi_pass" && opts.size() == 1)
+	{
+		opts.pop();
+		this->cgi = true;
+	}
 	else
 		return parent_ret;
 	return true;
@@ -101,19 +108,28 @@ str Location::getRoot() const
 	return root;
 }
 
-bool Location::getPermRedir() const {
+bool Location::getPermRedir() const
+{
 	return perm_redir;
 }
 
-bool Location::getAutoIndex() const {
+bool Location::getAutoIndex() const
+{
 	return auto_index;
 }
 
-const str& Location::getRedirUri() const {
+bool Location::isCGI() const
+{
+	return cgi;
+}
+
+const str& Location::getRedirUri() const
+{
 	return redir_uri;
 }
 
-const str& Location::getSaveFolder() const {
+const str& Location::getSaveFolder() const
+{
 	return save_folder;
 }
 
@@ -122,7 +138,8 @@ bool Location::isAllowedMethod(str method) const
 	return (std::find(this->allowed_methods.begin(), this->allowed_methods.end(), method) != this->allowed_methods.end());
 }
 
-const std::vector<str>& Location::getIndexFiles() const {
+const std::vector<str>& Location::getIndexFiles() const
+{
 	return indexfiles;
 }
 

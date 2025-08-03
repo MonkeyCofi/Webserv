@@ -119,12 +119,9 @@ class ConnectionManager
 
 
 		void	startConnections();
-
 		std::vector<struct pollfd>& getPollFds();
-
+		std::map<int, CGIinfo>& getCgiProcesses();
 		void debugVectorSizes(const std::string& location);
-
-		
 		void	addFdtoPoll(unsigned int i, struct pollfd fd);
 
 		~ConnectionManager();

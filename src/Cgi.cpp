@@ -34,7 +34,26 @@ Cgi::Cgi()
 
 Cgi::~Cgi()
 {
-
+	if (this->stdin_fds[0] != -1)
+	{
+		close(this->stdin_fds[0]);
+		this->stdin_fds[0] = -1;
+	}
+	if (this->stdin_fds[1] != -1)
+	{
+		close(this->stdin_fds[1]);
+		this->stdin_fds[1] = -1;
+	}
+	if (this->pipe_fds[0] != -1)
+	{
+		close(this->pipe_fds[0]);
+		this->pipe_fds[0] = -1;
+	}
+	if (this->pipe_fds[1] != -1)
+	{
+		close(this->pipe_fds[1]);
+		this->pipe_fds[1] = -1;
+	}
 }
 
 Cgi::Cgi(const Cgi& copy)
@@ -137,10 +156,10 @@ char**   Cgi::envToChar()
 std::string	Cgi::validScriptAccess() const
 {
 	std::cout << "Attempting to access path: " << this->cgiPath << "\n";
-	if (access(this->cgiPath.c_str(), F_OK | R_OK) == 0)    // the file is found
+	if (access(this->cgiPath.c_str(), F_OK) == 0)    // the file is found
 	{
 		std::cout << "Script file is found\n";
-		if (access(this->cgiPath.c_str(), X_OK) == 0)// check if the file has execution rights
+		if (access(this->cgiPath.c_str(), R_OK | X_OK) == 0)// check if the file has execution rights
 		{
 			std::cout << "Script file is readable and executable\n";
 			return ("OK");
@@ -177,10 +196,7 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server,
 	std::string access_status = validScriptAccess();
 
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
-	{
-		// if script is not accessible, respond with error page
 		return (access_status);
-	}
 	if (pipe(this->pipe_fds) == -1)	// if pipe fails, internal server error
 	{
 		std::cout << "returning 500\n";
@@ -210,10 +226,16 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server,
 		char* const* envp = envToChar();
 
 		if (this->stdin_fds[WRITE] != -1)
+		{
+			this->stdin_fds[WRITE] = -1;
 			close(this->stdin_fds[WRITE]);
+		}
 		close(this->pipe_fds[READ]);
+		this->pipe_fds[READ] = -1;
 		dupAndClose(this->stdin_fds[READ], STDIN_FILENO);
+		this->stdin_fds[READ] = -1;
 		dupAndClose(this->pipe_fds[WRITE], STDOUT_FILENO);
+		this->pipe_fds[WRITE] = -1;
 
 		execve(cmd, const_cast<char **>(argv), envp);
 		std::cerr << "Unable to execute cmd\n";
@@ -225,8 +247,12 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server,
 	else
 	{
 		if (this->stdin_fds[READ] != -1)
+		{
 			close(this->stdin_fds[READ]);
+			this->stdin_fds[READ] = -1;
+		}
 		close(pipe_fds[WRITE]);
+		this->pipe_fds[WRITE] = -1;
 		setAndAddPollFd(i, pipe_fds[READ], cm, pollfds, POLLIN);
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
 	}

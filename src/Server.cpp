@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Cgi.hpp"
+#include "ConnectionManager.hpp"
 
 const str	Server::default_ip = "127.0.0.1";
 const str	Server::default_port = "80";
@@ -477,8 +478,7 @@ Location *Server::matchLocation(const str &uri)
 	return NULL;
 }
 
-void Server::handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm,
-	std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
+void Server::handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm)
 {
 	Location		*loco;
 	struct stat 	s;
@@ -486,6 +486,8 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	unsigned int	len, count;
 	str				file, uri;
 	DIR* 			dir;
+	std::vector<struct pollfd>& pollfds = cm.getPollFds();
+	std::map<int, CGIinfo>&	cgiProcesses = cm.getCgiProcesses();
 
 	if (response.find(client_fd) == response.end())
 	{
@@ -495,12 +497,12 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	response[client_fd].clear();
 	pollfds.at(i).events |= POLLOUT;
 	file = req->getFileURI();
+	std::cout << RED << "File: " << file << NL;
 	const bool	cgi = file.find("cgi") != std::string::npos;
 	std::cout << "Client fd: " << client_fd << "\n";
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), client_fd);
-		std::cout << "this return 0\n";
 		return ;
 	}
 	this->response[client_fd].setRoot(this->root);
@@ -513,6 +515,12 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		{
 			handleError("405", client_fd);
 			std::cout <<"this return 1\n";
+			return ;
+		}
+		if (!loco->isCGI() && cgi)
+		{
+			handleError("403", client_fd);
+			std::cout << "CGI is not allowed in this location\n";
 			return ;
 		}
 		this->response[client_fd].setRoot(loco->getRoot());

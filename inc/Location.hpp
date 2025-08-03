@@ -13,7 +13,7 @@ typedef std::string str;
 class Location: public BlockOBJ
 {
 	private:
-		bool				perm_redir, auto_index;
+		bool				perm_redir, auto_index, cgi;
 		std::string			match_uri;
 		str					root, redir_uri, save_folder;
 		const static str	directives[];
@@ -32,6 +32,7 @@ class Location: public BlockOBJ
 		bool getAutoIndex() const;
 		const str& getRedirUri() const;
 		const str& getSaveFolder() const;
+		bool		isCGI() const;
 		bool isAllowedMethod(str method) const;
 		const std::vector<str>& getIndexFiles() const;
 		BlockOBJ	*handleBlock(std::queue<str> opts);

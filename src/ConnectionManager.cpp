@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/02 20:57:36 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/04 03:25:07 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,8 +181,8 @@ void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp.at(i).at((*req)->getHost());
-	sock_fds.at(i).events &= ~POLLIN;
-	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, *this, this->sock_fds, cgiProcesses);
+	// sock_fds.at(i).events &= ~POLLIN;
+	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, *this);
 }
 
 void	ConnectionManager::deleteRequest(unsigned int i)
@@ -450,8 +450,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					return (INVALID);
 				else
 				{
-					debugVectorSizes("receiveRequest");
-					std::cout << "trying to access " << index << "th handler\n";
+					// debugVectorSizes("receiveRequest");
+					// std::cout << "trying to access " << index << "th handler\n";
 					if (servers_per_ippp.at(index).find(req->getHost()) == servers_per_ippp.at(index).end())
 						handlers.at(index) = defaults.at(index);
 					else if(req->isValidRequest())
@@ -525,7 +525,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
 			sock_fds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from the FD
-			sock_fds.at(i).events |= POLLIN;
+			// sock_fds.at(i).events |= POLLIN;
 			std::cerr << "Finished responding to request\n";
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{
@@ -539,7 +539,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		{
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << " because connection is NOT keep-alive\n";
 			closeSocket(i);
-			std::cout << "Closed socket\n";
+			// std::cout << "Closed socket\n";
 			return ;
 		}
 		handler->setState(Server::returnIncomplete());
@@ -591,14 +591,6 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 		}
 		if (pipe_fd > -1)
 			cgiProcesses.erase(pipe_fd);
-		// delete request object and cgi object
-		// if (requests.find(sock_fds.at(i).fd) != requests.end())
-		// {
-		// 	std::cout << "\033[31mRemoving request from map\033[0m\n";
-		// 	Request* temp = requests[sock_fds.at(i).fd];
-		// 	requests.erase(sock_fds.at(i).fd);
-		// 	delete temp;
-		// }
 	}
 	return (true);
 }
@@ -666,7 +658,7 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 			if (it->fd == client_fd)
 			{
 				std::cout << "Setting cgi fd " << cgi_info.getClientFd() << "'s client fd " << it->fd << " to POLLOUT\n";
-				it->events &= ~POLLIN;
+				// it->events &= ~POLLIN;
 				it->events |= POLLOUT;	// add pollout to the cgi client fd
 				break ;
 			}
@@ -677,7 +669,9 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 	else
 	{
 		buffer[r] = 0;
+		std::cout << YELLOW << buffer << " will be added to buffer" << NL;
 		cgi_info.concatBuffer(std::string(buffer));
+		std::cout << BLUE << "Concatenating buffer" << NL;
 	}
 	std::cout << buffer << "\n";
 }
@@ -723,7 +717,7 @@ void	ConnectionManager::handleCgiPollhup(unsigned int& i)
 		{
 			std::cout << it->fd << " event getting OR'd with POLLOUT\n";
 			it->events |= POLLOUT;	// set the client fd's event to POLLOUT
-			it->events &= ~POLLIN;	// remove POLLIN from the client fd
+			// it->events &= ~POLLIN;	// remove POLLIN from the client fd
 			break ;
 		}
 	}
@@ -838,4 +832,9 @@ void	ConnectionManager::deleteTempFiles()
 std::vector<struct pollfd>& ConnectionManager::getPollFds()
 {
 	return (this->sock_fds);
+}
+
+std::map<int, CGIinfo>& ConnectionManager::getCgiProcesses()
+{
+	return (this->cgiProcesses);
 }
