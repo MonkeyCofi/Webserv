@@ -148,8 +148,8 @@ bool Location::matchURI(str uri) const
 	// return whether the matchUri is found in the uri string
 	std::cout << "uri: " << uri << "\n";
 	std::cout << "to match: " << this->match_uri << "\n";
+	// if the first part of the uri is found in the match uri, then its a match
 	return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
-	// return (this->root.find(uri) == 0);
 }
 
 const Location &Location::operator =(const Location &copy)

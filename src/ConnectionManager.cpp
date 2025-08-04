@@ -192,6 +192,23 @@ void	ConnectionManager::deleteRequest(unsigned int i)
 	delete temp;
 }
 
+void	ConnectionManager::closeSocketNoRef(unsigned int index)
+{
+	std::cout << "\033[31mClosing fd " << sock_fds.at(index).fd << "\033[0m\n";
+	close(sock_fds.at(index).fd);
+	if (requests.find(sock_fds.at(index).fd) == requests.end())
+		std::cout << "Request for fd " << sock_fds.at(index).fd << " is not found\n";
+	else
+	{
+		std::cout << "Request for fd " << sock_fds.at(index).fd << " exists and will now be deleted\n";
+		delete requests[(sock_fds.at(index).fd)];
+	}
+	sock_fds.erase(sock_fds.begin() + index);
+	handlers.erase(handlers.begin() + index);
+	defaults.erase(defaults.begin() + index);
+	servers_per_ippp.erase(servers_per_ippp.begin() + index);
+}
+
 void	ConnectionManager::closeSocket(unsigned int& index)
 {
 	std::cout << "\033[31mClosing fd " << sock_fds.at(index).fd << "\033[0m\n";
@@ -525,7 +542,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
 			sock_fds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from the FD
-			// sock_fds.at(i).events |= POLLIN;
+			sock_fds.at(i).events |= POLLIN;
 			std::cerr << "Finished responding to request\n";
 			if (requests.find(sock_fds[i].fd) != requests.end())
 			{
@@ -580,10 +597,12 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 		remove the cgi object from the ma of cgi processes
 	*/
 	Server* handler = handlers[i];
-
+	std::cout << handler << "fwfwfewfwefwe\n";
 	bool keep_alive = handler->cgiRespond(infoPtr);
 	if (infoPtr->getResponseStatus() == true) // response has been fully sent
 	{
+		std::cout << "Done responding to cgi client: " << this->sock_fds.at(i).fd << "\n";
+		// don't close cgi client, but rather the client's cgi fd
 		if (!keep_alive)
 		{
 			std::cout << "Closing client socket fd " << this->sock_fds[i].fd << " in cgi pollout\n";
@@ -616,6 +635,8 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 		this->sock_fds[i].events &= ~POLLIN;	// removing POLLIN; unsure why
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
+	if (state == FINISH)
+		this->sock_fds.at(i).events &= ~POLLIN;
 	if (state == FINISH || state == HEADER_FINISHED)	// HEADER_FINISHED indicates partial request
 	{
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;

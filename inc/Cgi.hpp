@@ -27,6 +27,8 @@ class Cgi
 		std::string					content_length;
 		std::string					method;
 		std::string					host;
+		struct pollfd				write_fd;
+		struct pollfd				read_fd;
 		int							pipe_fds[2];
 		int							stdin_fds[2];
 		pid_t						cgi_fd;
@@ -38,18 +40,16 @@ class Cgi
 		Cgi	&operator=(const Cgi& copy);
 		Cgi(const std::string script_path, Server* server);	// constructor that takes path to cgi script
 
-		std::string	setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, ConnectionManager& cm,Server* serv,
-			std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
+		std::string	setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, ConnectionManager& cm,Server* serv);
 
-		std::string	runCGI(unsigned int& i, int& client_fd, Server* server, Request* req, ConnectionManager& cm, 
-					std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses);
+		std::string	runCGI(unsigned int& i, int& client_fd, Server* server, Request* req, ConnectionManager& cm);
 
 		char**   	envToChar();
 		std::string	validScriptAccess() const;
 		int*		get_stdin();
 		void		dupAndClose(int fd1, int fd2);
-		void		setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, int events);
-		void		writeToFd(int fd, const char *buf, size_t r, Request* req);
+		void		setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, int events);
+		bool		writeToFd(int fd, const char *buf, size_t r, Request* req);
 };
 
 #endif

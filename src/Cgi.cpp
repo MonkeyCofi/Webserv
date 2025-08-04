@@ -30,6 +30,8 @@ Cgi::Cgi()
 	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
 	this->written_bytes = 0;
+	std::memset(&this->write_fd, 0, sizeof(struct pollfd));
+	std::memset(&this->read_fd, 0, sizeof(struct pollfd));
 }
 
 Cgi::~Cgi()
@@ -79,6 +81,8 @@ Cgi::Cgi(const str script_path, Server* server)
 	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
 	this->written_bytes = 0;
+	std::memset(&this->write_fd, 0, sizeof(struct pollfd));
+	std::memset(&this->read_fd, 0, sizeof(struct pollfd));
 }
 
 Cgi &Cgi::operator=(const Cgi& copy)
@@ -97,10 +101,12 @@ Cgi &Cgi::operator=(const Cgi& copy)
 	this->stdin_fds[1] = copy.stdin_fds[1];
 	this->cgi_fd = copy.cgi_fd;
 	this->written_bytes = copy.written_bytes;
+	this->write_fd = copy.write_fd;
+	this->read_fd = copy.read_fd;
 	return (*this);
 }
 
-void	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
+bool	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
 {
 	std::cout << "writing " << buf << " to stdin fd\n";
 	ssize_t	written = write(fd, buf, r);
@@ -110,15 +116,16 @@ void	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
 	{
 		std::cout << "Body has been fully written\n";
 		close(this->stdin_fds[WRITE]);
+		return (true);
 	}
 	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
 	{
 		;
 	}
+	return (false);
 }
 
-str	Cgi::setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, ConnectionManager& cm, Server* serv, 
-		std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
+str	Cgi::setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, ConnectionManager& cm, Server* serv)
 {
 	const str& uri = req->getFileURI();
 	std::ostringstream  length;
@@ -139,7 +146,7 @@ str	Cgi::setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, Connectio
 	this->env.push_back(content_length);
 	this->env.push_back("SCRIPT_NAME=" + this->scriptName);
 
-	return (runCGI(i, client_fd, serv, req, cm, pollfds, cgiProcesses));
+	return (runCGI(i, client_fd, serv, req, cm));
 }
 
 char**   Cgi::envToChar()
@@ -176,7 +183,7 @@ void	Cgi::dupAndClose(int fd1, int fd2)
 	close(fd1);
 }
 
-void	Cgi::setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, int events)
+void	Cgi::setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, int events)
 {
 	struct pollfd	pfd;
 
@@ -185,15 +192,14 @@ void	Cgi::setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, std::ve
 	fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
 	pfd.events = events;
 	pfd.revents = 0;
-	(void)pollfds;
 	std::cout << "Adding fd " << pfd.fd << " to pollfds at index " << i << "\n";
 	cm.addFdtoPoll(i, pfd);
 }
 
-std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, 
-		Request* req, ConnectionManager& cm, std::vector<struct pollfd>& pollfds, std::map<int, CGIinfo>& cgiProcesses)
+std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request* req, ConnectionManager& cm)
 {
 	std::string access_status = validScriptAccess();
+	std::map<int, CGIinfo>& cgiProcesses = cm.getCgiProcesses();
 
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
 		return (access_status);
@@ -206,16 +212,27 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server,
 		return ("500");
 	if (req->getMethod() == "POST")
 	{
-		setAndAddPollFd(i, this->stdin_fds[WRITE], cm, pollfds, POLLIN);
+		std::vector<struct pollfd>&	pollfds = cm.getPollFds();
+		std::cout << "Adding write end of stdin_fds: " << this->stdin_fds[WRITE] << " to pollfds\n";
+		setAndAddPollFd(i, this->stdin_fds[WRITE], cm, POLLIN);	// add the write end of the pipe to the pollfds
 		std::cerr << "opened stdin pipes for CGI POST request\n";
 		const char*	leftovers = req->getLeftOvers();
 		if (leftovers != NULL)
 		{
-			writeToFd(this->stdin_fds[WRITE], leftovers, req->getLeftOverSize(), req);
+			writeToFd(this->stdin_fds[WRITE], leftovers, req->getLeftOverSize(), req);	// save the pollfd in the pollfds and search for it later in the vector to remove
 			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
-			req->deleteLeftOvers();
-			// delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
+			req->deleteLeftOvers(); // delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
+			for (unsigned int i = 0; i < pollfds.size(); i++)
+			{
+				if (pollfds.at(i).fd == this->stdin_fds[WRITE])
+				{
+					std::cout << "i: " << i << " size: " << pollfds.size() << "\n";
+					cm.closeSocketNoRef(i);
+					break ;
+				}
+			}
 		}
+		// once there is nothing too write,
 	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process
@@ -253,8 +270,9 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server,
 		}
 		close(pipe_fds[WRITE]);
 		this->pipe_fds[WRITE] = -1;
-		setAndAddPollFd(i, pipe_fds[READ], cm, pollfds, POLLIN);
-		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);
+		std::cout << "Adding read end of cgi pipes " << pipe_fds[READ] << " to pollfds\n";
+		setAndAddPollFd(i, pipe_fds[READ], cm, POLLIN);
+		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);	// the read end of the pipe is the key
 	}
 	return ("200");
 	(void)server;

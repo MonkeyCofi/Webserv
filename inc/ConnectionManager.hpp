@@ -99,7 +99,6 @@ class ConnectionManager
 		void		printError(int revents);
 
 		void		passRequestToServer(unsigned int& i, Request **req);
-		void		closeSocket(unsigned int& index);
 
 		void		deleteTempFiles();
 
@@ -116,6 +115,8 @@ class ConnectionManager
 
 	public:
 		ConnectionManager(Http *protocol);
+		void		closeSocket(unsigned int& index);
+		void		closeSocketNoRef(unsigned int index);
 
 
 		void	startConnections();

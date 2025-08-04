@@ -487,18 +487,16 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	str				file, uri;
 	DIR* 			dir;
 	std::vector<struct pollfd>& pollfds = cm.getPollFds();
-	std::map<int, CGIinfo>&	cgiProcesses = cm.getCgiProcesses();
 
 	if (response.find(client_fd) == response.end())
 	{
-		std::cout << "Creating a request object for client fd: " << client_fd << "\n";
+		std::cout << "Creating a response object for client fd: " << client_fd << "\n";
 		response[client_fd] = Response();
 	}
 	response[client_fd].clear();
 	pollfds.at(i).events |= POLLOUT;
 	file = req->getFileURI();
 	std::cout << RED << "File: " << file << NL;
-	const bool	cgi = file.find("cgi") != std::string::npos;
 	std::cout << "Client fd: " << client_fd << "\n";
 	if (!req->isValidRequest())
 	{
@@ -506,9 +504,11 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		return ;
 	}
 	this->response[client_fd].setRoot(this->root);
+	std::cout << YELLOW << "File in " << this->root << file << NL;
 	this->response[client_fd].setAutoIndex(this->autoindex);
 	this->response[client_fd].setIndexFiles(this->index);
 	loco = this->matchLocation(file);
+	const bool	cgi = file.find("cgi") != std::string::npos;
 	if (loco)
 	{
 		if (!loco->isAllowedMethod(req->getMethod()))
@@ -546,7 +546,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		{
 			std::cerr << "Starting up GET CGI process\n";
 			Cgi	*cgi = new Cgi(file, this);
-			str cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this, pollfds, cgiProcesses);
+			str cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this);
 			if (cgi_status != "200")
 			{
 				std::cout << "CGI script returned status: " << cgi_status << "\n";
@@ -568,7 +568,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		{
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
 			Cgi	*cgi = new Cgi(file, this);
-			std::string	cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this, pollfds, cgiProcesses);
+			std::string	cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this);
 			if (cgi_status != "200")
 			{
 				handleError(cgi_status, client_fd);
@@ -740,7 +740,7 @@ bool Server::respond(int client_fd)
 	int		file_fd;
 	str		tmp, header;
 	ssize_t	bytes, tw;
-	char	buffer[BUFFER_SIZE + 1];
+	char	buffer[BUFFER_SIZE + 1] = {0};
 
 	if (this->response[client_fd].doneSending())
 	{
@@ -770,7 +770,7 @@ bool Server::respond(int client_fd)
 		this->response[client_fd].setHeaderSent(true);
 		std::cout << RED << "Header sent hellbent!\n";
 	}
-	response[client_fd].printResponse();
+	// response[client_fd].printResponse();
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
 	{
@@ -779,7 +779,7 @@ bool Server::respond(int client_fd)
 	}
 	else
 	{
-		std::cout << BLUE << "Done sending header!\n" << RESET;
+		// std::cout << BLUE << "Done sending header!\n" << RESET;
 		bytes = read(file_fd, buffer, BUFFER_SIZE);
 		if (bytes == -1)
 		{
@@ -792,6 +792,7 @@ bool Server::respond(int client_fd)
 		sent_bytes += bytes;
 		if (bytes == 0)	// file has been fully read and responded with
 		{
+			
 			std::cout << "Finished reading response from body file\n";
 			setState(FINISH);
 			close(file_fd);
@@ -799,29 +800,29 @@ bool Server::respond(int client_fd)
 			tmp = "0\r\n\r\n";
 			if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)	// send the ending byte to the client
 				return (this->response[client_fd].keepAlive());
-			std::cout << "--------\n";
-			std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-			std::cout << "--------\n";
+			// std::cout << "--------\n";
+			// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+			// std::cout << "--------\n";
 			this->response.erase(client_fd);
-			std::cout << "Removing response object for fd: " << client_fd << "\n";
+			// std::cout << "Removing response object for fd: " << client_fd << "\n";
 			return (ret);
 		}
 		tmp = ssizeToStr(bytes) + "\r\n";
 		if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)
 			return (ret);
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 		if ((tw = send(client_fd, buffer, bytes, 0)) <= 0)
 			return (ret);
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 		if ((tw = send(client_fd, "\r\n", 2, 0)) <= 0)
 			return (ret);
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 	}
 	return ret;
 }
