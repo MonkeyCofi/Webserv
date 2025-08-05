@@ -169,51 +169,60 @@ bool ConfigParser::parseLine(str &line)
 	return true;
 }
 
-Engine *ConfigParser::parse(str &fn, bool defaultConf)
+void	ConfigParser::parse(str &fn, bool defaultConf, Engine** ptr)
 {
-	if (!defaultConf && !validFilename(fn))
-		throw FilenameError("Invalid file name!");
-
-	str						line, cpy;
-	int						i = 0;
-	std::ifstream 			file;
-	std::vector <Server *>	servers;
-	if (defaultConf == true)
-		file.open("config/block_test.conf");
-	else
-		file.open(fn.c_str());
-	if (!file)
-		throw InvalidFileError("Could not open file!");
-
-	while (getline(file, line))
+	try
 	{
-		cpy = line;
-		if (cpy.find("#") != str::npos)
-			cpy = cpy.substr(0, cpy.find("#"));
-		i++;
-		if (!parseLine(cpy))
-			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
-	}
-	if (inBlock)
-		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
-	if (expected != DEFAULT)
-		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	servers = webserv->getProtocol()->getServers();
-	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
-	{
-		if ((*it)->getNames().size() == 0)
-			(*it)->setDefault();
-		(*it)->passValuesToLocations();
-	}
-	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
-    {
-		for (std::vector<Server *>::iterator it2 = it + 1; it2 != servers.end(); it2++)
+
+		if (!defaultConf && !validFilename(fn))
+			throw FilenameError("Invalid file name!");
+
+		str						line, cpy;
+		int						i = 0;
+		std::ifstream 			file;
+		std::vector <Server *>	servers;
+		if (defaultConf == true)
+			file.open("config/block_test.conf");
+		else
+			file.open(fn.c_str());
+		if (!file)
+			throw InvalidFileError("Could not open file!");
+
+		while (getline(file, line))
 		{
-			if (**it == **it2)
-				throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
+			cpy = line;
+			if (cpy.find("#") != str::npos)
+				cpy = cpy.substr(0, cpy.find("#"));
+			i++;
+			if (!parseLine(cpy))
+				throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 		}
+		if (inBlock)
+			throw InvalidFileError("Syntax error: Reached EOF before end of block.");
+		if (expected != DEFAULT)
+			throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
+		servers = webserv->getProtocol()->getServers();
+		for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+		{
+			if ((*it)->getNames().size() == 0)
+				(*it)->setDefault();
+			(*it)->passValuesToLocations();
+		}
+		for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+		{
+			for (std::vector<Server *>::iterator it2 = it + 1; it2 != servers.end(); it2++)
+			{
+				if (**it == **it2)
+					throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
+			}
+		}
+		*ptr = this->webserv;
 	}
-	return (webserv);
+	catch (std::exception& e)
+	{
+		*ptr = this->webserv;
+		throw; 
+	}
 }
 
 ConfigParser::~ConfigParser()

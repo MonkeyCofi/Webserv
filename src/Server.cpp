@@ -447,6 +447,8 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 		status = "302";
 	else
 	{
+		if (file_fd != -1)
+			close(file_fd);
 		path = this->response[client_fd].getRoot() + path;
 		file_fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 	}
@@ -508,7 +510,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	this->response[client_fd].setAutoIndex(this->autoindex);
 	this->response[client_fd].setIndexFiles(this->index);
 	loco = this->matchLocation(file);
-	const bool	cgi = file.find("cgi") != std::string::npos;
+	const bool	cgi = file.find("cgi") != std::string::npos && loco;
 	if (loco)
 	{
 		if (!loco->isAllowedMethod(req->getMethod()))

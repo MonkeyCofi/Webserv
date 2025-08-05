@@ -24,7 +24,7 @@ int main(int ac, char **av)
 		ConfigParser conf;
 		// str		tmp = av[1];
 		str	tmp = (defaultConf == false ? av[1] : "");
-		eng = conf.parse(tmp, defaultConf);
+		conf.parse(tmp, defaultConf, &eng);
 		if (!eng)
 			throw std::runtime_error("failed to boot up server");
 		std::cout << "Server Ready!\n";
