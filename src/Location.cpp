@@ -7,6 +7,7 @@ Location::Location(): BlockOBJ()
 	perm_redir = false;
 	auto_index = false;
 	cgi = false;
+	root_found = false;
 	root = "";
 	redir_uri = "";
 	save_folder = "";
@@ -18,6 +19,7 @@ Location::Location(const Location &copy): BlockOBJ(copy), root(copy.getRoot())
 	perm_redir = copy.perm_redir;
 	auto_index = copy.auto_index;
 	cgi = copy.cgi;
+	root_found = copy.root_found;
 	root = copy.root;
 	redir_uri = copy.redir_uri;
 	save_folder = copy.save_folder;
@@ -37,8 +39,10 @@ bool Location::handleDirective(std::queue<str> opts)
 	parent_ret = BlockOBJ::handleDirective(opts);
 	if (opts.front() == "root" && opts.size() == 2)
 	{
+		root_found = true;
 		opts.pop();
 		// check valid uri
+		// std::cout << "Setting root to: " << opts.front() << "\n";
 		this->root = opts.front();
 	}
 	else if (opts.front() == "redir" && opts.size() == 3)
@@ -103,9 +107,21 @@ bool Location::handleDirective(std::queue<str> opts)
 // 	return locations.back();
 // }
 
+
+bool	Location::getRootFound() const
+{
+	std::cout << std::boolalpha << "returning " << root_found << "\n";
+	return (this->root_found);
+}
+
 str Location::getRoot() const
 {
 	return root;
+}
+
+const std::string&	Location::getMatchUri() const
+{
+	return (this->match_uri);
 }
 
 bool Location::getPermRedir() const
@@ -145,11 +161,17 @@ const std::vector<str>& Location::getIndexFiles() const
 
 bool Location::matchURI(str uri) const
 {
-	// return whether the matchUri is found in the uri string
 	std::cout << "uri: " << uri << "\n";
 	std::cout << "to match: " << this->match_uri << "\n";
-	// if the first part of the uri is found in the match uri, then its a match
-	return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
+	if (uri.find(this->match_uri) != 0)	// the uri doesn't start with the match uri
+		return (false);
+	if (uri.length() == this->match_uri.length())
+		return (true);
+	if (this->match_uri.at(this->match_uri.length() - 1) == '/')
+		return (true);
+		
+	return (false);
+	// return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
 }
 
 const Location &Location::operator =(const Location &copy)
@@ -178,7 +200,10 @@ void Location::setAutoIndex(bool value) {
 	auto_index = value;
 }
 
-void Location::setRoot(const str& value) {
+void Location::setRoot(const str& value)
+{
+	std::cout << "old root: " << this->root << "\n";
+	std::cout << "setting it to: " << value << "\n";
 	root = value;
 }
 

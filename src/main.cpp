@@ -9,6 +9,8 @@
 int main(int ac, char **av)
 {
 	bool	defaultConf = false;
+	int		exit_status = EXIT_SUCCESS;
+
 	signal(SIGPIPE, SIG_IGN);
 	unlink("localhost");
 	if (ac == 1)
@@ -33,9 +35,9 @@ int main(int ac, char **av)
 	catch (const std::exception &e)
 	{
 		std::cerr << "Caught standard exception " << e.what() << "\n";
-		if (eng)
-			delete eng;
-		exit(1);
+		exit_status = EXIT_FAILURE;
 	}
-	delete eng;
+	if (eng)
+		delete eng;
+	exit(exit_status);
 }

@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/04 03:25:07 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/08 19:32:07 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -557,7 +557,7 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << " because connection is NOT keep-alive\n";
 			closeSocket(i);
 			// std::cout << "Closed socket\n";
-			return ;
+			// return ;
 		}
 		handler->setState(Server::returnIncomplete());
 	}
