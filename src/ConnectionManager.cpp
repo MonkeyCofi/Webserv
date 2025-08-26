@@ -25,7 +25,7 @@ void sigint_handle(int signal)
 
 ConnectionManager::ConnectionManager(): main_listeners(0)
 {
-	
+	this->fd = -1;
 }
 
 ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
@@ -398,6 +398,87 @@ void ConnectionManager::debugVectorSizes(const std::string& location)
     std::cerr << "==========================================\n";
 }
 
+bool	mustCreateFile(Request* req, char* buffer, size_t size)
+{
+	if (std::strstr(buffer, "filename=\"") != buffer + size)
+		return true;
+	std::string content_type = req->getContentType();
+	if (content_type.find("application/octet-stream") != std::string::npos ||
+	content_type.find("image/") != std::string::npos || \
+	content_type.find("video/") != std::string::npos || \
+	content_type.find("audio/") != std::string::npos || \
+	content_type.find("application/pdf") != std::string::npos)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
+{
+	static bool first = true;
+	// if the buffer contains the filename, then create a file of that type
+	// char* filename_pos = std::find(buffer, buffer + size, "Content-type: ");
+	char* filename_pos = std::strstr(buffer, "filename=\"");
+	std::cout << "in file upload\n";
+	if (filename_pos != NULL && mustCreateFile(req, buffer, size))
+	{
+		std::cout << "Creating upload file\n";
+		std::string file_format = std::string(filename_pos + 10);
+		file_format = file_format.substr(file_format.find_last_of('.') + 1);
+		file_format.erase(file_format.find_first_of("\"\r\n"));
+		std::cout << "File format: " << file_format << "\n";
+		// std::string filename = "./fileuploadXXXXX." + file_format;
+		std::string filename = "./fileuploadXXXXX." + file_format;
+		char *nameTemp = new char[filename.size() + 1];
+		nameTemp[filename.size()] = 0;
+		strcpy(nameTemp, filename.c_str());
+		std::cout << nameTemp << "\n";
+		// this->fd = mkstemp(nameTemp);
+		this->fd = mkstemps(nameTemp, file_format.size() + 1);
+		if (fd == -1)
+		{
+			delete [] nameTemp;
+			std::cout << "Failed to create upload file\n";
+			return (-1);
+		}
+	}
+	else
+		std::cout << "Didn't create upload file\n";
+	// start writing from where the binary data starts
+	char* binary_start = std::strstr(buffer, "\r\n\r\n");
+	if (binary_start != NULL && first)
+	{
+		binary_start += 4;
+		size_t binary_size = size - (binary_start - buffer);
+		std::cout << "Writing " << binary_size << " bytes of binary data\n";
+		first = false;
+		write(this->fd, binary_start, binary_size);
+	}
+	else
+	{
+		// std::cout << "Couldn't find the start of binary data\n";
+		write(this->fd, buffer, size);
+	}
+	std::cout << "Boundary: " << req->getBoundary() << "\n";
+	std::string ending = req->getBoundary() + "--";
+	const char* str = ending.c_str();
+	for (size_t i = 0; i < size; i++)
+	{
+		size_t j = 0;
+		std::cout << buffer[i];
+		while (buffer[i] == str[j])
+		{
+			std::cout << "b: " << buffer[i] << " s: " << str[j] << "\n";
+			j++;
+		}
+		if (str[j] == '\0')
+			return (1);
+	}
+	return (0);
+}
+
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	std::string	_request;
@@ -436,6 +517,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
 	if (req->getHeaderReceived())
 	{
+		std::cout << "heree\n";
 		req->addReceivedBytes(r);
 		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
 		{
@@ -443,6 +525,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			Cgi* cgi = req->getCgiObj();
 			cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
 		}
+		else if (req->getMethod() == "POST" && req->isValidRequest())
+			write(this->fd, buffer, r);
 	}
 	else
 	{
@@ -482,7 +566,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					}
 				}
 				barbenindex = (_request.find("\r\n\r\n") != std::string::npos ? _request.find("\r\n\r\n") + 4 : std::string::npos);
-				if ((ssize_t)barbenindex < r) // If there are left-overs.
+				if ((ssize_t)barbenindex < r) // move leftovers to beginning of buffer
 				{
 					r = r - barbenindex;
 					std::memmove(buffer, buffer + barbenindex, r + 1);
@@ -510,15 +594,21 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	if (req->getHeaderReceived() && req->getMethod() == "POST" && !req->isCGI() && r > 0)
 	{
+		std::cout << "inside here\n";
 		// outcome = req->pushBody(buffer, r);
-		outcome = 1;
+		outcome = fileUpload(req, buffer, r);
+		// outcome = 1;
 		switch(outcome)
 		{
 			case -1:
 				// > maxbodysize
 				// > contentlength
 				// No boundary
+			case 0:
+				std::cout << "Returning incomplete\n";
+				return (INCOMPLETE);
 			case 1:
+				std::cout << "Returning finished\n";
 				return (FINISH);
 			default:
 				return (INCOMPLETE);

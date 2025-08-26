@@ -742,7 +742,7 @@ bool Server::respond(int client_fd)
 	int		file_fd;
 	str		tmp, header;
 	ssize_t	bytes, tw;
-	char	buffer[BUFFER_SIZE + 1] = {0};
+	char	buffer[SEND_BUFFER + 1] = {0};
 
 	if (this->response[client_fd].doneSending())
 	{
@@ -772,6 +772,7 @@ bool Server::respond(int client_fd)
 		this->response[client_fd].setHeaderSent(true);
 		std::cout << RED << "Header sent hellbent!\n";
 	}
+	std::cout << "Response is " << (this->response.at(client_fd).isChunked() ? "chunked" : "not chunked") << "\n";
 	// response[client_fd].printResponse();
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
@@ -782,7 +783,7 @@ bool Server::respond(int client_fd)
 	else
 	{
 		// std::cout << BLUE << "Done sending header!\n" << RESET;
-		bytes = read(file_fd, buffer, BUFFER_SIZE);
+		bytes = read(file_fd, buffer, SEND_BUFFER);
 		if (bytes == -1)
 		{
 			std::cout << "Read returned -1 for reading response body\n";

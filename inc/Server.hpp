@@ -27,6 +27,8 @@
 # include "Request.hpp"
 # include "Response.hpp"
 
+# define SEND_BUFFER 1024
+
 typedef std::string str;
 
 class	Socket;
