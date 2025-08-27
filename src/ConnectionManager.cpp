@@ -429,38 +429,71 @@ const char*	sizestrstr(const char* haystack, const char* needle, size_t size)
 	return (NULL);
 }
 
-const char* partial_boundary(const char *haystack, const char *needle, size_t size)
+size_t	partial_boundary_index(const char *haystack, const char *needle, size_t size, size_t& partial_size)
 {
 	// check at the end of the haystack up until the "\r\n" as that indicates the end of the binary data
 	size_t i = size - 1;
-	while (i >= 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
-	{
-		i--;
-	}
+	size_t j = 0;
 	(void)needle;
-	if (i == size - 1)
+	while (i >= 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
+		i--;
+	i += haystack[i] == '\n';
+	while (i < size && needle[j] && haystack[i] == needle[j])
 	{
-		std::cout << "nothing\n";
-		return (NULL);
+		i++;
+		j++;
 	}
-	else
-		std::cout << "Test " << &haystack[i] << "\n";
-	return (&haystack[i]);
+	if (j == 0)
+	{
+		std::cout << "No partial boundary\n";
+		return (0);
+	}
+	partial_size = j;
+	std::cout << YELLOW << "PARTIAL BOUNDARY FOUND" << NL;
+	return (i);
+}
+
+char	*copy_partial(char *buffer, size_t size)
+{
+	char* partial = new char[size + 1];
+	partial[size] = 0;
+	std::memcpy(partial, buffer, size);
+	return (partial);
 }
 
 int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
 {
 	static bool first = true;
-	static char* partial = NULL;
+	static size_t	partial_index = 0;
+	static size_t	partial_size = 0;
+	static char* partial_buffer = NULL;
+	static size_t partial_buffer_size = 0;
 	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
 	std::string	ending_boundary = req->getBoundary() + "--";
 	const char* boundary = ending_boundary.c_str();
 
 	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
-	if (partial)
+	if (partial_index != 0)
 	{
-		// if it is not the case that it was not the boundary, just write the partial bytes and continue
-		// otherwise write everything up until where the partial byte was first found
+		// while the new buffer beginning is equal to boundary[size]
+		size_t i = 0;
+		while (boundary[partial_size] != '\0' && i < size && buffer[i] == boundary[partial_size + i])
+			i++;
+		if (partial_size + i != std::strlen(boundary))	// if the boundary was indeed not found in the new buffer
+			write(this->fd, partial_buffer, partial_buffer_size);
+		else
+		{
+			// write the old buffer without the partial boundary
+			size_t write_size = partial_buffer_size - partial_size - 2;
+			write(this->fd, partial_buffer, write_size);
+			close(this->fd);
+			this->fd = -1;
+			return (1);
+		}
+		delete [] partial_buffer;
+		partial_buffer = NULL;
+		partial_buffer_size = 0;
+		partial_index = 0;
 	}
 
 	// if the buffer contains the filename, then create a file of that type
@@ -513,10 +546,11 @@ int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
 		// check if the boundary is partially found
 		// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
 		const char* bpos = sizestrstr(buffer, boundary, size);
-		partial = const_cast<char *>(partial_boundary(buffer, boundary, size));
-		if (partial)
+		partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
+		if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
 		{
-			// don't write yet, save the data after where partial was saved
+			partial_buffer = copy_partial(buffer, size);
+			partial_buffer_size = size;
 			return (0);
 		}
 		// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
