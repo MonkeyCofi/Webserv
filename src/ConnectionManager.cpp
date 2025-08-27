@@ -400,7 +400,8 @@ void ConnectionManager::debugVectorSizes(const std::string& location)
 
 bool	mustCreateFile(Request* req, char* buffer, size_t size)
 {
-	if (std::strstr(buffer, "filename=\"") != buffer + size)
+	(void)size;
+	if (std::strstr(buffer, "filename=\"") != NULL)
 		return true;
 	std::string content_type = req->getContentType();
 	if (content_type.find("application/octet-stream") != std::string::npos ||
@@ -415,9 +416,53 @@ bool	mustCreateFile(Request* req, char* buffer, size_t size)
 	return false;
 }
 
+const char*	sizestrstr(const char* haystack, const char* needle, size_t size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		size_t j = 0;
+		while (haystack[i + j] == needle[j])
+			j++;
+		if (needle[j] == '\0')
+			return (haystack + i);
+	}
+	return (NULL);
+}
+
+const char* partial_boundary(const char *haystack, const char *needle, size_t size)
+{
+	// check at the end of the haystack up until the "\r\n" as that indicates the end of the binary data
+	size_t i = size - 1;
+	while (i >= 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
+	{
+		i--;
+	}
+	(void)needle;
+	if (i == size - 1)
+	{
+		std::cout << "nothing\n";
+		return (NULL);
+	}
+	else
+		std::cout << "Test " << &haystack[i] << "\n";
+	return (&haystack[i]);
+}
+
 int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
 {
 	static bool first = true;
+	static char* partial = NULL;
+	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
+	std::string	ending_boundary = req->getBoundary() + "--";
+	const char* boundary = ending_boundary.c_str();
+
+	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
+	if (partial)
+	{
+		// if it is not the case that it was not the boundary, just write the partial bytes and continue
+		// otherwise write everything up until where the partial byte was first found
+	}
+
 	// if the buffer contains the filename, then create a file of that type
 	// char* filename_pos = std::find(buffer, buffer + size, "Content-type: ");
 	char* filename_pos = std::strstr(buffer, "filename=\"");
@@ -446,37 +491,60 @@ int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
 	}
 	else
 		std::cout << "Didn't create upload file\n";
-	// start writing from where the binary data starts
-	char* binary_start = std::strstr(buffer, "\r\n\r\n");
-	if (binary_start != NULL && first)
+
+	if (binary_start != NULL && first)	// if this is the first time writing to the file and the there is binary data present
 	{
 		binary_start += 4;
 		size_t binary_size = size - (binary_start - buffer);
 		std::cout << "Writing " << binary_size << " bytes of binary data\n";
 		first = false;
+		const char* binary_position = sizestrstr(binary_start, boundary, binary_size);
+		if (binary_position != NULL)
+		{
+			binary_size = binary_position - binary_start - 2;
+			first = true;
+		}
+		else
+			first = false;
 		write(this->fd, binary_start, binary_size);
 	}
 	else
 	{
-		// std::cout << "Couldn't find the start of binary data\n";
-		write(this->fd, buffer, size);
-	}
-	std::cout << "Boundary: " << req->getBoundary() << "\n";
-	std::string ending = req->getBoundary() + "--";
-	const char* str = ending.c_str();
-	for (size_t i = 0; i < size; i++)
-	{
-		size_t j = 0;
-		std::cout << buffer[i];
-		while (buffer[i] == str[j])
+		// check if the boundary is partially found
+		// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
+		const char* bpos = sizestrstr(buffer, boundary, size);
+		partial = const_cast<char *>(partial_boundary(buffer, boundary, size));
+		if (partial)
 		{
-			std::cout << "b: " << buffer[i] << " s: " << str[j] << "\n";
-			j++;
+			// don't write yet, save the data after where partial was saved
+			return (0);
 		}
-		if (str[j] == '\0')
-			return (1);
+		// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
+		if (bpos)
+		{
+			std::cout << "Found boundary\n";
+			size_t write_size = size - std::strlen(bpos) - 2;
+			std::cout << "size: " << size << " write_size: " << write_size << "\n";
+			write(fd, buffer, write_size);
+			close(this->fd);
+			this->fd = -1;
+			first = true;
+		}
+		else
+		{
+			std::cout << "just writing everything\n";
+			write(this->fd, buffer, size);
+		}
 	}
-	return (0);
+	std::cout << "Received bytes: " << req->getReceivedBytes() << " content length: " << req->getContentLen() << "\n";
+	if (req->getReceivedBytes() == req->getContentLen())
+	{
+		std::cout << "Received content length bytes\n";
+		return (1);
+	}
+	if (req->getReceivedBytes() > req->getContentLen())
+		return (-1);
+	return (sizestrstr(buffer, boundary, size) != NULL);
 }
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
@@ -500,6 +568,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		return (IGNORE);
 	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	std::cout << "r: " << r << "\n";
 	if (r < 0)
 	{
 		std::cout << "uwu\n";
@@ -525,8 +594,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			Cgi* cgi = req->getCgiObj();
 			cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
 		}
-		else if (req->getMethod() == "POST" && req->isValidRequest())
-			write(this->fd, buffer, r);
+		// else if (req->getMethod() == "POST" && req->isValidRequest())
+		// 	write(this->fd, buffer, r);
 	}
 	else
 	{
@@ -569,11 +638,11 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 				if ((ssize_t)barbenindex < r) // move leftovers to beginning of buffer
 				{
 					r = r - barbenindex;
+					req->addReceivedBytes(r);
 					std::memmove(buffer, buffer + barbenindex, r + 1);
 					if (!req->isCGI())
 						break ;
 					req->setLeftOvers(buffer, r);	// add leftovers to the request object
-					req->addReceivedBytes(r);
 				}
 				if (req->getContentLen() != 0)
 				{
