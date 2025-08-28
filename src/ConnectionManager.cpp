@@ -472,8 +472,9 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
 	std::string	ending_boundary = req->getBoundary() + "--";
 	const char* boundary = ending_boundary.c_str();
-	std::string	upload_location = location->getSaveFolder() != "" \
-		? (location->getSaveFolder().at(location->getSaveFolder().size() - 1) == '/' ? location->getSaveFolder() : location->getSaveFolder() + '/') \
+	const std::string save_folder = location ? location->getSaveFolder() : "./";
+	std::string	upload_location = save_folder != "" \
+		? (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/') \
 		: "./";
 
 	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
@@ -502,8 +503,10 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 
 	// if the buffer contains the filename, then create a file of that type
 	// char* filename_pos = std::find(buffer, buffer + size, "Content-type: ");
-	char* filename_pos = std::strstr(buffer, "filename=\"");
-	std::cout << BLUE << filename_pos << NL;
+	// char* filename_pos = std::strstr(buffer, "filename=\"");
+	const char* filename_pos = sizestrstr(buffer, "filename=\"", size);
+	if (filename_pos)
+		std::cout << BLUE << filename_pos << NL;
 	std::cout << "in file upload\n";
 	if (filename_pos != NULL && mustCreateFile(req, buffer, size))
 	{
@@ -770,8 +773,6 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		{
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << " because connection is NOT keep-alive\n";
 			closeSocket(i);
-			// std::cout << "Closed socket\n";
-			return ;
 		}
 		handler->setState(Server::returnIncomplete());
 	}
@@ -958,6 +959,28 @@ void	ConnectionManager::handleCgiPollhup(unsigned int& i)
 	}
 }
 
+void	ConnectionManager::checkCGItimeouts()
+{
+	// go through the cgi info processes
+	// if any of the cgi processes go above 20 seconds (hard limit), send 504 Timed Out to the client
+	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
+	{
+		// over 20 seconds have passed
+		std::cout << "Checking timeout for pid: " << it->second.getPid() << " and client fd: " << it->second.getClientFd() << "\n";
+		if (it->second.timedOut(5))
+		{
+			// respond with code 504
+			// remove the cgi process from the map
+			std::cout << "timed out\n";
+			requests.find(it->second.getClientFd())->second->setStatus("504");
+			requests.find(it->second.getClientFd())->second->setValid(false);
+
+			kill(it->second.getPid(), SIGKILL);
+			it->second.completeResponse();
+		}
+	}
+}
+
 void ConnectionManager::startConnections()
 {
 	int						res;
@@ -993,6 +1016,8 @@ void ConnectionManager::startConnections()
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
 			// reapProcesses();
+			checkCGItimeouts();
+			std::cout << "waiting " << i << "\n";
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)

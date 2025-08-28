@@ -1,0 +1,6726 @@
+Server Ready!
+Server has 7 listeners
+Listener fds: 4 5 6 7 8 9 10 
+Pushing back client fd 11 at index 7
+Pushing back client fd 12 at index 8
+in normal POLLIN
+POLLIN fd: 11Index: 7
+[36mCreating a new request for fd 11
+[0mIn receive request
+r: 433
+[34mGET / HTTP/1.1
+Host: 10.18.244.163:8080
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US,en;q=0.9
+
+[0m
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+[36mPassing request from fd 11 to server
+[0mCreating a response object for client fd: 11
+[31mFile: /[0m
+Client fd: 11
+[33mFile in /Users/pipolint/Desktop/projects/webserv/www/base-site/[0m
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+[31m1[0m
+[32mFileREsponsing In th3 d1r3ct0ry!
+[0m--------
+Sent bytes: 96 to fd 11
+--------
+[31mHeader sent hellbent!
+Response is chunked
+Read 1024 from body fd
+Response is chunked
+Read 1024 from body fd
+Response is chunked
+Read 1024 from body fd
+Response is chunked
+Read 511 from body fd
+Response is chunked
+Read 0 from body fd
+Finished reading response from body file
+[31mRemoving request from map[0m
+in normal POLLIN
+POLLIN fd: 11Index: 7
+[36mCreating a new request for fd 11
+[0mIn receive request
+r: 333
+[34mGET /styles.css HTTP/1.1
+Host: 10.18.244.163:8080
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36
+Accept: text/css,*/*;q=0.1
+Referer: http://10.18.244.163:8080/
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US,en;q=0.9
+
+[0m
+number of locations: 1
+uri: /styles.css
+to match: /
+Matching location found for /styles.css
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+[36mPassing request from fd 11 to server
+[0mCreating a response object for client fd: 11
+[31mFile: /styles.css[0m
+Client fd: 11
+[33mFile in /Users/pipolint/Desktop/projects/webserv/www/base-site/styles.css[0m
+number of locations: 1
+uri: /styles.css
+to match: /
+Matching location found for /styles.css
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+--------
+Sent bytes: 95 to fd 11
+--------
+[31mHeader sent hellbent!
+Response is chunked
+Read 496 from body fd
+Response is chunked
+Read 0 from body fd
+Finished reading response from body file
+[31mRemoving request from map[0m
+in normal POLLIN
+POLLIN fd: 12Index: 8
+[36mCreating a new request for fd 12
+[0mIn receive request
+r: 317
+[34mGET /script.js HTTP/1.1
+Host: 10.18.244.163:8080
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36
+Accept: */*
+Referer: http://10.18.244.163:8080/
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US,en;q=0.9
+
+[0m
+number of locations: 1
+uri: /script.js
+to match: /
+Matching location found for /script.js
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+[36mPassing request from fd 12 to server
+[0mCreating a response object for client fd: 12
+[31mFile: /script.js[0m
+Client fd: 12
+[33mFile in /Users/pipolint/Desktop/projects/webserv/www/base-site/script.js[0m
+number of locations: 1
+uri: /script.js
+to match: /
+Matching location found for /script.js
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+--------
+Sent bytes: 94 to fd 12
+--------
+[31mHeader sent hellbent!
+Response is chunked
+Read 138 from body fd
+Response is chunked
+Read 0 from body fd
+Finished reading response from body file
+[31mRemoving request from map[0m
+in normal POLLIN
+POLLIN fd: 11Index: 7
+[36mCreating a new request for fd 11
+[0mIn receive request
+r: 4096
+[31mB: boundary=----WebKitFormBoundaryXkFW1kYUlutx8voF[0m
+[34mPOST / HTTP/1.1
+Host: 10.18.244.163:8080
+Connection: keep-alive
+Content-Length: 1035249
+Cache-Control: max-age=0
+Origin: http://10.18.244.163:8080
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryXkFW1kYUlutx8voF
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://10.18.244.163:8080/
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US,en;q=0.9[0m
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+[34mfilename="17563953759921175690363859683205.jpg"
+Content-Type: image/jpeg
+
+ÿØÿá?Exif[0m
+in file upload
+Creating upload file
+File format: jpg
+/Users/pipolint/Desktop/projects/webserv/storage/user-content/fileuploadXXXXXX.jpg
+suffix size: 4
+Writing 3283 bytes of binary data
+Received bytes: 3455 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 7551 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3591
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 11142 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 15238 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 16094 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 20190 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3332
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 23522 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 27618 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 31714 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 35810 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 92
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 35902 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 38378 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 40854 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 44950 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 45806 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 49902 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 50758 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 54854 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 58950 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1712
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 60662 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 64758 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 65614 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 69710 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 70566 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 74662 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 75518 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 79614 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 83710 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1712
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 85422 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 89518 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 90374 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 94470 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3332
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 97802 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 100278 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 104374 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 108470 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 112566 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2568
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 115134 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 117610 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 120086 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 124182 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 125038 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 129134 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 129990 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 132466 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 136562 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 140658 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 144754 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 148850 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 152946 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 157042 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 161138 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 165234 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 169330 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 173426 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 177522 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 181618 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 185714 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 189810 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 193906 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 198002 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 202098 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 206194 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 210290 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 170
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 210460 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 212936 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 217032 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 221128 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 474
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 221602 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 225698 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 226554 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 230650 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 234746 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 238842 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 242938 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 247034 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 251130 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 255226 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 259322 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 263418 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 267514 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 271610 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 275706 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 279802 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 283898 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 287994 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 292090 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 296186 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 300282 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 304378 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3884
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 308262 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 312358 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 313214 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 317310 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 318166 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 322262 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3332
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 325594 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 329690 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 333786 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 337882 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 341978 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 346074 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 350170 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 354266 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 358362 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 362458 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 366554 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 370650 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 374746 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 378842 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 382938 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 387034 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 391130 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 395226 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 399322 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 403418 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 407514 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1026
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 408540 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 411016 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 415112 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 419208 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 423304 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 427400 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 431496 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 435592 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 439688 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 443784 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 447880 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 451976 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 456072 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1988
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 458060 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 462156 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 466252 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 470348 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 474444 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 478540 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 482636 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 486732 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 490828 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 494924 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2752
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 497676 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 501772 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 505868 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 509964 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 514060 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2186
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 516246 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 520342 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 521198 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 525294 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 526150 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 530246 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 531102 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 535198 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 536054 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 538530 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3714
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 542244 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 546340 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 550436 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1712
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 552148 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 556244 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 557100 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 561196 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 565292 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1712
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 567004 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 571100 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 571956 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 574432 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 578528 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 579384 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 583480 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 587576 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 591672 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 595768 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 599864 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 603960 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 608056 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 612152 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 616248 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 620344 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 624440 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 628536 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 632632 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 636728 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 640824 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 644920 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 649016 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 934
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 649950 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 652426 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 656522 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 660618 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 664714 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 668810 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 672906 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 677002 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 184
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 677186 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 681282 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 685378 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 689474 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+[33mPARTIAL BOUNDARY FOUND[0m
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 697666 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 701762 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2660
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 704422 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 708518 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 712614 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1712
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 714326 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 718422 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 722518 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1712
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 724230 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 728326 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 732422 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 736518 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 740614 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 744710 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 748806 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 752902 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 756998 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 761094 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 765190 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 769286 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 750
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 770036 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 774132 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 774988 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 779084 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 783180 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 474
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 783654 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 786130 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 790226 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3332
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 793558 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 796034 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 800130 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2094
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 802224 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 804700 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 808796 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 809652 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 813748 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 817844 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 821940 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 826036 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 830132 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 834228 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 838324 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 842420 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 846516 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 850612 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 854708 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1988
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 856696 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 860792 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 864888 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 868984 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 873080 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 877176 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 881272 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2660
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 883932 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 888028 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 892124 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 896220 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 92
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 896312 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 900408 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 901264 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 905360 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 906216 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 910312 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 911168 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 915264 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 856
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 916120 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 2476
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 918596 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 922692 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 926788 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 930884 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 934980 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 939076 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 943172 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 947268 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 951364 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 955460 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 959556 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 963652 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 967748 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 971844 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 975940 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 980036 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 984132 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 988228 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 992324 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 996420 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1000516 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1004612 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1008708 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1012804 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1016900 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1020996 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 1592
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1022588 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 3714
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1026302 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1030398 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 4096
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+just writing everything
+Received bytes: 1034494 content length: 1035249
+Returning incomplete
+in normal POLLIN
+POLLIN fd: 11Index: 7
+In receive request
+r: 755
+heree
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+inside here
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+in file upload
+Didn't create upload file
+No partial boundary
+Found boundary
+size: 755 write_size: 709
+Received bytes: 1035249 content length: 1035249
+Received content length bytes
+Returning finished
+[36mPassing request from fd 11 to server
+[0mCreating a response object for client fd: 11
+[31mFile: /[0m
+Client fd: 11
+[33mFile in /Users/pipolint/Desktop/projects/webserv/www/base-site/[0m
+number of locations: 1
+uri: /
+to match: /
+Matching location found for /
+Root for found location block: /Users/pipolint/Desktop/projects/webserv/www/base-site
+--------
+Sent bytes: 94 to fd 11
+--------
+[31mHeader sent hellbent!
+Response is not chunked
+[34mDone responding!
+
+Sent:
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 28
+
+<html><h1>POSTED</h1></html>
+
+
+[0mClosing client socket fd 11 because connection is NOT keep-alive
+[31mClosing fd 11[0m
+Request for fd 11 exists and will now be deleted
+[31mclosing at index: 7[0m
+
+Ending Server...
+[31mClosing fd 4[0m
+Request for fd 4 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 5[0m
+Request for fd 5 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 6[0m
+Request for fd 6 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 7[0m
+Request for fd 7 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 8[0m
+Request for fd 8 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 9[0m
+Request for fd 9 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 10[0m
+Request for fd 10 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 12[0m
+Request for fd 12 is not found
+[31mclosing at index: 0[0m
+Server closed!
