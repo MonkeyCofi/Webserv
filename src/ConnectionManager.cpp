@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/04 03:25:07 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/28 14:45:46 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,14 +77,15 @@ int ConnectionManager::setupSocket(str ip, str port)
 	ret = *((sockaddr_in *)info->ai_addr);
 	fd = socket(PF_INET, SOCK_STREAM, 0);
 	ret.sin_family = AF_INET;
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+	{
+		throw (std::runtime_error("setsockopt error"));
+	}
 	if (bind(fd, (sockaddr *)&ret, sizeof(ret)) < 0)
 	{
-		// perror("Bind in parameterized constructor");
 		freeaddrinfo(info);
 		const str	e = "Error! " + ip + ":" + port + ": " + strerror(errno);
 		throw (std::runtime_error(e));
-		// throw (ConnectionManager::bindException());
 	}
 	if (listen(fd, 128) == -1)
 	{
@@ -435,7 +436,7 @@ size_t	partial_boundary_index(const char *haystack, const char *needle, size_t s
 	size_t i = size - 1;
 	size_t j = 0;
 	(void)needle;
-	while (i >= 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
+	while (i > 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
 		i--;
 	i += haystack[i] == '\n';
 	while (i < size && needle[j] && haystack[i] == needle[j])
@@ -461,7 +462,7 @@ char	*copy_partial(char *buffer, size_t size)
 	return (partial);
 }
 
-int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
+int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer, size_t size)
 {
 	static bool first = true;
 	static size_t	partial_index = 0;
@@ -471,6 +472,9 @@ int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
 	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
 	std::string	ending_boundary = req->getBoundary() + "--";
 	const char* boundary = ending_boundary.c_str();
+	std::string	upload_location = location->getSaveFolder() != "" \
+		? (location->getSaveFolder().at(location->getSaveFolder().size() - 1) == '/' ? location->getSaveFolder() : location->getSaveFolder() + '/') \
+		: "./";
 
 	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
 	if (partial_index != 0)
@@ -499,28 +503,32 @@ int	ConnectionManager::fileUpload(Request* req, char *buffer, size_t size)
 	// if the buffer contains the filename, then create a file of that type
 	// char* filename_pos = std::find(buffer, buffer + size, "Content-type: ");
 	char* filename_pos = std::strstr(buffer, "filename=\"");
+	std::cout << BLUE << filename_pos << NL;
 	std::cout << "in file upload\n";
 	if (filename_pos != NULL && mustCreateFile(req, buffer, size))
 	{
 		std::cout << "Creating upload file\n";
 		std::string file_format = std::string(filename_pos + 10);
+		file_format = file_format.substr(0, file_format.find_first_of("\""));
 		file_format = file_format.substr(file_format.find_last_of('.') + 1);
-		file_format.erase(file_format.find_first_of("\"\r\n"));
 		std::cout << "File format: " << file_format << "\n";
 		// std::string filename = "./fileuploadXXXXX." + file_format;
-		std::string filename = "./fileuploadXXXXX." + file_format;
+		std::string filename = upload_location + "fileuploadXXXXXX." + file_format;
 		char *nameTemp = new char[filename.size() + 1];
 		nameTemp[filename.size()] = 0;
 		strcpy(nameTemp, filename.c_str());
 		std::cout << nameTemp << "\n";
 		// this->fd = mkstemp(nameTemp);
+		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
 		this->fd = mkstemps(nameTemp, file_format.size() + 1);
 		if (fd == -1)
 		{
+			perror("mkstemp");
 			delete [] nameTemp;
 			std::cout << "Failed to create upload file\n";
 			return (-1);
 		}
+		std::cerr << "created file: " << nameTemp << "\n";
 	}
 	else
 		std::cout << "Didn't create upload file\n";
@@ -697,13 +705,26 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	if (req->getHeaderReceived() && req->getMethod() == "POST" && !req->isCGI() && r > 0)
 	{
+		if (servers_per_ippp.at(index).find(req->getHost()) == servers_per_ippp.at(index).end())
+			handlers.at(index) = defaults.at(index);
+		else if(req->isValidRequest())
+			handlers.at(index) = servers_per_ippp[index][req->getHost()];
+		if (handlers.at(index)->checkRequestValidity(req) == false)
+		{
+			req->setStatus((req->getContentLen() > handlers.at(index)->getMaxBodySize()) ? "501" : "405");
+			req->setValid(false);
+			std::cout << "Invalid here2\n";
+			return (INVALID);
+		}
 		std::cout << "inside here\n";
 		// outcome = req->pushBody(buffer, r);
-		outcome = fileUpload(req, buffer, r);
+		outcome = fileUpload(req, handlers.at(index)->matchLocation(req->getFileURI()), buffer, r);
 		// outcome = 1;
 		switch(outcome)
 		{
 			case -1:
+				req->setValid(false);
+				return (INVALID);
 				// > maxbodysize
 				// > contentlength
 				// No boundary

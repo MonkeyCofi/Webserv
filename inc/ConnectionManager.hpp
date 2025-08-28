@@ -119,7 +119,7 @@ class ConnectionManager
 		void		closeSocket(unsigned int& index);
 		void		closeSocketNoRef(unsigned int index);
 
-		int			fileUpload(Request* req, char *buffer, size_t size);
+		int			fileUpload(Request* req, Location* location, char *buffer, size_t size);
 
 
 		void	startConnections();

@@ -52,8 +52,6 @@ class Server: public BlockOBJ
 		std::map<str, str>		error_pages;
 		std::vector<Location *>	locations;
 		ResponseState			responseState;
-
-		Location 		*matchLocation(const str &uri);
 		void			handleError(str error_code, int client_fd);
 		bool			validAddress(str address);
 		bool			handleAddress(str address);
@@ -72,6 +70,7 @@ class Server: public BlockOBJ
 		~Server();
 
 		void					passValuesToLocations();
+		Location 				*matchLocation(const str &uri);
 		size_t					sent_bytes;
 		void					handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm);
 
