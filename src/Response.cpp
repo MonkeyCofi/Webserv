@@ -166,13 +166,14 @@ void Response::setHeaderSent(bool sent)
 
 bool Response::isChunked() const
 {
+	std::cout << "Chunked: " << std::boolalpha << this->chunked << "\n";
 	return chunked;
 }
 
 bool Response::doneSending() const
 {
-	std::cout << std::boolalpha << "header sent: " << header_sent << "\nChunked: " << chunked 
-		<< "\nfd: " << fd << "\n";
+	// std::cout << std::boolalpha << "header sent: " << header_sent << "\nChunked: " << chunked 
+	// 	<< "\nfd: " << fd << "\n";
 	return (header_sent && !chunked) || (chunked && fd == -1);
 }
 
@@ -248,6 +249,11 @@ void Response::setAllowedMethods(std::vector<str> &all)
 
 str Response::getRoot() const
 {
+	if (root.at(root.length() - 1) == '/')
+	{
+		std::cout << "Returning " << root.substr(0, root.length() - 1) << "\n";
+		return (root.substr(0, root.length() - 1));
+	}
 	return this->root;
 }
 
@@ -261,9 +267,18 @@ bool Response::getAutoIndex() const
 	return this->autoindex;
 }
 
+// const std::string&	Response::getRoot() const
+// {
+// 	return this->root;
+// }
+
 Response::~Response()
 {
-
+	if (this->fd != -1)
+	{
+		close(this->fd);
+		this->fd = -1;
+	}
 }
 
 void	Response::printResponse()
@@ -290,4 +305,14 @@ const std::vector<str>& Response::getIndexFiles() const {
 
 void Response::setIndexFiles(const std::vector<str>& files) {
 	this->index_files = files;
+}
+
+void Response::setFileFD(int fd)
+{
+	this->fd = fd;
+}
+
+int Response::getFileFD() const
+{
+	return this->fd;
 }

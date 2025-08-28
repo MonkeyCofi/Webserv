@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/29 10:46:34 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/02 20:51:57 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,16 @@ Request::Request()
 
 Request::~Request()
 {
-	
+	if (this->cgi)
+	{
+		delete this->cgi;
+		this->cgi = NULL;
+	}
+	if (this->left_overs)
+	{
+		delete[] this->left_overs;
+		this->left_overs = NULL;
+	}
 }
 
 Request::Request(const Request& obj)
@@ -522,6 +531,15 @@ char*	Request::getLeftOvers() const
 size_t	Request::getLeftOverSize() const
 {
 	return (this->left_over_size);
+}
+
+void	Request::deleteLeftOvers()
+{
+	if (this->left_overs)
+	{
+		delete [] this->left_overs;
+		this->left_overs = NULL;
+	}
 }
 
 void	Request::addReceivedBytes(size_t received)

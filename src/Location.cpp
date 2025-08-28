@@ -1,11 +1,13 @@
 #include "Location.hpp"
 
-const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "allowed_methods", "" };
+const str	Location::directives[] = { "root", "index", "client_max_body_size", "min_delete_depth", "autoindex", "return", "redir", "save_folder", "allowed_methods", "cgi_pass", "" };
 
 Location::Location(): BlockOBJ()
 {
 	perm_redir = false;
 	auto_index = false;
+	cgi = false;
+	root_found = false;
 	root = "";
 	redir_uri = "";
 	save_folder = "";
@@ -16,6 +18,8 @@ Location::Location(const Location &copy): BlockOBJ(copy), root(copy.getRoot())
 {
 	perm_redir = copy.perm_redir;
 	auto_index = copy.auto_index;
+	cgi = copy.cgi;
+	root_found = copy.root_found;
 	root = copy.root;
 	redir_uri = copy.redir_uri;
 	save_folder = copy.save_folder;
@@ -35,8 +39,10 @@ bool Location::handleDirective(std::queue<str> opts)
 	parent_ret = BlockOBJ::handleDirective(opts);
 	if (opts.front() == "root" && opts.size() == 2)
 	{
+		root_found = true;
 		opts.pop();
 		// check valid uri
+		// std::cout << "Setting root to: " << opts.front() << "\n";
 		this->root = opts.front();
 	}
 	else if (opts.front() == "redir" && opts.size() == 3)
@@ -83,6 +89,11 @@ bool Location::handleDirective(std::queue<str> opts)
 		// check valid uri
 		this->save_folder = opts.front();
 	}
+	else if (opts.front() == "cgi_pass" && opts.size() == 1)
+	{
+		opts.pop();
+		this->cgi = true;
+	}
 	else
 		return parent_ret;
 	return true;
@@ -96,24 +107,45 @@ bool Location::handleDirective(std::queue<str> opts)
 // 	return locations.back();
 // }
 
+
+bool	Location::getRootFound() const
+{
+	std::cout << std::boolalpha << "returning " << root_found << "\n";
+	return (this->root_found);
+}
+
 str Location::getRoot() const
 {
 	return root;
 }
 
-bool Location::getPermRedir() const {
+const std::string&	Location::getMatchUri() const
+{
+	return (this->match_uri);
+}
+
+bool Location::getPermRedir() const
+{
 	return perm_redir;
 }
 
-bool Location::getAutoIndex() const {
+bool Location::getAutoIndex() const
+{
 	return auto_index;
 }
 
-const str& Location::getRedirUri() const {
+bool Location::isCGI() const
+{
+	return cgi;
+}
+
+const str& Location::getRedirUri() const
+{
 	return redir_uri;
 }
 
-const str& Location::getSaveFolder() const {
+const str& Location::getSaveFolder() const
+{
 	return save_folder;
 }
 
@@ -122,17 +154,24 @@ bool Location::isAllowedMethod(str method) const
 	return (std::find(this->allowed_methods.begin(), this->allowed_methods.end(), method) != this->allowed_methods.end());
 }
 
-const std::vector<str>& Location::getIndexFiles() const {
+const std::vector<str>& Location::getIndexFiles() const
+{
 	return indexfiles;
 }
 
 bool Location::matchURI(str uri) const
 {
-	// return whether the matchUri is found in the uri string
 	std::cout << "uri: " << uri << "\n";
 	std::cout << "to match: " << this->match_uri << "\n";
-	return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
-	// return (this->root.find(uri) == 0);
+	if (uri.find(this->match_uri) != 0)	// the uri doesn't start with the match uri
+		return (false);
+	if (uri.length() == this->match_uri.length())
+		return (true);
+	if (this->match_uri.at(this->match_uri.length() - 1) == '/')
+		return (true);
+		
+	return (false);
+	// return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
 }
 
 const Location &Location::operator =(const Location &copy)
@@ -161,7 +200,10 @@ void Location::setAutoIndex(bool value) {
 	auto_index = value;
 }
 
-void Location::setRoot(const str& value) {
+void Location::setRoot(const str& value)
+{
+	std::cout << "old root: " << this->root << "\n";
+	std::cout << "setting it to: " << value << "\n";
 	root = value;
 }
 

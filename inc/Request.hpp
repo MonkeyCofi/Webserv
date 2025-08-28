@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/04/29 10:46:17 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/02 15:03:28 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,8 +126,9 @@ class Request
 		char*	getLeftOvers() const;
 		void	addReceivedBytes(size_t received);
 		size_t	getLeftOverSize() const;
-
 		Cgi*	getCgiObj();
+		
+		void	deleteLeftOvers();
 
 		class	NoHostException: public std::exception
 		{

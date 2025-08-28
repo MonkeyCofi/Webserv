@@ -62,6 +62,7 @@ class Server: public BlockOBJ
 		void 			directoryResponse(Request* req, str path, int client_fd);
 		// void			fileResponse(str path, bool checking_index);
 		void			fileResponse(Request* req, str path, int file_fd, int client_fd);
+		bool			validCGIfile(const std::string& uri);
 		// unsigned int	fileSize(int fd);
 
 	public:
@@ -71,8 +72,7 @@ class Server: public BlockOBJ
 
 		void					passValuesToLocations();
 		size_t					sent_bytes;
-		void					handleRequest(int& i, int client_fd, Request *req, std::vector<struct pollfd>& pollfds, 
-								std::map<int, CGIinfo>& cgiProcesses);
+		void					handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm);
 
 		bool					handleDirective(std::queue<str> opts);
 		BlockOBJ				*handleBlock(std::queue<str> opts);

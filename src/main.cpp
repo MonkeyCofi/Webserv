@@ -9,6 +9,8 @@
 int main(int ac, char **av)
 {
 	bool	defaultConf = false;
+	int		exit_status = EXIT_SUCCESS;
+
 	signal(SIGPIPE, SIG_IGN);
 	unlink("localhost");
 	if (ac == 1)
@@ -24,7 +26,7 @@ int main(int ac, char **av)
 		ConfigParser conf;
 		// str		tmp = av[1];
 		str	tmp = (defaultConf == false ? av[1] : "");
-		eng = conf.parse(tmp, defaultConf);
+		conf.parse(tmp, defaultConf, &eng);
 		if (!eng)
 			throw std::runtime_error("failed to boot up server");
 		std::cout << "Server Ready!\n";
@@ -33,9 +35,9 @@ int main(int ac, char **av)
 	catch (const std::exception &e)
 	{
 		std::cerr << "Caught standard exception " << e.what() << "\n";
-		if (eng)
-			delete eng;
-		exit(1);
+		exit_status = EXIT_FAILURE;
 	}
-	delete eng;
+	if (eng)
+		delete eng;
+	exit(exit_status);
 }

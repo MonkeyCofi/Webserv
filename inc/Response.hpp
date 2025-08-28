@@ -6,6 +6,7 @@
 #include <map>
 #include <iostream>
 #include <cstdlib>
+#include <unistd.h>
 
 typedef std::string str;
 
@@ -56,6 +57,9 @@ class Response
 		Response	&operator =(const Response &copy);
 		~Response();
 
+
+		void	setFileFD(int fd);
+		int		getFileFD() const;
 		void	printResponse();
 };
 

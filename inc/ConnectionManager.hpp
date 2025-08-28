@@ -98,8 +98,7 @@ class ConnectionManager
 		void		newClient(int i, struct pollfd sock);
 		void		printError(int revents);
 
-		void		passRequestToServer(int i, Request **req);
-		void		closeSocket(unsigned int& index);
+		void		passRequestToServer(unsigned int& i, Request **req);
 
 		void		deleteTempFiles();
 
@@ -108,7 +107,7 @@ class ConnectionManager
 
 		bool		handleCGIPollout(unsigned int& i);
 		void		handleCGIread(unsigned int& i);
-		void		handleCgiPollhup(unsigned int i);
+		void		handleCgiPollhup(unsigned int& i);
 
 		void		reapProcesses();
 
@@ -116,11 +115,15 @@ class ConnectionManager
 
 	public:
 		ConnectionManager(Http *protocol);
+		void		closeSocket(unsigned int& index);
+		void		closeSocketNoRef(unsigned int index);
 
 
 		void	startConnections();
-
 		std::vector<struct pollfd>& getPollFds();
+		std::map<int, CGIinfo>& getCgiProcesses();
+		void debugVectorSizes(const std::string& location);
+		void	addFdtoPoll(unsigned int i, struct pollfd fd);
 
 		~ConnectionManager();
 

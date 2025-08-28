@@ -1,6 +1,6 @@
 #include "ConfigParser.hpp"
 
-const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "" };
+const str	ConfigParser::directives[] = { "root", "listen", "index", "server_name", "error_page", "client_max_body_size", "min_delete_depth", "alias", "autoindex", "return", "allowed_methods", "cgi_pass", "" };
 
 ConfigParser::ConfigParser(): webserv(NULL), err_msg("Unexpected error!\n"), inBlock(0), expected(DEFAULT)
 {
@@ -145,23 +145,8 @@ bool ConfigParser::handleNext(str &word)
 					this->location_uri.clear();
 				}
 			}
-			// while (parsed_opts.size() > 0)
-			// {
-			// 	if (parsed_opts.front() == "location")
-			// 	{
-			// 		Location* lptr = dynamic_cast<Location *>(blocks.top());
-			// 		if (lptr)
-			// 		{
-			// 			parsed_opts.pop();
-			// 			std::cout << "Setting match uri to " << parsed_opts.front() << "\n";
-			// 			if (parsed_opts.size() > 1)
-			// 				return false;
-			// 			lptr->setMatchUri(parsed_opts.front());
-			// 		}
-			// 	}
-			// 	else
-			// 		parsed_opts.pop();
-			// }
+			while (parsed_opts.size())
+				parsed_opts.pop();
 		}
 		if (word == "}")
 			blocks.pop();
@@ -184,51 +169,60 @@ bool ConfigParser::parseLine(str &line)
 	return true;
 }
 
-Engine *ConfigParser::parse(str &fn, bool defaultConf)
+void	ConfigParser::parse(str &fn, bool defaultConf, Engine** ptr)
 {
-	if (!defaultConf && !validFilename(fn))
-		throw FilenameError("Invalid file name!");
-
-	str						line, cpy;
-	int						i = 0;
-	std::ifstream 			file;
-	std::vector <Server *>	servers;
-	if (defaultConf == true)
-		file.open("config/block_test.conf");
-	else
-		file.open(fn.c_str());
-	if (!file)
-		throw InvalidFileError("Could not open file!");
-
-	while (getline(file, line))
+	try
 	{
-		cpy = line;
-		if (cpy.find("#") != str::npos)
-			cpy = cpy.substr(0, cpy.find("#"));
-		i++;
-		if (!parseLine(cpy))
-			throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
-	}
-	if (inBlock)
-		throw InvalidFileError("Syntax error: Reached EOF before end of block.");
-	if (expected != DEFAULT)
-		throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
-	servers = webserv->getProtocol()->getServers();
-	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
-	{
-		if ((*it)->getNames().size() == 0)
-			(*it)->setDefault();
-		(*it)->passValuesToLocations();
-	}
-	for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
-    {
-		for (std::vector<Server *>::iterator it2 = it + 1; it2 != servers.end(); it2++)
+
+		if (!defaultConf && !validFilename(fn))
+			throw FilenameError("Invalid file name!");
+
+		str						line, cpy;
+		int						i = 0;
+		std::ifstream 			file;
+		std::vector <Server *>	servers;
+		if (defaultConf == true)
+			file.open("config/block_test.conf");
+		else
+			file.open(fn.c_str());
+		if (!file)
+			throw InvalidFileError("Could not open file!");
+
+		while (getline(file, line))
 		{
-			if (**it == **it2)
-				throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
+			cpy = line;
+			if (cpy.find("#") != str::npos)
+				cpy = cpy.substr(0, cpy.find("#"));
+			i++;
+			if (!parseLine(cpy))
+				throw InvalidFileError(err_msg + "Line (" + toString(i) + "): " + line);
 		}
+		if (inBlock)
+			throw InvalidFileError("Syntax error: Reached EOF before end of block.");
+		if (expected != DEFAULT)
+			throw InvalidFileError("Syntax error: Reached EOF before end of directive.");
+		servers = webserv->getProtocol()->getServers();
+		for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+		{
+			if ((*it)->getNames().size() == 0)
+				(*it)->setDefault();
+			(*it)->passValuesToLocations();
+		}
+		for (std::vector<Server *>::iterator it = servers.begin(); it != servers.end(); it++)
+		{
+			for (std::vector<Server *>::iterator it2 = it + 1; it2 != servers.end(); it2++)
+			{
+				if (**it == **it2)
+					throw InvalidFileError("Configuration error: Two identical servers found! Servers must have at least one unique element (IP - Port - Server Name).");
+			}
+		}
+		*ptr = this->webserv;
 	}
-	return (webserv);
+	catch (std::exception& e)
+	{
+		*ptr = this->webserv;
+		throw; 
+	}
 }
 
 ConfigParser::~ConfigParser()
