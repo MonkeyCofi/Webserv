@@ -10,6 +10,7 @@ CGIinfo::CGIinfo()
     this->finished_responding = false;
     this->header.clear();
     this->response_str.clear();
+    this->start_time = std::chrono::steady_clock::now();
 }
 
 CGIinfo::~CGIinfo()
@@ -27,6 +28,7 @@ CGIinfo::CGIinfo(int _client, pid_t _child)
     this->finished_responding = false;
     this->header.clear();
     this->response_str.clear();
+    this->start_time = std::chrono::steady_clock::now();
 }
 
 CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
@@ -39,6 +41,7 @@ CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
     this->header = obj.header;
     this->response_str = obj.response_str;
     this->finished_responding = obj.finished_responding;
+    this->start_time = obj.start_time;
     return (*this);
 }
 
@@ -53,6 +56,7 @@ CGIinfo::CGIinfo(const CGIinfo& obj)
     this->header = obj.header;
     this->response_str = obj.response_str;
     this->finished_responding = obj.finished_responding;
+    this->start_time = obj.start_time;
 }
 
 void    CGIinfo::concatBuffer(std::string str)
@@ -158,4 +162,12 @@ bool    CGIinfo::getResponseStatus() const
 void    CGIinfo::setFinishedResponding()
 {
     this->finished_responding = true;
+}
+
+bool	CGIinfo::timedOut(size_t timeout) const
+{
+	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+	if (std::chrono::duration_cast<std::chrono::seconds>(now - start_time) > std::chrono::seconds(timeout))
+		return true;
+	return false;
 }

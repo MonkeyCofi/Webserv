@@ -78,6 +78,7 @@ class ConnectionManager
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
 		std::vector<str>						reqs;
+		int										fd;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
@@ -112,11 +113,14 @@ class ConnectionManager
 		void		reapProcesses();
 
 		void		deleteRequest(unsigned int i);
+		void		checkCGItimeouts();
 
 	public:
 		ConnectionManager(Http *protocol);
 		void		closeSocket(unsigned int& index);
 		void		closeSocketNoRef(unsigned int index);
+
+		int			fileUpload(Request* req, Location* location, char *buffer, size_t size);
 
 
 		void	startConnections();

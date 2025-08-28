@@ -8,6 +8,7 @@
 # include <vector>
 # include "Server.hpp"
 # include "CGIinfo.hpp"
+# include "Cgi.hpp"
 
 # define READ 0
 # define WRITE 1

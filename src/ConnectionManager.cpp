@@ -6,6 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
+/*   Updated: 2025/08/28 14:45:46 by ppolinta         ###   ########.fr       */
 /*   Updated: 2025/08/08 19:32:07 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
@@ -25,7 +26,7 @@ void sigint_handle(int signal)
 
 ConnectionManager::ConnectionManager(): main_listeners(0)
 {
-	
+	this->fd = -1;
 }
 
 ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
@@ -77,14 +78,15 @@ int ConnectionManager::setupSocket(str ip, str port)
 	ret = *((sockaddr_in *)info->ai_addr);
 	fd = socket(PF_INET, SOCK_STREAM, 0);
 	ret.sin_family = AF_INET;
-	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+	{
+		throw (std::runtime_error("setsockopt error"));
+	}
 	if (bind(fd, (sockaddr *)&ret, sizeof(ret)) < 0)
 	{
-		// perror("Bind in parameterized constructor");
 		freeaddrinfo(info);
 		const str	e = "Error! " + ip + ":" + port + ": " + strerror(errno);
 		throw (std::runtime_error(e));
-		// throw (ConnectionManager::bindException());
 	}
 	if (listen(fd, 128) == -1)
 	{
@@ -398,6 +400,199 @@ void ConnectionManager::debugVectorSizes(const std::string& location)
     std::cerr << "==========================================\n";
 }
 
+bool	mustCreateFile(Request* req, char* buffer, size_t size)
+{
+	(void)size;
+	if (std::strstr(buffer, "filename=\"") != NULL)
+		return true;
+	std::string content_type = req->getContentType();
+	if (content_type.find("application/octet-stream") != std::string::npos ||
+	content_type.find("image/") != std::string::npos || \
+	content_type.find("video/") != std::string::npos || \
+	content_type.find("audio/") != std::string::npos || \
+	content_type.find("application/pdf") != std::string::npos)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+const char*	sizestrstr(const char* haystack, const char* needle, size_t size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		size_t j = 0;
+		while (haystack[i + j] == needle[j])
+			j++;
+		if (needle[j] == '\0')
+			return (haystack + i);
+	}
+	return (NULL);
+}
+
+size_t	partial_boundary_index(const char *haystack, const char *needle, size_t size, size_t& partial_size)
+{
+	// check at the end of the haystack up until the "\r\n" as that indicates the end of the binary data
+	size_t i = size - 1;
+	size_t j = 0;
+	(void)needle;
+	while (i > 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
+		i--;
+	i += haystack[i] == '\n';
+	while (i < size && needle[j] && haystack[i] == needle[j])
+	{
+		i++;
+		j++;
+	}
+	if (j == 0)
+	{
+		std::cout << "No partial boundary\n";
+		return (0);
+	}
+	partial_size = j;
+	std::cout << YELLOW << "PARTIAL BOUNDARY FOUND" << NL;
+	return (i);
+}
+
+char	*copy_partial(char *buffer, size_t size)
+{
+	char* partial = new char[size + 1];
+	partial[size] = 0;
+	std::memcpy(partial, buffer, size);
+	return (partial);
+}
+
+int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer, size_t size)
+{
+	static bool first = true;
+	static size_t	partial_index = 0;
+	static size_t	partial_size = 0;
+	static char* partial_buffer = NULL;
+	static size_t partial_buffer_size = 0;
+	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
+	std::string	ending_boundary = req->getBoundary() + "--";
+	const char* boundary = ending_boundary.c_str();
+	const std::string save_folder = location ? location->getSaveFolder() : "./";
+	std::string	upload_location = save_folder != "" \
+		? (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/') \
+		: "./";
+
+	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
+	if (partial_index != 0)
+	{
+		// while the new buffer beginning is equal to boundary[size]
+		size_t i = 0;
+		while (boundary[partial_size] != '\0' && i < size && buffer[i] == boundary[partial_size + i])
+			i++;
+		if (partial_size + i != std::strlen(boundary))	// if the boundary was indeed not found in the new buffer
+			write(this->fd, partial_buffer, partial_buffer_size);
+		else
+		{
+			// write the old buffer without the partial boundary
+			size_t write_size = partial_buffer_size - partial_size - 2;
+			write(this->fd, partial_buffer, write_size);
+			close(this->fd);
+			this->fd = -1;
+			return (1);
+		}
+		delete [] partial_buffer;
+		partial_buffer = NULL;
+		partial_buffer_size = 0;
+		partial_index = 0;
+	}
+
+	// if the buffer contains the filename, then create a file of that type
+	// char* filename_pos = std::find(buffer, buffer + size, "Content-type: ");
+	// char* filename_pos = std::strstr(buffer, "filename=\"");
+	const char* filename_pos = sizestrstr(buffer, "filename=\"", size);
+	if (filename_pos)
+		std::cout << BLUE << filename_pos << NL;
+	std::cout << "in file upload\n";
+	if (filename_pos != NULL && mustCreateFile(req, buffer, size))
+	{
+		std::cout << "Creating upload file\n";
+		std::string file_format = std::string(filename_pos + 10);
+		file_format = file_format.substr(0, file_format.find_first_of("\""));
+		file_format = file_format.substr(file_format.find_last_of('.') + 1);
+		std::cout << "File format: " << file_format << "\n";
+		// std::string filename = "./fileuploadXXXXX." + file_format;
+		std::string filename = upload_location + "fileuploadXXXXXX." + file_format;
+		char *nameTemp = new char[filename.size() + 1];
+		nameTemp[filename.size()] = 0;
+		strcpy(nameTemp, filename.c_str());
+		std::cout << nameTemp << "\n";
+		// this->fd = mkstemp(nameTemp);
+		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
+		this->fd = mkstemps(nameTemp, file_format.size() + 1);
+		if (fd == -1)
+		{
+			perror("mkstemp");
+			delete [] nameTemp;
+			std::cout << "Failed to create upload file\n";
+			return (-1);
+		}
+		std::cerr << "created file: " << nameTemp << "\n";
+	}
+	else
+		std::cout << "Didn't create upload file\n";
+
+	if (binary_start != NULL && first)	// if this is the first time writing to the file and the there is binary data present
+	{
+		binary_start += 4;
+		size_t binary_size = size - (binary_start - buffer);
+		std::cout << "Writing " << binary_size << " bytes of binary data\n";
+		first = false;
+		const char* binary_position = sizestrstr(binary_start, boundary, binary_size);
+		if (binary_position != NULL)
+		{
+			binary_size = binary_position - binary_start - 2;
+			first = true;
+		}
+		else
+			first = false;
+		write(this->fd, binary_start, binary_size);
+	}
+	else
+	{
+		// check if the boundary is partially found
+		// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
+		const char* bpos = sizestrstr(buffer, boundary, size);
+		partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
+		if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
+		{
+			partial_buffer = copy_partial(buffer, size);
+			partial_buffer_size = size;
+			return (0);
+		}
+		// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
+		if (bpos)
+		{
+			std::cout << "Found boundary\n";
+			size_t write_size = size - std::strlen(bpos) - 2;
+			std::cout << "size: " << size << " write_size: " << write_size << "\n";
+			write(fd, buffer, write_size);
+			close(this->fd);
+			this->fd = -1;
+			first = true;
+		}
+		else
+		{
+			std::cout << "just writing everything\n";
+			write(this->fd, buffer, size);
+		}
+	}
+	std::cout << "Received bytes: " << req->getReceivedBytes() << " content length: " << req->getContentLen() << "\n";
+	if (req->getReceivedBytes() == req->getContentLen())
+	{
+		std::cout << "Received content length bytes\n";
+		return (1);
+	}
+	if (req->getReceivedBytes() > req->getContentLen())
+		return (-1);
+	return (sizestrstr(buffer, boundary, size) != NULL);
+}
+
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
 {
 	std::string	_request;
@@ -419,6 +614,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		return (IGNORE);
 	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	std::cout << "r: " << r << "\n";
 	if (r < 0)
 	{
 		std::cout << "uwu\n";
@@ -436,6 +632,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
 	if (req->getHeaderReceived())
 	{
+		std::cout << "heree\n";
 		req->addReceivedBytes(r);
 		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
 		{
@@ -443,6 +640,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			Cgi* cgi = req->getCgiObj();
 			cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
 		}
+		// else if (req->getMethod() == "POST" && req->isValidRequest())
+		// 	write(this->fd, buffer, r);
 	}
 	else
 	{
@@ -482,14 +681,14 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 					}
 				}
 				barbenindex = (_request.find("\r\n\r\n") != std::string::npos ? _request.find("\r\n\r\n") + 4 : std::string::npos);
-				if ((ssize_t)barbenindex < r) // If there are left-overs.
+				if ((ssize_t)barbenindex < r) // move leftovers to beginning of buffer
 				{
 					r = r - barbenindex;
+					req->addReceivedBytes(r);
 					std::memmove(buffer, buffer + barbenindex, r + 1);
 					if (!req->isCGI())
 						break ;
 					req->setLeftOvers(buffer, r);	// add leftovers to the request object
-					req->addReceivedBytes(r);
 				}
 				if (req->getContentLen() != 0)
 				{
@@ -510,15 +709,34 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	}
 	if (req->getHeaderReceived() && req->getMethod() == "POST" && !req->isCGI() && r > 0)
 	{
+		if (servers_per_ippp.at(index).find(req->getHost()) == servers_per_ippp.at(index).end())
+			handlers.at(index) = defaults.at(index);
+		else if(req->isValidRequest())
+			handlers.at(index) = servers_per_ippp[index][req->getHost()];
+		if (handlers.at(index)->checkRequestValidity(req) == false)
+		{
+			req->setStatus((req->getContentLen() > handlers.at(index)->getMaxBodySize()) ? "501" : "405");
+			req->setValid(false);
+			std::cout << "Invalid here2\n";
+			return (INVALID);
+		}
+		std::cout << "inside here\n";
 		// outcome = req->pushBody(buffer, r);
-		outcome = 1;
+		outcome = fileUpload(req, handlers.at(index)->matchLocation(req->getFileURI()), buffer, r);
+		// outcome = 1;
 		switch(outcome)
 		{
 			case -1:
+				req->setValid(false);
+				return (INVALID);
 				// > maxbodysize
 				// > contentlength
 				// No boundary
+			case 0:
+				std::cout << "Returning incomplete\n";
+				return (INCOMPLETE);
 			case 1:
+				std::cout << "Returning finished\n";
 				return (FINISH);
 			default:
 				return (INCOMPLETE);
@@ -556,8 +774,6 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 		{
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << " because connection is NOT keep-alive\n";
 			closeSocket(i);
-			// std::cout << "Closed socket\n";
-			// return ;
 		}
 		handler->setState(Server::returnIncomplete());
 	}
@@ -744,6 +960,28 @@ void	ConnectionManager::handleCgiPollhup(unsigned int& i)
 	}
 }
 
+void	ConnectionManager::checkCGItimeouts()
+{
+	// go through the cgi info processes
+	// if any of the cgi processes go above 20 seconds (hard limit), send 504 Timed Out to the client
+	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
+	{
+		// over 20 seconds have passed
+		std::cout << "Checking timeout for pid: " << it->second.getPid() << " and client fd: " << it->second.getClientFd() << "\n";
+		if (it->second.timedOut(5))
+		{
+			// respond with code 504
+			// remove the cgi process from the map
+			std::cout << "timed out\n";
+			requests.find(it->second.getClientFd())->second->setStatus("504");
+			requests.find(it->second.getClientFd())->second->setValid(false);
+
+			kill(it->second.getPid(), SIGKILL);
+			it->second.completeResponse();
+		}
+	}
+}
+
 void ConnectionManager::startConnections()
 {
 	int						res;
@@ -779,6 +1017,8 @@ void ConnectionManager::startConnections()
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
 			// reapProcesses();
+			checkCGItimeouts();
+			std::cout << "waiting " << i << "\n";
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
