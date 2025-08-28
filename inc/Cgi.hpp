@@ -8,6 +8,8 @@
 # include <vector>
 # include "Server.hpp"
 # include "CGIinfo.hpp"
+# include "Cgi.hpp"
+# include <chrono>
 
 # define READ 0
 # define WRITE 1
@@ -33,6 +35,7 @@ class Cgi
 		int							stdin_fds[2];
 		pid_t						cgi_fd;
 		ssize_t						written_bytes;
+		std::chrono::time_point<std::chrono::steady_clock> start_time;
 		Cgi();	// make default constructor inaccessible
 	public:
 		~Cgi();

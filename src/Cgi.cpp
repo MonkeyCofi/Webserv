@@ -30,6 +30,7 @@ Cgi::Cgi()
 	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
 	this->written_bytes = 0;
+	this->start_time = std::chrono::system_clock::now();
 	std::memset(&this->write_fd, 0, sizeof(struct pollfd));
 	std::memset(&this->read_fd, 0, sizeof(struct pollfd));
 }
@@ -81,6 +82,7 @@ Cgi::Cgi(const str script_path, Server* server)
 	this->stdin_fds[1] = -1;
 	this->cgi_fd = -1;
 	this->written_bytes = 0;
+	this->start_time = std::chrono::system_clock::now();
 	std::memset(&this->write_fd, 0, sizeof(struct pollfd));
 	std::memset(&this->read_fd, 0, sizeof(struct pollfd));
 }
@@ -103,6 +105,7 @@ Cgi &Cgi::operator=(const Cgi& copy)
 	this->written_bytes = copy.written_bytes;
 	this->write_fd = copy.write_fd;
 	this->read_fd = copy.read_fd;
+	this->start_time = copy.start_time;
 	return (*this);
 }
 
