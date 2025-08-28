@@ -277,10 +277,15 @@ void Server::setDefault()
 
 void Server::passValuesToLocations()
 {
+	// only set the root to the Server's root if the Location block doesn't have a root
+	// directive
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
 		(*it)->setAutoIndex(this->autoindex);
-		(*it)->setRoot(this->root);
+		if ((*it)->getRootFound() == false)
+		{
+			(*it)->setRoot(this->root);
+		}
 		(*it)->setIndexFiles(this->index);
 	}
 }
@@ -467,17 +472,45 @@ void Server::fileResponse(Request* req, str path, int file_fd, int client_fd)
 
 Location *Server::matchLocation(const str &uri)
 {
+	Location*	match = NULL;
+	bool		found_match = false;
+	size_t		match_max_size = 0;
+
 	std::cout << "number of locations: " << this->locations.size() << "\n";
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
 		if ((*it)->matchURI(uri))
 		{
-			std::cout << "Matching location found for " << uri << "\n";
-			std::cout << "Root for found location block: " << (*it)->getRoot() << "\n";
-			return *it;
+			// std::cout << "Matching location found for " << uri << "\n";
+			// std::cout << "Root for found location block: " << (*it)->getRoot() << "\n";
+			found_match = true;
+			// return *it;
+		}
+		if (found_match)
+		{
+			size_t len = (*it)->getMatchUri().length();
+			if (len > match_max_size)
+			{
+				match_max_size = len;
+				match = (*it);
+			}
+			found_match = false;
 		}
 	}
-	return NULL;
+	if (match)
+		std::cout << "Found match for uri: " << uri << " " << match->getMatchUri() << "\n";
+	// match->printLocation();
+	return (match);
+}
+
+bool	Server::validCGIfile(const std::string& uri)
+{
+	size_t	format_start_pos = uri.find_last_of(".");
+	if (format_start_pos == std::string::npos)
+		return (false);
+	std::string	extension = uri.substr(format_start_pos + 1, std::string::npos);
+	std::cout << "ext: " << extension << "\n";
+	return (extension.find("php") != std::string::npos);
 }
 
 void Server::handleRequest(unsigned int& i, int client_fd, Request *req, ConnectionManager& cm)
@@ -506,13 +539,13 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		return ;
 	}
 	this->response[client_fd].setRoot(this->root);
-	std::cout << YELLOW << "File in " << this->root << file << NL;
 	this->response[client_fd].setAutoIndex(this->autoindex);
 	this->response[client_fd].setIndexFiles(this->index);
 	loco = this->matchLocation(file);
-	const bool	cgi = file.find("cgi") != std::string::npos && loco;
+	bool	cgi = file.find("cgi") != std::string::npos && loco;
 	if (loco)
 	{
+		std::cout << "Location found for uri: " << file << "\n"; 
 		if (!loco->isAllowedMethod(req->getMethod()))
 		{
 			handleError("405", client_fd);
@@ -526,6 +559,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			return ;
 		}
 		this->response[client_fd].setRoot(loco->getRoot());
+		std::cout << "Response root: " << this->response.at(client_fd).getRoot() << "\n";
 		this->response[client_fd].setAutoIndex(loco->getAutoIndex());
 		this->response[client_fd].setIndexFiles(loco->getIndexFiles());
 		uri = loco->getRedirUri();
@@ -541,6 +575,8 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			return ;
 		}
 	}
+	std::cout << YELLOW << "File in " << this->root << file << NL;
+	cgi = cgi && validCGIfile(file);
 	if (req->getMethod() == "GET")
 	{
 		// pass the pollfds to the CGI handler
@@ -764,13 +800,14 @@ bool Server::respond(int client_fd)
 		header += this->response[client_fd].getBody();
 	if (!this->response[client_fd].headerSent())
 	{
+		std::cout << "Sending: " << header << "\n";
 		if ((tw = send(client_fd, header.c_str(), header.length(), 0)) <= 0)
 			return this->response[client_fd].keepAlive();
 		std::cout << "--------\n";
 		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
 		std::cout << "--------\n";
 		this->response[client_fd].setHeaderSent(true);
-		std::cout << RED << "Header sent hellbent!\n";
+		std::cout << RED << "Header sent hellbent!" << NL;
 	}
 	std::cout << "Response is " << (this->response.at(client_fd).isChunked() ? "chunked" : "not chunked") << "\n";
 	// response[client_fd].printResponse();
@@ -801,31 +838,53 @@ bool Server::respond(int client_fd)
 			close(file_fd);
 			this->response[client_fd].setBodyFd(-1);
 			tmp = "0\r\n\r\n";
+			for (size_t i = 0; i < tmp.size(); i++)
+			{
+				if (tmp.at(i) == '\r')
+					std::cout << "\r";
+				else if (tmp.at(i) == '\n')
+					std::cout << "\n";
+				else
+					std::cout << tmp.at(i);
+			}
 			if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)	// send the ending byte to the client
 				return (this->response[client_fd].keepAlive());
-			// std::cout << "--------\n";
-			// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-			// std::cout << "--------\n";
+			std::cout << "--------\n";
+			std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+			std::cout << "--------\n";
 			this->response.erase(client_fd);
-			// std::cout << "Removing response object for fd: " << client_fd << "\n";
+			std::cout << "Removing response object for fd: " << client_fd << "\n";
 			return (ret);
+		}
+		std::string to_send = ssizeToStr(bytes) + "\r\n";
+		to_send.append(buffer);
+		to_send.append("\r\n");
+		std::cout << "Sending: ";
+		for (size_t i = 0; i < to_send.length(); i++)
+		{
+			if (to_send.at(i) == '\r')
+				std::cout << "\\r";
+			else if (to_send.at(i) == '\n')
+				std::cout << "\\n";
+			else
+				std::cout << to_send.at(i);
 		}
 		tmp = ssizeToStr(bytes) + "\r\n";
 		if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)
 			return (ret);
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
+		std::cout << "--------\n";
+		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		std::cout << "--------\n";
 		if ((tw = send(client_fd, buffer, bytes, 0)) <= 0)
 			return (ret);
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
+		std::cout << "--------\n";
+		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		std::cout << "--------\n";
 		if ((tw = send(client_fd, "\r\n", 2, 0)) <= 0)
 			return (ret);
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
+		std::cout << "--------\n";
+		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		std::cout << "--------\n";
 	}
 	return ret;
 }

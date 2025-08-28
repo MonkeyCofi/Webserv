@@ -13,7 +13,7 @@ typedef std::string str;
 class Location: public BlockOBJ
 {
 	private:
-		bool				perm_redir, auto_index, cgi;
+		bool				perm_redir, auto_index, cgi, root_found;
 		std::string			match_uri;
 		str					root, redir_uri, save_folder;
 		const static str	directives[];
@@ -28,8 +28,9 @@ class Location: public BlockOBJ
 		bool	handleDirective(std::queue<str> opts);
 		bool	matchURI(str uri) const;
 		str		getRoot() const;
-		bool getPermRedir() const;
-		bool getAutoIndex() const;
+		bool 	getPermRedir() const;
+		bool 	getAutoIndex() const;
+		bool	getRootFound() const;
 		const str& getRedirUri() const;
 		const str& getSaveFolder() const;
 		bool		isCGI() const;
@@ -44,6 +45,8 @@ class Location: public BlockOBJ
 		void setSaveFolder(const str& value);
 		void setAllowedMethods(const std::vector<str>& methods);
 		void setIndexFiles(const std::vector<str>& files);
+
+		const std::string&	getMatchUri() const;
 
 		const Location &operator =(const Location &copy);
 

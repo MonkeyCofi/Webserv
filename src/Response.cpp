@@ -166,6 +166,7 @@ void Response::setHeaderSent(bool sent)
 
 bool Response::isChunked() const
 {
+	std::cout << "Chunked: " << std::boolalpha << this->chunked << "\n";
 	return chunked;
 }
 
@@ -248,6 +249,11 @@ void Response::setAllowedMethods(std::vector<str> &all)
 
 str Response::getRoot() const
 {
+	if (root.at(root.length() - 1) == '/')
+	{
+		std::cout << "Returning " << root.substr(0, root.length() - 1) << "\n";
+		return (root.substr(0, root.length() - 1));
+	}
 	return this->root;
 }
 
@@ -260,6 +266,11 @@ bool Response::getAutoIndex() const
 {
 	return this->autoindex;
 }
+
+// const std::string&	Response::getRoot() const
+// {
+// 	return this->root;
+// }
 
 Response::~Response()
 {

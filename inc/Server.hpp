@@ -62,6 +62,7 @@ class Server: public BlockOBJ
 		void 			directoryResponse(Request* req, str path, int client_fd);
 		// void			fileResponse(str path, bool checking_index);
 		void			fileResponse(Request* req, str path, int file_fd, int client_fd);
+		bool			validCGIfile(const std::string& uri);
 		// unsigned int	fileSize(int fd);
 
 	public:

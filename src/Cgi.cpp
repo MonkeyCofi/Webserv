@@ -115,7 +115,8 @@ bool	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
 	if (this->written_bytes == (ssize_t)req->getContentLen()) // all bytes written: close write pipe
 	{
 		std::cout << "Body has been fully written\n";
-		close(this->stdin_fds[WRITE]);
+		if (this->stdin_fds[WRITE] != -1)
+			close(this->stdin_fds[WRITE]);
 		return (true);
 	}
 	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
@@ -132,6 +133,7 @@ str	Cgi::setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, Connectio
 
 	this->path_info = "PATH_INFO=" + str(serv->getRoot() + uri);
 	this->path_info = path_info.substr(0, path_info.find_first_of('?'));
+	std::cout << "path info: " << this->path_info << "\n";
 	this->query_string = "QUERY_STRING=" + uri.substr(uri.find_first_of('?') + 1, str::npos);
 	this->method = "REQUEST_METHOD=" + req->getMethod();
 	this->content_type = "CONTENT_TYPE=" + req->getContentType();
@@ -244,8 +246,8 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 
 		if (this->stdin_fds[WRITE] != -1)
 		{
-			this->stdin_fds[WRITE] = -1;
 			close(this->stdin_fds[WRITE]);
+			this->stdin_fds[WRITE] = -1;
 		}
 		close(this->pipe_fds[READ]);
 		this->pipe_fds[READ] = -1;
@@ -268,8 +270,11 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 			close(this->stdin_fds[READ]);
 			this->stdin_fds[READ] = -1;
 		}
-		close(pipe_fds[WRITE]);
-		this->pipe_fds[WRITE] = -1;
+		if (this->pipe_fds[WRITE] != -1)
+		{
+			close(pipe_fds[WRITE]);
+			this->pipe_fds[WRITE] = -1;
+		}
 		std::cout << "Adding read end of cgi pipes " << pipe_fds[READ] << " to pollfds\n";
 		setAndAddPollFd(i, pipe_fds[READ], cm, POLLIN);
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);	// the read end of the pipe is the key
