@@ -203,7 +203,7 @@ bool Server::handleDirective(std::queue<str> opts)
 			if (opts.front().at(i) < '0' || opts.front().at(i) > '9')
 				return false;
 		}
-		client_max_body = std::atoi(opts.front().c_str());
+		this->client_max_body = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
 	else
@@ -281,11 +281,10 @@ void Server::passValuesToLocations()
 	// directive
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
-		(*it)->setAutoIndex(this->autoindex);
+		if (this->autoindex && (*it)->getAutoindexFound() == false)
+			(*it)->setAutoIndex(this->autoindex);
 		if ((*it)->getRootFound() == false)
-		{
 			(*it)->setRoot(this->root);
-		}
 		(*it)->setIndexFiles(this->index);
 	}
 }
@@ -560,6 +559,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		}
 		this->response[client_fd].setRoot(loco->getRoot());
 		std::cout << "Response root: " << this->response.at(client_fd).getRoot() << "\n";
+		std::cout << "autoindex for location: " << loco->getMatchUri() << ": " << std::boolalpha << loco->getAutoIndex() << "\n";
 		this->response[client_fd].setAutoIndex(loco->getAutoIndex());
 		this->response[client_fd].setIndexFiles(loco->getIndexFiles());
 		uri = loco->getRedirUri();
@@ -614,17 +614,6 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			}
 			req->setCgi(cgi);
 			req->setCGIstarted();
-			// if there are leftovers bytes, write them to the stdin_pipes of the cgi object
-			// const char*	leftovers = req->getLeftOvers();
-			// if (leftovers != NULL)
-			// {
-			// 	std::cout << "Leftovers; " << leftovers << "\n";
-			// 	write(cgi->get_stdin()[WRITE], leftovers, req->getLeftOverSize());
-			// 	delete req->getLeftOvers();
-			// 	req->setLeftOvers(NULL, 0);
-			// }
-			// else
-			// 	std::cout << "there are no leftovers\n";
 		}
 		else if (cgi && req->getCGIstarted())
 		{

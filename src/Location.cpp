@@ -8,6 +8,7 @@ Location::Location(): BlockOBJ()
 	auto_index = false;
 	cgi = false;
 	root_found = false;
+	autoindex_found = false;
 	root = "";
 	redir_uri = "";
 	save_folder = "";
@@ -20,6 +21,7 @@ Location::Location(const Location &copy): BlockOBJ(copy), root(copy.getRoot())
 	auto_index = copy.auto_index;
 	cgi = copy.cgi;
 	root_found = copy.root_found;
+	autoindex_found = copy.autoindex_found;
 	root = copy.root;
 	redir_uri = copy.redir_uri;
 	save_folder = copy.save_folder;
@@ -58,6 +60,7 @@ bool Location::handleDirective(std::queue<str> opts)
 	else if (opts.front() == "autoindex" && opts.size() == 2)
 	{
 		opts.pop();
+		autoindex_found = true;
 		this->auto_index = (opts.front() == "on");
 		if (opts.front() != "on" && opts.front() != "off")
 			return false;
@@ -112,6 +115,11 @@ bool	Location::getRootFound() const
 {
 	std::cout << std::boolalpha << "returning " << root_found << "\n";
 	return (this->root_found);
+}
+
+bool	Location::getAutoindexFound() const
+{
+	return (this->autoindex_found);
 }
 
 str Location::getRoot() const
