@@ -113,7 +113,8 @@ class ConnectionManager
 		void		reapProcesses();
 
 		void		deleteRequest(unsigned int i);
-		void		checkCGItimeouts();
+		
+		void		checkCGItimeouts(unsigned int& index);
 
 	public:
 		ConnectionManager(Http *protocol);

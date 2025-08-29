@@ -18,6 +18,7 @@ Response::Response(): root("/"), header(""), body(""), code("200"), chunked(fals
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
 	http_codes["501"] = "Not Implemented";
+	http_codes["504"] = "Gateway Timeout";
 	http_codes["505"] = "HTTP Version Not Supported";
 }
 

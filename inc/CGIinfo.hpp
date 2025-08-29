@@ -4,7 +4,7 @@
 # include <unistd.h>
 # include <iostream>
 # include "Response.hpp"
-# include <chrono>
+# include <ctime>
 
 typedef std::string str;
 
@@ -18,7 +18,7 @@ class CGIinfo
 		str     header;
 		bool	parsed;
 		bool	finished_responding;
-		std::chrono::time_point<std::chrono::steady_clock>	start_time;
+		time_t	start_time;
 	public:
 		CGIinfo();
 		CGIinfo(int _client, pid_t _child);

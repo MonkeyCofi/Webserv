@@ -6,10 +6,10 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/28 14:45:46 by ppolinta         ###   ########.fr       */
-/*   Updated: 2025/08/08 19:32:07 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/08/29 03:30:50 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "ConnectionManager.hpp"
 #include "Cgi.hpp"
@@ -189,6 +189,7 @@ void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 
 void	ConnectionManager::deleteRequest(unsigned int i)
 {
+	std::cout << RED << "Delete request called" << NL;
 	Request*	temp = this->requests[sock_fds[i].fd];
 	this->requests.erase(sock_fds[i].fd);
 	delete temp;
@@ -960,24 +961,36 @@ void	ConnectionManager::handleCgiPollhup(unsigned int& i)
 	}
 }
 
-void	ConnectionManager::checkCGItimeouts()
+void	ConnectionManager::checkCGItimeouts(unsigned int& index)
 {
-	// go through the cgi info processes
-	// if any of the cgi processes go above 20 seconds (hard limit), send 504 Timed Out to the client
+	// check if this fd is an fd with a cgi process
 	for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
 	{
-		// over 20 seconds have passed
-		std::cout << "Checking timeout for pid: " << it->second.getPid() << " and client fd: " << it->second.getClientFd() << "\n";
-		if (it->second.timedOut(5))
+		if (it->second.getClientFd() == sock_fds.at(index).fd)
 		{
-			// respond with code 504
-			// remove the cgi process from the map
-			std::cout << "timed out\n";
-			requests.find(it->second.getClientFd())->second->setStatus("504");
-			requests.find(it->second.getClientFd())->second->setValid(false);
-
-			kill(it->second.getPid(), SIGKILL);
-			it->second.completeResponse();
+			if (it->second.timedOut(2) == true)
+			{
+				std::cout << "CGI process timed out\n";
+				// kill the cgi process
+				kill(it->second.getPid(), SIGKILL);
+				// set the client fd to POLLOUT so that it can respond with 504
+				sock_fds.at(index).events |= POLLOUT;
+				for (unsigned int idx = 0; idx < sock_fds.size(); idx++)
+				{
+					if (sock_fds.at(idx).fd == it->first)
+					{
+						closeSocketNoRef(idx);
+					}
+				}
+				Request* req = requests.at(sock_fds.at(index).fd);
+				req->setValid(false);
+				req->setStatus("504");
+				passRequestToServer(index, &req);
+				index--;
+				cgiProcesses.erase(it);
+				// closeSocket(index);
+			}
+			break ;
 		}
 	}
 }
@@ -1017,8 +1030,7 @@ void ConnectionManager::startConnections()
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
 			// reapProcesses();
-			checkCGItimeouts();
-			std::cout << "waiting " << i << "\n";
+			checkCGItimeouts(i);
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
