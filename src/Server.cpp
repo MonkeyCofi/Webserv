@@ -193,7 +193,7 @@ bool Server::handleDirective(std::queue<str> opts)
 		min_del_depth = std::atoi(opts.front().c_str());
 		opts.pop();
 	}
-	else if (opts.front() == "max_body_size" && opts.size() == 2)
+	else if (opts.front() == "client_max_body_size" && opts.size() == 2)
 	{
 		opts.pop();
 		if (opts.front().length() > 10)
@@ -335,9 +335,11 @@ void Server::handleError(str error_code, int client_fd)
 	}
 	if (error_pages.find(error_code) == error_pages.end() || (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
 	{
+		std::cout << "Testing\n";
 		this->response[client_fd].setBody(this->response[client_fd].errorPage(error_code), "text/html");
 		return ;
 	}
+	std::cout << "Testing2\n";
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	this->response[client_fd].setBodyFd(fd);
 }
@@ -535,6 +537,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	if (!req->isValidRequest())
 	{
 		handleError(req->getStatus(), client_fd);
+		std::cout << "handleError called from handleRequest\n";
 		return ;
 	}
 	this->response[client_fd].setRoot(this->root);
@@ -557,7 +560,9 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			std::cout << "CGI is not allowed in this location\n";
 			return ;
 		}
+		std::cout << "Root before: " << this->response.at(client_fd).getRoot() << "\n";
 		this->response[client_fd].setRoot(loco->getRoot());
+		std::cout << "Root after: " << this->response.at(client_fd).getRoot() << "\n";
 		std::cout << "Response root: " << this->response.at(client_fd).getRoot() << "\n";
 		std::cout << "autoindex for location: " << loco->getMatchUri() << ": " << std::boolalpha << loco->getAutoIndex() << "\n";
 		this->response[client_fd].setAutoIndex(loco->getAutoIndex());
@@ -575,7 +580,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			return ;
 		}
 	}
-	std::cout << YELLOW << "File in " << this->root << file << NL;
+	std::cout << YELLOW << "File in " << this->response.at(client_fd).getRoot() << file << NL;
 	cgi = cgi && validCGIfile(file);
 	if (req->getMethod() == "GET")
 	{
@@ -641,6 +646,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			return ;
 		}
 		uri = this->response[client_fd].getRoot() + uri;
+		std::cout << "Delete uri: " << uri << "\n";
 		if (stat(uri.c_str(), &s) == 0) 
 		{
 			// Check if it's a directory
@@ -674,6 +680,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			}
 			else if (S_ISREG(s.st_mode))
 			{
+				std::cout << "here\n";
 				if (remove(uri.c_str()) == -1)
 				{
 					handleError("500", client_fd);
@@ -710,17 +717,21 @@ bool Server::checkRequestValidity(Request *req)
 {
 	Location	*loco;
 
-	if (!req->isValidRequest())
-		return false;
-	if (req->getContentLen() > client_max_body)
-		return false;
+	std::cout << "Content length: " << req->getContentLen() << " client_max_body_size: " << this->client_max_body << "\n";
 	loco = this->matchLocation(req->getFileURI());
 	if (loco)
 	{
 		if (!loco->isAllowedMethod(req->getMethod()))
+		{
+			req->setStatus("405");
 			return false;
+		}
 		req->setDestURI(loco->getSaveFolder());
 	}
+	if (!req->isValidRequest())
+		return false;
+	if (req->getContentLen() > client_max_body)
+		return false;
 	return true;
 }
 

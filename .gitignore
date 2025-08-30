@@ -4,3 +4,6 @@ webserv
 .temp
 test/
 storage/
+uploads/
+log
+

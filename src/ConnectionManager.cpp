@@ -117,7 +117,11 @@ void ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &ser
 
 ConnectionManager::~ConnectionManager()
 {
-	
+	if (this->fd != -1)
+	{
+		close(this->fd);
+		this->fd = -1;
+	}
 }
 
 ConnectionManager::ConnectionManager(const ConnectionManager &obj): main_listeners(0)
@@ -176,7 +180,6 @@ void ConnectionManager::printError(int revents)
 // if cgi is requested, don't erase the request for the client_fd
 void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 {
-	// std::cerr << "Passing request to server with " << ((*req)->isCompleteRequest() ? "a complete request" : "a partial request") << "\n";
 	if (!(*req)->isValidRequest())
 		handlers.at(i) = defaults.at(i);
 	if (servers_per_ippp.at(i).find((*req)->getHost()) == servers_per_ippp.at(i).end())
@@ -474,11 +477,15 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
 	std::string	ending_boundary = req->getBoundary() + "--";
 	const char* boundary = ending_boundary.c_str();
+	if (location != NULL)
+		std::cout << "There is a location object\n";
+	else
+		std::cout << "There is no location object\n";
 	const std::string save_folder = location ? location->getSaveFolder() : "./";
 	std::string	upload_location = save_folder != "" \
 		? (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/') \
 		: "./";
-
+	std::cout << "Save folder: " << save_folder << "\n";
 	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
 	if (partial_index != 0)
 	{
@@ -675,7 +682,8 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 						handlers.at(index) = servers_per_ippp[index][req->getHost()];
 					if (handlers.at(index)->checkRequestValidity(req) == false)
 					{
-						req->setStatus((req->getContentLen() > handlers.at(index)->getMaxBodySize()) ? "501" : "405");
+						std::cout << "Current request status: " << req->getStatus() << "\n";
+						req->setStatus(req->getStatus() != "405" && (req->getContentLen() > handlers.at(index)->getMaxBodySize()) ? "413" : "405");
 						req->setValid(false);
 						std::cout << "Invalid here5\n";
 						return (INVALID);
@@ -728,6 +736,7 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 		switch(outcome)
 		{
 			case -1:
+				std::cout << "Returning invalid\n";
 				req->setValid(false);
 				return (INVALID);
 				// > maxbodysize
@@ -754,9 +763,10 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
 	Server* handler = handlers[i];
-
+	std::cout << "in pollout function\n";
 	if (handler && state == FINISH)	// the request has been parsed and ready for response building
 	{
+		std::cout << YELLOW << "in handlePollout FINISH" << NL;
 		bool keep_open = handler->respond(sock_fds[i].fd);
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
@@ -776,15 +786,16 @@ void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<in
 			std::cout << "Closing client socket fd " << sock_fds[i].fd << " because connection is NOT keep-alive\n";
 			closeSocket(i);
 		}
-		handler->setState(Server::returnIncomplete());
 	}
 	else if (state == INVALID)
 	{
 		std::cout << "responding invalid\n";
 		sock_fds[i].events &= ~POLLOUT;
 		handler->respond(sock_fds[i].fd);
+		sock_fds[i].events |= POLLIN;
 		handler->setState(Server::returnIncomplete());
 	}
+	handler->setState(Server::returnIncomplete());
 	(void)state;
 }
 
@@ -827,6 +838,7 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 		}
 		if (pipe_fd > -1)
 			cgiProcesses.erase(pipe_fd);
+		handler->setState(Server::returnIncomplete());
 	}
 	return (true);
 }
@@ -978,9 +990,7 @@ void	ConnectionManager::checkCGItimeouts(unsigned int& index)
 				for (unsigned int idx = 0; idx < sock_fds.size(); idx++)
 				{
 					if (sock_fds.at(idx).fd == it->first)
-					{
 						closeSocketNoRef(idx);
-					}
 				}
 				Request* req = requests.at(sock_fds.at(index).fd);
 				req->setValid(false);
@@ -1029,7 +1039,6 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
-			// reapProcesses();
 			checkCGItimeouts(i);
 			if (sock_fds.at(i).revents == 0)
 				continue ;
@@ -1064,9 +1073,6 @@ void ConnectionManager::startConnections()
 					std::cout << "POLLHUP CGI event\n";
 					handleCgiPollhup(i);
 					closeSocket(i);
-					// close(sock_fds.at(i).fd);
-					// sock_fds.erase(sock_fds.begin() + i);
-					// i--;
 				}
 				else
 				{

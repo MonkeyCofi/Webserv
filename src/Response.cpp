@@ -278,6 +278,7 @@ bool Response::getAutoIndex() const
 
 Response::~Response()
 {
+	std::cout << "Response object is being destroyed\n";
 	if (this->fd != -1)
 	{
 		close(this->fd);
