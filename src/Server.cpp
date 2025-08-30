@@ -646,12 +646,12 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			return ;
 		}
 		uri = this->response[client_fd].getRoot() + uri;
-		std::cout << "Delete uri: " << uri << "\n";
 		if (stat(uri.c_str(), &s) == 0) 
 		{
 			// Check if it's a directory
 			if (S_ISDIR(s.st_mode))
 			{
+				std::cout << "in directory\n";
 				dir = opendir(uri.c_str());
 				if (!dir)
 				{
@@ -660,6 +660,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 				}
 				count = 0;
 				while ((entry = readdir(dir)) != NULL) {
+					std::cout << "Emtry: " << entry->d_name << "\n";
 					if (++count > 2) {
 						break;
 					}

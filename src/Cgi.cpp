@@ -36,6 +36,7 @@ Cgi::Cgi()
 
 Cgi::~Cgi()
 {
+	std::cout << RED << "Cgi destructor was called\n";
 	if (this->stdin_fds[0] != -1)
 	{
 		close(this->stdin_fds[0]);

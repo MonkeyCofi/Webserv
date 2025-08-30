@@ -980,6 +980,7 @@ void	ConnectionManager::checkCGItimeouts(unsigned int& index)
 	{
 		if (it->second.getClientFd() == sock_fds.at(index).fd)
 		{
+		std::cout << "Checking\n";
 			if (it->second.timedOut(2) == true)
 			{
 				std::cout << "CGI process timed out\n";
@@ -990,19 +991,103 @@ void	ConnectionManager::checkCGItimeouts(unsigned int& index)
 				for (unsigned int idx = 0; idx < sock_fds.size(); idx++)
 				{
 					if (sock_fds.at(idx).fd == it->first)
+					{
 						closeSocketNoRef(idx);
+						break ;
+					}
 				}
 				Request* req = requests.at(sock_fds.at(index).fd);
 				req->setValid(false);
 				req->setStatus("504");
 				passRequestToServer(index, &req);
-				index--;
+				if (req->getCgiObj() != NULL)
+				{
+					delete(req->getCgiObj());
+					req->setCgi(NULL);
+				}
+				// index--;
 				cgiProcesses.erase(it);
 				// closeSocket(index);
+				return ;
 			}
-			break ;
 		}
 	}
+}
+
+void	ConnectionManager::checkAllCGItimeouts()
+{
+    std::vector<std::map<int, CGIinfo>::iterator> timeouts_to_erase;
+    
+    // First pass: identify all timeouts
+    for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
+    {
+        if (it->second.timedOut(1) == true)
+        {
+            std::cout << "CGI process timed out for pipe fd: " << it->first << " client fd: " << it->second.getClientFd() << "\n";
+            timeouts_to_erase.push_back(it);
+        }
+    }
+    
+    // Second pass: handle all timeouts
+    for (std::vector<std::map<int, CGIinfo>::iterator>::iterator timeout_it = timeouts_to_erase.begin(); 
+         timeout_it != timeouts_to_erase.end(); timeout_it++)
+    {
+        std::map<int, CGIinfo>::iterator it = *timeout_it;
+        
+        // Kill the CGI process
+        kill(it->second.getPid(), SIGKILL);
+        
+        // Find client fd index
+        int client_fd = it->second.getClientFd();
+        unsigned int client_index = 0;
+        bool found_client = false;
+        
+        for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
+        {
+            if (sock_fds.at(i).fd == client_fd)
+            {
+                client_index = i;
+                found_client = true;
+                break;
+            }
+        }
+        
+        if (found_client)
+        {
+            // Set up timeout response
+            Request* req = requests.at(client_fd);
+            req->setValid(false);
+            req->setStatus("504");
+            
+            // Clean up CGI object
+            if (req->getCgiObj() != NULL)
+            {
+                delete(req->getCgiObj());
+                req->setCgi(NULL);
+            }
+            
+            // Set client to POLLOUT
+            sock_fds.at(client_index).events |= POLLOUT;
+            
+            // Pass to server
+            passRequestToServer(client_index, &req);
+			handlers.at(client_index)->respond(client_index);
+        }
+        
+        // Close CGI pipe fd
+        int pipe_fd = it->first;
+        for (unsigned int idx = 0; idx < sock_fds.size(); idx++)
+        {
+            if (sock_fds.at(idx).fd == pipe_fd)
+            {
+                closeSocketNoRef(idx);
+                break;
+            }
+        }
+        
+        // Remove from map
+        cgiProcesses.erase(it);
+    }
 }
 
 void ConnectionManager::startConnections()
@@ -1022,7 +1107,7 @@ void ConnectionManager::startConnections()
 	(void)state;
 	while (g_quit != true)
 	{
-		res = poll(&sock_fds[0], sock_fds.size(), -1);
+		res = poll(&sock_fds[0], sock_fds.size(), 100);
 		if (res == 0)
 			continue ;
 		if (res < 0)
@@ -1032,6 +1117,7 @@ void ConnectionManager::startConnections()
 			perror("Poll");
 			throw std::runtime_error("unexpected error in poll function");
 		}
+		// checkAllCGItimeouts();
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			if (sock_fds.at(i).revents & POLLIN)
@@ -1039,7 +1125,7 @@ void ConnectionManager::startConnections()
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
-			checkCGItimeouts(i);
+			// checkCGItimeouts(i);
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)

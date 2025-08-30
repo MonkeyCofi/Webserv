@@ -1,62 +1,35 @@
-in normal POLLIN
-POLLIN fd: 8Index: 4
-Creating a new request for fd 8
-In receive request
-r: 4096
-B: boundary=----WebKitFormBoundaryzdiiEDGbsrSIAY8s
-POST / HTTP/1.1
-Host: localhost:9000
-Connection: keep-alive
-Content-Length: 3102750
-Pragma: no-cache
-Cache-Control: no-cache
-sec-ch-ua: "Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"
-sec-ch-ua-mobile: ?0
-sec-ch-ua-platform: "macOS"
-Upgrade-Insecure-Requests: 1
-Origin: http://localhost:9000
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryzdiiEDGbsrSIAY8s
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-Sec-Fetch-Site: same-origin
-Sec-Fetch-Mode: navigate
-Sec-Fetch-User: ?1
-Sec-Fetch-Dest: document
-Referer: http://localhost:9000/
-Accept-Encoding: gzip, deflate, br, zstd
-Accept-Language: en-US,en;q=0.9
-Content length: 3102750 client_max_body_size: 500000
-Invalid here5
-STATE: INVALID
-Creating a response object for client fd: 8
-File: /
-Client fd: 8
-Testing
-handleError called from handleRequest
-responding invalid
-Chunked: false
-Sending: HTTP/1.1 413 Request Entity Too Large
-Connection: close
-Content-Type: text/html
-Content-Length: 119
+returning false
+old root: 
+setting it to: /Users/pipolint/Desktop/projects/webserv/www/base-site
+returning false
+old root: 
+setting it to: /Users/pipolint/Desktop/projects/webserv/www/base-site
+returning false
+old root: 
+setting it to: /Users/pipolint/Desktop/projects/webserv/www/base-site
+returning true
+returning false
+old root: 
+setting it to: /Users/pipolint/Desktop/projects/webserv/www/base-site
+returning false
+old root: 
+setting it to: /home/piolo/webserv/www/base-site
+returning true
+Server Ready!
+Server has 4 listeners
+Listener fds: 4 5 6 7 
 
-<html><head><title>Error Page</title></head><body><h1>Error Code 413</h1><p>Request Entity Too Large!</p></body></html>
-
---------
-Sent bytes: 227 to fd 8
---------
-Header sent hellbent!
-Response is Chunked: false
-not chunked
-Chunked: false
-Done responding!
-
-Sent:
-HTTP/1.1 413 Request Entity Too Large
-Connection: close
-Content-Type: text/html
-Content-Length: 119
-
-<html><head><title>Error Page</title></head><body><h1>Error Code 413</h1><p>Request Entity Too Large!</p></body></html>
-
-
+Ending Server...
+[31mClosing fd 4[0m
+Request for fd 4 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 5[0m
+Request for fd 5 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 6[0m
+Request for fd 6 is not found
+[31mclosing at index: 0[0m
+[31mClosing fd 7[0m
+Request for fd 7 is not found
+[31mclosing at index: 0[0m
+Server closed!

@@ -166,7 +166,9 @@ void    CGIinfo::setFinishedResponding()
 
 bool	CGIinfo::timedOut(size_t timeout) const
 {
+    std::cout << "Process started at: " << this->start_time << "\n";
 	time_t now = time(NULL);
+    std::cout << "now: " << now << "\n";
 	if (now - this->start_time > static_cast<time_t>(timeout))
 		return true;
 	return false;

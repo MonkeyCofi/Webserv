@@ -115,6 +115,7 @@ class ConnectionManager
 		void		deleteRequest(unsigned int i);
 		
 		void		checkCGItimeouts(unsigned int& index);
+		void		checkAllCGItimeouts();
 
 	public:
 		ConnectionManager(Http *protocol);
