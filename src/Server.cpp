@@ -318,7 +318,7 @@ void Server::handleError(str error_code, int client_fd)
 {
 	bool	keep;
 	int		fd;
-	str		s;
+	str		s, path;
 
 	keep = this->response[client_fd].keepAlive();
 	this->response[client_fd].clear();
@@ -333,7 +333,8 @@ void Server::handleError(str error_code, int client_fd)
 			s = s.substr(0, s.length() - 2);
 		this->response[client_fd].setHeaderField("Allow", s);
 	}
-	if (error_pages.find(error_code) == error_pages.end() || (fd = open(error_pages[error_code].c_str(), O_RDONLY)) == -1)
+	path = root + "/" + error_pages[error_code];
+	if (error_pages.find(error_code) == error_pages.end() || (fd = open(path.c_str(), O_RDONLY)) == -1)
 	{
 		std::cout << "Testing\n";
 		this->response[client_fd].setBody(this->response[client_fd].errorPage(error_code), "text/html");

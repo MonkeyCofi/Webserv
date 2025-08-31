@@ -15,6 +15,7 @@ Response::Response(): root("/"), header(""), body(""), code("200"), chunked(fals
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
 	http_codes["405"] = "Method Not Allowed";
+	http_codes["409"] = "Conflict";
 	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
@@ -46,6 +47,7 @@ Response::Response(const Response &copy)
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
 	http_codes["405"] = "Method Not Allowed";
+	http_codes["409"] = "Conflict";
 	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
@@ -68,6 +70,7 @@ Response::Response(str code): root("/"), header(""), body(""), code("200"), chun
 	http_codes["403"] = "Forbidden";
 	http_codes["404"] = "Page Not Found";
 	http_codes["405"] = "Method Not Allowed";
+	http_codes["409"] = "Conflict";
 	http_codes["413"] = "Request Entity Too Large";
 	http_codes["414"] = "URI Too Long";
 	http_codes["500"] = "Internal Server Error";
