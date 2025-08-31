@@ -280,6 +280,8 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 		setAndAddPollFd(i, pipe_fds[READ], cm, POLLIN);
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);	// the read end of the pipe is the key
 	}
+	if (req->getMethod() == "DELETE")
+		return ("204");
 	return ("200");
 	(void)server;
 }

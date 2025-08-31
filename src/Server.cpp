@@ -639,6 +639,21 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	}
 	else if (req->getMethod() == "DELETE")
 	{
+		if (cgi)
+		{
+			std::cerr << "Starting up DELETE CGI process\n";
+			Cgi	*cgi = new Cgi(file, this);
+			str cgi_status = cgi->setupEnvAndRun(i, client_fd, req, cm, this);
+			if (cgi_status != "204")
+			{
+				std::cout << "CGI script returned status: " << cgi_status << "\n";
+				handleError(cgi_status, client_fd);
+				return ;
+				// fileResponse(req, file, -1, client_fd);
+			}
+			req->setCgi(cgi);
+			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
+		}
 		uri = req->getFileURI();
 		len = uri.length();
 		count = -1;
