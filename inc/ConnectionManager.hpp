@@ -84,6 +84,7 @@ class ConnectionManager
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;
 		std::map<int, Request *>				requests;
 		std::map<int, CGIinfo>	 				cgiProcesses;
+		std::vector<State>						states;
 		std::string								request_header;
 		std::fstream							request_body;
 		int										cgi_pipes[2];

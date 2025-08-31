@@ -169,8 +169,8 @@ const std::vector<str>& Location::getIndexFiles() const
 
 bool Location::matchURI(str uri) const
 {
-	std::cout << "uri: " << uri << "\n";
-	std::cout << "to match: " << this->match_uri << "\n";
+	// std::cout << "uri: " << uri << "\n";
+	// std::cout << "to match: " << this->match_uri << "\n";
 	if (uri.find(this->match_uri) != 0)	// the uri doesn't start with the match uri
 		return (false);
 	if (uri.length() == this->match_uri.length())

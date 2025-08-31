@@ -36,6 +36,7 @@ typedef std::string str;
 
 class	ConnectionManager;
 class	Cgi;
+class	Location;
 
 class Request
 {
@@ -65,6 +66,15 @@ class Request
 		int					bodyFd;
 		char				*left_overs;
 		size_t				left_over_size;
+
+		// file upload members
+		bool				first_chunk;
+		char*				tempFile;
+		char*				partial_buffer;
+		size_t				partial_buffer_size;
+		size_t				partial_size;
+		size_t				partial_index;
+		int					upload_file_fd;
 
 		bool		parseRequestLine(str &line);
 		void		setRequestField(str &header_field, std::string &field_conent);
@@ -129,6 +139,8 @@ class Request
 		Cgi*	getCgiObj();
 		
 		void	deleteLeftOvers();
+
+		int		fileUpload(Location* location, char *buffer, size_t size);
 
 		class	NoHostException: public std::exception
 		{

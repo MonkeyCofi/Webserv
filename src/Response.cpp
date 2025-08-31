@@ -173,7 +173,7 @@ void Response::setHeaderSent(bool sent)
 
 bool Response::isChunked() const
 {
-	std::cout << "Chunked: " << std::boolalpha << this->chunked << "\n";
+	// std::cout << "Chunked: " << std::boolalpha << this->chunked << "\n";
 	return chunked;
 }
 

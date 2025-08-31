@@ -47,6 +47,7 @@ ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
 				reqs.push_back(ipp);
 				defaults.push_back(*it);
 				handlers.push_back(NULL);
+				states.push_back(INVALID);
 				addServerToMap(servers_per_ippp.back(), **it);
 			}
 			else
@@ -157,6 +158,7 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	handlers.push_back(NULL);
 	defaults.push_back(defaults.at(i));
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
+	states.push_back(INCOMPLETE);
 }
 
 void	ConnectionManager::addFdtoPoll(unsigned int i, struct pollfd fd)
@@ -165,6 +167,7 @@ void	ConnectionManager::addFdtoPoll(unsigned int i, struct pollfd fd)
 	handlers.push_back(NULL);
 	defaults.push_back(defaults.at(i));
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
+	states.push_back(INVALID);
 }
 
 void ConnectionManager::printError(int revents)
@@ -213,6 +216,7 @@ void	ConnectionManager::closeSocketNoRef(unsigned int index)
 	handlers.erase(handlers.begin() + index);
 	defaults.erase(defaults.begin() + index);
 	servers_per_ippp.erase(servers_per_ippp.begin() + index);
+	states.erase(states.begin() + index);
 }
 
 void	ConnectionManager::closeSocket(unsigned int& index)
@@ -232,6 +236,7 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	handlers.erase(handlers.begin() + index);
 	defaults.erase(defaults.begin() + index);
 	servers_per_ippp.erase(servers_per_ippp.begin() + index);
+	states.erase(states.begin() + index);
 	index--;
 }
 
@@ -400,232 +405,9 @@ void ConnectionManager::debugVectorSizes(const std::string& location)
     std::cerr << "handlers.size(): " << handlers.size() << "\n";
     std::cerr << "defaults.size(): " << defaults.size() << "\n";
     std::cerr << "servers_per_ippp.size(): " << servers_per_ippp.size() << "\n";
+    std::cerr << "states.size(): " << states.size() << "\n";
     std::cerr << "main_listeners: " << main_listeners << "\n";
     std::cerr << "==========================================\n";
-}
-
-bool	mustCreateFile(Request* req, char* buffer, size_t size)
-{
-	(void)size;
-	if (std::strstr(buffer, "filename=\"") != NULL)
-		return true;
-	std::string content_type = req->getContentType();
-	if (content_type.find("application/") != std::string::npos ||
-		content_type.find("image/") != std::string::npos ||
-		content_type.find("video/") != std::string::npos ||
-		content_type.find("audio/") != std::string::npos ||
-		content_type.find("text/") != std::string::npos ||
-		content_type.find("font/") != std::string::npos)
-	{
-		return true;
-	}
-	return false;
-}
-
-const char*	sizestrstr(const char* haystack, const char* needle, size_t size)
-{
-	for (size_t i = 0; i < size; i++)
-	{
-		size_t j = 0;
-		while (haystack[i + j] == needle[j])
-			j++;
-		if (needle[j] == '\0')
-			return (haystack + i);
-	}
-	return (NULL);
-}
-
-size_t	partial_boundary_index(const char *haystack, const char *needle, size_t size, size_t& partial_size)
-{
-	// check at the end of the haystack up until the "\r\n" as that indicates the end of the binary data
-	size_t i = size - 1;
-	size_t j = 0;
-	(void)needle;
-	while (i > 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
-		i--;
-	i += haystack[i] == '\n';
-	while (i < size && needle[j] && haystack[i] == needle[j])
-	{
-		i++;
-		j++;
-	}
-	if (j == 0)
-	{
-		std::cout << "No partial boundary\n";
-		return (0);
-	}
-	partial_size = j;
-	std::cout << YELLOW << "PARTIAL BOUNDARY FOUND" << NL;
-	return (i);
-}
-
-char	*copy_partial(char *buffer, size_t size)
-{
-	char* partial = new char[size + 1];
-	partial[size] = 0;
-	std::memcpy(partial, buffer, size);
-	return (partial);
-}
-
-int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer, size_t size)
-{
-	static bool first = true;
-	static size_t	partial_index = 0;
-	static size_t	partial_size = 0;
-	static char* partial_buffer = NULL;
-	static size_t partial_buffer_size = 0;
-	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
-	std::string	ending_boundary = req->getBoundary() + "--";
-	const char* boundary = ending_boundary.c_str();
-	if (location != NULL)
-		std::cout << "There is a location object\n";
-	else
-		std::cout << "There is no location object\n";
-	const std::string save_folder = location ? location->getSaveFolder() : "./";
-	std::string	upload_location = save_folder != "" \
-		? (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/') \
-		: "./";
-	std::cout << "Save folder: " << save_folder << "\n";
-	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
-	if (partial_index != 0)
-	{
-		// while the new buffer beginning is equal to boundary[size]
-		size_t i = 0;
-		while (boundary[partial_size] != '\0' && i < size && buffer[i] == boundary[partial_size + i])
-			i++;
-		if (partial_size + i != std::strlen(boundary))	// if the boundary was indeed not found in the new buffer
-			write(this->fd, partial_buffer, partial_buffer_size);
-		else
-		{
-			// write the old buffer without the partial boundary
-			size_t write_size = partial_buffer_size - partial_size - 2;
-			write(this->fd, partial_buffer, write_size);
-			close(this->fd);
-			this->fd = -1;
-			return (1);
-		}
-		delete [] partial_buffer;
-		partial_buffer = NULL;
-		partial_buffer_size = 0;
-		partial_index = 0;
-	}
-
-	// if the buffer contains the filename, then create a file of that type
-	// char* filename_pos = std::find(buffer, buffer + size, "Content-type: ");
-	// char* filename_pos = std::strstr(buffer, "filename=\"");
-	const char* filename_pos = sizestrstr(buffer, "filename=\"", size);
-	if (filename_pos)
-		std::cout << BLUE << filename_pos << NL;
-	std::cout << "in file upload\n";
-	if (first && filename_pos != NULL && mustCreateFile(req, buffer, size))
-	{
-		std::cout << "Creating upload file\n";
-		std::string file_format = std::string(filename_pos + 10);
-		file_format = file_format.substr(0, file_format.find_first_of("\""));
-		file_format = file_format.substr(file_format.find_last_of('.') + 1);
-		std::cout << "File format: " << file_format << "\n";
-		// std::string filename = "./fileuploadXXXXX." + file_format;
-		std::string filename = upload_location + "upload_XXXXXX." + file_format;
-		char *nameTemp = new char[filename.size() + 1];
-		nameTemp[filename.size()] = 0;
-		strcpy(nameTemp, filename.c_str());
-		std::cout << nameTemp << "\n";
-		// this->fd = mkstemp(nameTemp);
-		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
-		this->fd = mkstemps(nameTemp, file_format.size() + 1);
-		if (fd == -1)
-		{
-			perror("mkstemp");
-			delete [] nameTemp;
-			std::cout << "Failed to create upload file\n";
-			return (-1);
-		}
-		std::cerr << "created file: " << nameTemp << "\n";
-		if (binary_start != NULL)	// if this is the first time writing to the file and the there is binary data present
-		{
-			binary_start += 4;
-			size_t binary_size = size - (binary_start - buffer);
-			std::cout << "Writing " << binary_size << " bytes of binary data\n";
-			first = false;
-			const char* boundary_position = sizestrstr(binary_start, boundary, binary_size);
-			if (boundary_position != NULL)
-			{
-				binary_size = boundary_position - binary_start - 2;
-				first = true;
-			}
-			write(this->fd, binary_start, binary_size);
-		}
-	}
-	else
-	{
-		// first will be true if there was no data
-		
-		// check if the boundary is partially found
-		// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
-		partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
-		if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
-		{
-			partial_buffer = copy_partial(buffer, size);
-			partial_buffer_size = size;
-			return (0);
-		}
-		// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
-		const char* bpos = sizestrstr(buffer, boundary, size);
-		if (bpos)
-		{
-			std::cout << "Found boundary\n";
-			size_t write_size = size - std::strlen(bpos) - 2;
-			std::cout << "size: " << size << " write_size: " << write_size << "\n";
-			write(fd, buffer, write_size);
-			close(this->fd);
-			this->fd = -1;
-			first = true;
-		}
-		else
-		{
-			std::cout << "just writing everything\n";
-			write(this->fd, buffer, size);
-		}
-	}
-
-	// else
-	// {
-	// 	// check if the boundary is partially found
-	// 	// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
-	// 	const char* bpos = sizestrstr(buffer, boundary, size);
-	// 	partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
-	// 	if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
-	// 	{
-	// 		partial_buffer = copy_partial(buffer, size);
-	// 		partial_buffer_size = size;
-	// 		return (0);
-	// 	}
-	// 	// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
-	// 	if (bpos)
-	// 	{
-	// 		std::cout << "Found boundary\n";
-	// 		size_t write_size = size - std::strlen(bpos) - 2;
-	// 		std::cout << "size: " << size << " write_size: " << write_size << "\n";
-	// 		write(fd, buffer, write_size);
-	// 		close(this->fd);
-	// 		this->fd = -1;
-	// 		first = true;
-	// 	}
-	// 	else
-	// 	{
-	// 		std::cout << "just writing everything\n";
-	// 		write(this->fd, buffer, size);
-	// 	}
-	// }
-	std::cout << "Received bytes: " << req->getReceivedBytes() << " content length: " << req->getContentLen() << "\n";
-	if (req->getReceivedBytes() == req->getContentLen())
-	{
-		std::cout << "Received content length bytes\n";
-		return (1);
-	}
-	if (req->getReceivedBytes() > req->getContentLen())
-		return (-1);
-	return (sizestrstr(buffer, boundary, size) != NULL);
 }
 
 ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int& index, State& state)
@@ -639,20 +421,18 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	// if the cient fd is a cgi pipe, then we don't want to receive a request from it
 	if (cgiProcesses.find(client_fd) != cgiProcesses.end())
 	{
-		std::cout << "Ignoring fd " << client_fd << " because it is a CGI pipe\n";
+		// std::cout << "Ignoring fd " << client_fd << " because it is a CGI pipe\n";
 		return (IGNORE);
 	}
-	std::cout << "In receive request\n";
+	// std::cout << "In receive request\n";
 	if (!req)
 	{
-		std::cerr << "REQUEST DONT EXIST\n";
+		// std::cerr << "REQUEST DONT EXIST\n";
 		return (IGNORE);
 	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
-	std::cout << "r: " << r << "\n";
 	if (r < 0)
 	{
-		std::cout << "uwu\n";
 		// sock_fds.at(index).events &= ~POLLIN;
 		return (INCOMPLETE);
 	}
@@ -667,11 +447,11 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
 	if (req->getHeaderReceived())
 	{
-		std::cout << "heree\n";
+		// std::cout << "heree\n";
 		req->addReceivedBytes(r);
 		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
 		{
-			std::cout << "in here writing\n";
+			// std::cout << "in here writing\n";
 			Cgi* cgi = req->getCgiObj();
 			cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
 		}
@@ -756,24 +536,21 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 			std::cout << "Invalid here2\n";
 			return (INVALID);
 		}
-		std::cout << "inside here\n";
+		// std::cout << "inside here\n";
 		// outcome = req->pushBody(buffer, r);
-		outcome = fileUpload(req, handlers.at(index)->matchLocation(req->getFileURI()), buffer, r);
+		outcome = req->fileUpload(handlers.at(index)->matchLocation(req->getFileURI()), buffer, r);
 		// outcome = 1;
 		switch(outcome)
 		{
 			case -1:
-				std::cout << "Returning invalid\n";
+				// std::cout << "Returning invalid\n";
 				req->setValid(false);
 				return (INVALID);
-				// > maxbodysize
-				// > contentlength
-				// No boundary
 			case 0:
-				std::cout << "Returning incomplete\n";
+				// std::cout << "Returning incomplete\n";
 				return (INCOMPLETE);
 			case 1:
-				std::cout << "Returning finished\n";
+				// std::cout << "Returning finished\n";
 				return (FINISH);
 			default:
 				return (INCOMPLETE);
@@ -790,10 +567,10 @@ ConnectionManager::State	ConnectionManager::receiveRequest(int client_fd, Reques
 void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
 	Server* handler = handlers[i];
-	std::cout << "in pollout function\n";
+	// std::cout << "in pollout function\n";
 	if (handler && state == FINISH)	// the request has been parsed and ready for response building
 	{
-		std::cout << YELLOW << "in handlePollout FINISH" << NL;
+		// std::cout << YELLOW << "in handlePollout FINISH" << NL;
 		bool keep_open = handler->respond(sock_fds[i].fd);
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
@@ -872,30 +649,30 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 
 void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests)
 {
-	std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
+	// std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
 	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
 	if (it == requests.end())
 	{
-		std::cout << CYAN <<  "Creating a new request for fd " << sock_fds.at(i).fd << "\n" << RESET;
+		// std::cout << CYAN <<  "Creating a new request for fd " << sock_fds.at(i).fd << "\n" << RESET;
 		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request()));
 	}
 	state = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
 	if (state == IGNORE)
 	{
-		std::cout << "Ignoring fd " << sock_fds.at(i).fd << " due to recv() returning 0\n";
+		// std::cout << "Ignoring fd " << sock_fds.at(i).fd << " due to recv() returning 0\n";
 		return ;
 	}
 	if (state == INVALID)
 	{
-		std::cerr << "STATE: " << "INVALID\n";
+		// std::cerr << "STATE: " << "INVALID\n";
 		this->sock_fds[i].events &= ~POLLIN;	// removing POLLIN; unsure why
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
-	if (state == FINISH)
-		this->sock_fds.at(i).events &= ~POLLIN;
-	if (state == FINISH || state == HEADER_FINISHED)	// HEADER_FINISHED indicates partial request
+	// if (state == FINISH)
+	// 	this->sock_fds.at(i).events &= ~POLLIN;
+	if (state == FINISH || (state == HEADER_FINISHED && requests.at(sock_fds.at(i).fd)->isCGI()))	// HEADER_FINISHED indicates partial request
 	{
-		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
+		// std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
 }
@@ -1120,7 +897,6 @@ void	ConnectionManager::checkAllCGItimeouts()
 void ConnectionManager::startConnections()
 {
 	int						res;
-	State					state = INCOMPLETE;
 
 	main_listeners = sock_fds.size();
 	signal(SIGPIPE, SIG_IGN);
@@ -1131,7 +907,6 @@ void ConnectionManager::startConnections()
 		std::cout << sock_fds.at(i).fd << " ";
 	std::cout << "\n";
 	(void)res;
-	(void)state;
 	while (g_quit != true)
 	{
 		res = poll(&sock_fds[0], sock_fds.size(), 100);
@@ -1166,9 +941,8 @@ void ConnectionManager::startConnections()
 				}
 				else
 				{
-					std::cout << "in normal POLLIN\n";
-					handlePollin(i, state, requests);
-					continue ;
+					handlePollin(i, states.at(i), requests);
+					// continue ;
 				}
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
@@ -1176,8 +950,8 @@ void ConnectionManager::startConnections()
 				// std::cerr << "FD: " << this->sock_fds[i].fd << " is ready for POLLOUT\n";
 				if (handleCGIPollout(i) == true)
 					continue ;
-				handlePollout(state, i, requests);
-				continue ;
+				handlePollout(states.at(i), i, requests);
+				// continue ;
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{

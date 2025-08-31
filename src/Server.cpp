@@ -13,7 +13,7 @@ Server::Server() : BlockOBJ()
 	autoindex = false;
 	min_del_depth = 0;
 	sent_bytes = 0;
-	client_max_body = 10000000;
+	client_max_body = -1;
 	responseState = INCOMPLETE;
 }
 
@@ -482,7 +482,7 @@ Location *Server::matchLocation(const str &uri)
 	bool		found_match = false;
 	size_t		match_max_size = 0;
 
-	std::cout << "number of locations: " << this->locations.size() << "\n";
+	// std::cout << "number of locations: " << this->locations.size() << "\n";
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
 		if ((*it)->matchURI(uri))
@@ -503,8 +503,8 @@ Location *Server::matchLocation(const str &uri)
 			found_match = false;
 		}
 	}
-	if (match)
-		std::cout << "Found match for uri: " << uri << " " << match->getMatchUri() << "\n";
+	// if (match)
+	// 	std::cout << "Found match for uri: " << uri << " " << match->getMatchUri() << "\n";
 	// match->printLocation();
 	return (match);
 }
@@ -723,7 +723,7 @@ bool Server::checkRequestValidity(Request *req)
 {
 	Location	*loco;
 
-	std::cout << "Content length: " << req->getContentLen() << " client_max_body_size: " << this->client_max_body << "\n";
+	// std::cout << "Content length: " << req->getContentLen() << " client_max_body_size: " << this->client_max_body << "\n";
 	loco = this->matchLocation(req->getFileURI());
 	if (loco)
 	{
@@ -786,6 +786,7 @@ bool Server::respond(int client_fd)
 	ssize_t	bytes, tw;
 	char	buffer[SEND_BUFFER + 1] = {0};
 
+	std::cout << GREEN << "Responding to fd: " << client_fd << NL;
 	if (this->response[client_fd].doneSending())
 	{
 		// std::cout << RED << "Done sending" << RESET << "\n";
@@ -806,21 +807,21 @@ bool Server::respond(int client_fd)
 		header += this->response[client_fd].getBody();
 	if (!this->response[client_fd].headerSent())
 	{
-		std::cout << "Sending: " << header << "\n";
+		// std::cout << "Sending: " << header << "\n";
 		if ((tw = send(client_fd, header.c_str(), header.length(), 0)) <= 0)
 			return this->response[client_fd].keepAlive();
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 		this->response[client_fd].setHeaderSent(true);
 		std::cout << RED << "Header sent hellbent!" << NL;
 	}
-	std::cout << "Response is " << (this->response.at(client_fd).isChunked() ? "chunked" : "not chunked") << "\n";
+	// std::cout << "Response is " << (this->response.at(client_fd).isChunked() ? "chunked" : "not chunked") << "\n";
 	// response[client_fd].printResponse();
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
 	{
-		std::cout << BLUE << "Done responding!\n\nSent:\n" << header << "\n\n" << RESET;
+		// std::cout << BLUE << "Done responding!\n\nSent:\n" << header << "\n\n" << RESET;
 		setState(FINISH);
 	}
 	else
@@ -833,7 +834,7 @@ bool Server::respond(int client_fd)
 			perror("Read");
 			return (false);
 		}
-		std::cout << "Read " << bytes << " from body fd\n";
+		// std::cout << "Read " << bytes << " from body fd\n";
 		buffer[bytes] = 0;
 		sent_bytes += bytes;
 		if (bytes == 0)	// file has been fully read and responded with
@@ -855,42 +856,42 @@ bool Server::respond(int client_fd)
 			}
 			if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)	// send the ending byte to the client
 				return (this->response[client_fd].keepAlive());
-			std::cout << "--------\n";
-			std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-			std::cout << "--------\n";
+			// std::cout << "--------\n";
+			// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+			// std::cout << "--------\n";
 			this->response.erase(client_fd);
 			std::cout << "Removing response object for fd: " << client_fd << "\n";
 			return (ret);
 		}
-		std::string to_send = ssizeToStr(bytes) + "\r\n";
-		to_send.append(buffer);
-		to_send.append("\r\n");
-		std::cout << "Sending: ";
-		for (size_t i = 0; i < to_send.length(); i++)
-		{
-			if (to_send.at(i) == '\r')
-				std::cout << "\\r";
-			else if (to_send.at(i) == '\n')
-				std::cout << "\\n";
-			else
-				std::cout << to_send.at(i);
-		}
+		// std::string to_send = ssizeToStr(bytes) + "\r\n";
+		// to_send.append(buffer);
+		// to_send.append("\r\n");
+		// std::cout << "Sending: ";
+		// for (size_t i = 0; i < to_send.length(); i++)
+		// {
+		// 	if (to_send.at(i) == '\r')
+		// 		std::cout << "\\r";
+		// 	else if (to_send.at(i) == '\n')
+		// 		std::cout << "\\n";
+		// 	else
+		// 		std::cout << to_send.at(i);
+		// }
 		tmp = ssizeToStr(bytes) + "\r\n";
 		if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)
 			return (ret);
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 		if ((tw = send(client_fd, buffer, bytes, 0)) <= 0)
 			return (ret);
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 		if ((tw = send(client_fd, "\r\n", 2, 0)) <= 0)
 			return (ret);
-		std::cout << "--------\n";
-		std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		std::cout << "--------\n";
+		// std::cout << "--------\n";
+		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
+		// std::cout << "--------\n";
 	}
 	return ret;
 }

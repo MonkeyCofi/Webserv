@@ -13,6 +13,7 @@
 #include "Request.hpp"
 #include "ConnectionManager.hpp"
 #include "Cgi.hpp"
+#include "Location.hpp"
 
 Request::Request()
 {
@@ -40,6 +41,15 @@ Request::Request()
 	this->bodyFd = -1;
 	this->left_overs = NULL;
 	this->left_over_size = 0;
+
+	// file upload members
+	this->tempFile = NULL;
+	this->partial_buffer = NULL;
+	this->first_chunk = true;
+	this->partial_buffer_size = 0;
+	this->partial_size = 0;
+	this->partial_index = 0;
+	this->upload_file_fd = -1;
 }
 
 Request::~Request()
@@ -53,6 +63,16 @@ Request::~Request()
 	{
 		delete[] this->left_overs;
 		this->left_overs = NULL;
+	}
+	if (this->tempFile)
+	{
+		delete[] this->tempFile;
+		this->tempFile = NULL;
+	}
+	if (this->partial_buffer)
+	{
+		delete[] this->partial_buffer;
+		this->partial_buffer = NULL;
 	}
 }
 
@@ -94,6 +114,15 @@ Request	&Request::operator=(const Request& obj)
 	this->cgi = NULL;
 	this->left_overs = NULL;
 	this->left_over_size = 0;
+
+	// file upload members
+	this->tempFile = NULL;
+	this->partial_buffer = NULL;
+	this->first_chunk = false;
+	this->partial_buffer_size = 0;
+	this->partial_size = 0;
+	this->partial_index = 0;
+	this->upload_file_fd = -1;
 	return (*this);
 }
 
@@ -362,6 +391,221 @@ Request	&Request::parseRequest(str& request)
 	validRequest = true;
 	std::cout << BLUE << this->header << NL;
 	return (*this);
+}
+
+bool	mustCreateFile(Request* req, char* buffer, size_t size)
+{
+	(void)size;
+	if (std::strstr(buffer, "filename=\"") != NULL)
+		return true;
+	std::string content_type = req->getContentType();
+	if (content_type.find("application/") != std::string::npos ||
+		content_type.find("image/") != std::string::npos ||
+		content_type.find("video/") != std::string::npos ||
+		content_type.find("audio/") != std::string::npos ||
+		content_type.find("text/") != std::string::npos ||
+		content_type.find("font/") != std::string::npos)
+	{
+		return true;
+	}
+	return false;
+}
+
+const char*	sizestrstr(const char* haystack, const char* needle, size_t size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		size_t j = 0;
+		while (haystack[i + j] == needle[j])
+			j++;
+		if (needle[j] == '\0')
+			return (haystack + i);
+	}
+	return (NULL);
+}
+
+size_t	partial_boundary_index(const char *haystack, const char *needle, size_t size, size_t& partial_size)
+{
+	// check at the end of the haystack up until the "\r\n" as that indicates the end of the binary data
+	size_t i = size - 1;
+	size_t j = 0;
+	(void)needle;
+	while (i > 0 && haystack[i - 1] != '\r' && haystack[i] != '\n')
+		i--;
+	i += haystack[i] == '\n';
+	while (i < size && needle[j] && haystack[i] == needle[j])
+	{
+		i++;
+		j++;
+	}
+	if (j == 0)
+	{
+		// std::cout << "No partial boundary\n";
+		return (0);
+	}
+	partial_size = j;
+	// std::cout << YELLOW << "PARTIAL BOUNDARY FOUND" << NL;
+	return (i);
+}
+
+char	*copy_partial(char *buffer, size_t size)
+{
+	char* partial = new char[size + 1];
+	partial[size] = 0;
+	std::memcpy(partial, buffer, size);
+	return (partial);
+}
+
+int	Request::fileUpload(Location* location, char *buffer, size_t size)
+{
+	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
+	std::string	ending_boundary = this->getBoundary() + "--";
+	const char* boundary = ending_boundary.c_str();
+	const std::string save_folder = location ? location->getSaveFolder() : "./";
+	std::string	upload_location = save_folder != "" \
+		? (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/') \
+		: "./";
+
+	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
+	if (partial_index != 0)
+	{
+		// while the new buffer beginning is equal to boundary[size]
+		size_t i = 0;
+		while (boundary[partial_size] != '\0' && i < size && buffer[i] == boundary[partial_size + i])
+			i++;
+		if (partial_size + i != std::strlen(boundary))	// if the boundary was indeed not found in the new buffer
+			write(this->upload_file_fd, partial_buffer, partial_buffer_size);
+		else
+		{
+			// write the old buffer without the partial boundary
+			size_t write_size = partial_buffer_size - partial_size - 2;
+			write(this->upload_file_fd, partial_buffer, write_size);
+			close(this->upload_file_fd);
+			this->upload_file_fd = -1;
+			delete [] partial_buffer;
+			return (1);
+		}
+		delete [] partial_buffer;
+		partial_buffer = NULL;
+		partial_buffer_size = 0;
+		partial_index = 0;
+	}
+
+	// if the buffer contains the filename, then create a file of that type
+	const char* filename_pos = sizestrstr(buffer, "filename=\"", size);
+	if (filename_pos)
+		std::cout << BLUE << filename_pos << NL;
+	// std::cout << "in file upload\n";
+	if (first_chunk && filename_pos != NULL && mustCreateFile(this, buffer, size))
+	{
+		std::cout << "Creating upload file\n";
+		std::string file_format = std::string(filename_pos + 10);
+		file_format = file_format.substr(0, file_format.find_first_of("\""));
+		file_format = file_format.substr(file_format.find_last_of('.') + 1);
+		std::cout << "File format: " << file_format << "\n";
+		// std::string filename = "./fileuploadXXXXX." + file_format;
+		std::string filename = upload_location + "upload_XXXXXX." + file_format;
+		char *nameTemp = new char[filename.size() + 1];
+		nameTemp[filename.size()] = 0;
+		strcpy(nameTemp, filename.c_str());
+		std::cout << nameTemp << "\n";
+		// this->fd = mkstemp(nameTemp);
+		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
+		this->upload_file_fd = mkstemps(nameTemp, file_format.size() + 1);
+		if (upload_file_fd == -1)
+		{
+			perror("mkstemp");
+			delete [] nameTemp;
+			std::cout << "Failed to create upload file\n";
+			return (-1);
+		}
+		fcntl(upload_file_fd, F_SETFL, O_NONBLOCK);
+		std::cerr << "created file: " << nameTemp << "\n";
+		if (binary_start != NULL)	// if this is the first time writing to the file and the there is binary data present
+		{
+			binary_start += 4;
+			size_t binary_size = size - (binary_start - buffer);
+			std::cout << "Writing " << binary_size << " bytes of binary data\n";
+			first_chunk = false;
+			const char* boundary_position = sizestrstr(binary_start, boundary, binary_size);
+			if (boundary_position != NULL)
+			{
+				binary_size = boundary_position - binary_start - 2;
+				first_chunk = true;
+			}
+			write(this->upload_file_fd, binary_start, binary_size);
+		}
+	}
+	else
+	{
+		// first will be true if there was no data
+		
+		// check if the boundary is partially found
+		// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
+		partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
+		if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
+		{
+			partial_buffer = copy_partial(buffer, size);
+			partial_buffer_size = size;
+			return (0);
+		}
+		// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
+		const char* bpos = sizestrstr(buffer, boundary, size);
+		if (bpos)
+		{
+			std::cout << "Found boundary\n";
+			size_t write_size = size - std::strlen(bpos) - 2;
+			std::cout << "size: " << size << " write_size: " << write_size << "\n";
+			write(upload_file_fd, buffer, write_size);
+			close(this->upload_file_fd);
+			this->upload_file_fd = -1;
+			first_chunk = true;
+		}
+		else
+		{
+			// std::cout << "just writing everything\n";
+			write(this->upload_file_fd, buffer, size);
+		}
+	}
+
+	// else
+	// {
+	// 	// check if the boundary is partially found
+	// 	// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
+	// 	const char* bpos = sizestrstr(buffer, boundary, size);
+	// 	partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
+	// 	if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
+	// 	{
+	// 		partial_buffer = copy_partial(buffer, size);
+	// 		partial_buffer_size = size;
+	// 		return (0);
+	// 	}
+	// 	// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
+	// 	if (bpos)
+	// 	{
+	// 		std::cout << "Found boundary\n";
+	// 		size_t write_size = size - std::strlen(bpos) - 2;
+	// 		std::cout << "size: " << size << " write_size: " << write_size << "\n";
+	// 		write(upload_file_fd, buffer, write_size);
+	// 		close(this->fd);
+	// 		this->fd = -1;
+	// 		first = true;
+	// 	}
+	// 	else
+	// 	{
+	// 		std::cout << "just writing everything\n";
+	// 		write(this->fd, buffer, size);
+	// 	}
+	// }
+	// std::cout << "Received bytes: " << this->getReceivedBytes() << " content length: " << this->getContentLen() << "\n";
+	if (this->getReceivedBytes() == this->getContentLen())
+	{
+		std::cout << "Received content length bytes\n";
+		return (1);
+	}
+	if (this->getReceivedBytes() > this->getContentLen())
+		return (-1);
+	return (sizestrstr(buffer, boundary, size) != NULL);
 }
 
 bool Request::isValidRequest()
