@@ -42,16 +42,16 @@ class Server: public BlockOBJ
 			FINISH
 		}	ResponseState;
 
-		size_t					client_max_body;
 		str						root;
 		bool					autoindex;
+		size_t					client_max_body;
 		unsigned int			min_del_depth;
-		std::map<int, Response>	response;
 		const static str		default_ip, default_port, directives[];
 		std::vector<str>		names, ips, ports, index;
 		std::map<str, str>		error_pages;
-		std::vector<Location *>	locations;
 		ResponseState			responseState;
+		std::map<int, Response>	response;
+		std::vector<Location *>	locations;
 		void			handleError(str error_code, int client_fd);
 		bool			validAddress(str address);
 		bool			handleAddress(str address);

@@ -410,15 +410,15 @@ bool	mustCreateFile(Request* req, char* buffer, size_t size)
 	if (std::strstr(buffer, "filename=\"") != NULL)
 		return true;
 	std::string content_type = req->getContentType();
-	if (content_type.find("application/octet-stream") != std::string::npos ||
-	content_type.find("image/") != std::string::npos || \
-	content_type.find("video/") != std::string::npos || \
-	content_type.find("audio/") != std::string::npos || \
-	content_type.find("application/pdf") != std::string::npos)
+	if (content_type.find("application/") != std::string::npos ||
+		content_type.find("image/") != std::string::npos ||
+		content_type.find("video/") != std::string::npos ||
+		content_type.find("audio/") != std::string::npos ||
+		content_type.find("text/") != std::string::npos ||
+		content_type.find("font/") != std::string::npos)
 	{
 		return true;
 	}
-
 	return false;
 }
 
@@ -517,7 +517,7 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 	if (filename_pos)
 		std::cout << BLUE << filename_pos << NL;
 	std::cout << "in file upload\n";
-	if (filename_pos != NULL && mustCreateFile(req, buffer, size))
+	if (first && filename_pos != NULL && mustCreateFile(req, buffer, size))
 	{
 		std::cout << "Creating upload file\n";
 		std::string file_format = std::string(filename_pos + 10);
@@ -525,7 +525,7 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 		file_format = file_format.substr(file_format.find_last_of('.') + 1);
 		std::cout << "File format: " << file_format << "\n";
 		// std::string filename = "./fileuploadXXXXX." + file_format;
-		std::string filename = upload_location + "fileuploadXXXXXX." + file_format;
+		std::string filename = upload_location + "upload_XXXXXX." + file_format;
 		char *nameTemp = new char[filename.size() + 1];
 		nameTemp[filename.size()] = 0;
 		strcpy(nameTemp, filename.c_str());
@@ -541,31 +541,27 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 			return (-1);
 		}
 		std::cerr << "created file: " << nameTemp << "\n";
-	}
-	else
-		std::cout << "Didn't create upload file\n";
-
-	if (binary_start != NULL && first)	// if this is the first time writing to the file and the there is binary data present
-	{
-		binary_start += 4;
-		size_t binary_size = size - (binary_start - buffer);
-		std::cout << "Writing " << binary_size << " bytes of binary data\n";
-		first = false;
-		const char* binary_position = sizestrstr(binary_start, boundary, binary_size);
-		if (binary_position != NULL)
+		if (binary_start != NULL)	// if this is the first time writing to the file and the there is binary data present
 		{
-			binary_size = binary_position - binary_start - 2;
-			first = true;
-		}
-		else
+			binary_start += 4;
+			size_t binary_size = size - (binary_start - buffer);
+			std::cout << "Writing " << binary_size << " bytes of binary data\n";
 			first = false;
-		write(this->fd, binary_start, binary_size);
+			const char* boundary_position = sizestrstr(binary_start, boundary, binary_size);
+			if (boundary_position != NULL)
+			{
+				binary_size = boundary_position - binary_start - 2;
+				first = true;
+			}
+			write(this->fd, binary_start, binary_size);
+		}
 	}
 	else
 	{
+		// first will be true if there was no data
+		
 		// check if the boundary is partially found
 		// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
-		const char* bpos = sizestrstr(buffer, boundary, size);
 		partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
 		if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
 		{
@@ -574,6 +570,7 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 			return (0);
 		}
 		// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
+		const char* bpos = sizestrstr(buffer, boundary, size);
 		if (bpos)
 		{
 			std::cout << "Found boundary\n";
@@ -590,6 +587,36 @@ int	ConnectionManager::fileUpload(Request* req, Location* location, char *buffer
 			write(this->fd, buffer, size);
 		}
 	}
+
+	// else
+	// {
+	// 	// check if the boundary is partially found
+	// 	// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
+	// 	const char* bpos = sizestrstr(buffer, boundary, size);
+	// 	partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
+	// 	if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
+	// 	{
+	// 		partial_buffer = copy_partial(buffer, size);
+	// 		partial_buffer_size = size;
+	// 		return (0);
+	// 	}
+	// 	// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
+	// 	if (bpos)
+	// 	{
+	// 		std::cout << "Found boundary\n";
+	// 		size_t write_size = size - std::strlen(bpos) - 2;
+	// 		std::cout << "size: " << size << " write_size: " << write_size << "\n";
+	// 		write(fd, buffer, write_size);
+	// 		close(this->fd);
+	// 		this->fd = -1;
+	// 		first = true;
+	// 	}
+	// 	else
+	// 	{
+	// 		std::cout << "just writing everything\n";
+	// 		write(this->fd, buffer, size);
+	// 	}
+	// }
 	std::cout << "Received bytes: " << req->getReceivedBytes() << " content length: " << req->getContentLen() << "\n";
 	if (req->getReceivedBytes() == req->getContentLen())
 	{

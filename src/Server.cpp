@@ -333,7 +333,11 @@ void Server::handleError(str error_code, int client_fd)
 			s = s.substr(0, s.length() - 2);
 		this->response[client_fd].setHeaderField("Allow", s);
 	}
-	path = root + "/" + error_pages[error_code];
+	std::cout << error_code << "\n";
+	for (std::map<str, str>::iterator it = error_pages.begin(); it != error_pages.end(); it++)
+		std::cout << "\n\n\n" << it->first << " ---> " << it->second << "\n\n\n";	
+	if (error_pages.find(error_code) != error_pages.end())
+		path = root + "/" + error_pages[error_code];
 	if (error_pages.find(error_code) == error_pages.end() || (fd = open(path.c_str(), O_RDONLY)) == -1)
 	{
 		std::cout << "Testing\n";
