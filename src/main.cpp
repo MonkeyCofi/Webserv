@@ -24,7 +24,6 @@ int main(int ac, char **av)
 	try
 	{
 		ConfigParser conf;
-		// str		tmp = av[1];
 		str	tmp = (defaultConf == false ? av[1] : "");
 		conf.parse(tmp, defaultConf, &eng);
 		if (!eng)

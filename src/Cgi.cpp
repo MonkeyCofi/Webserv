@@ -61,7 +61,6 @@ Cgi::~Cgi()
 
 Cgi::Cgi(const Cgi& copy)
 {
-	// this->env = copy.env;
 	this->operator=(copy);
 }
 
@@ -231,17 +230,7 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 			}	// save the pollfd in the pollfds and search for it later in the vector to remove
 			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
 			req->deleteLeftOvers(); // delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
-			// for (unsigned int i = 0; i < pollfds.size(); i++)
-			// {
-			// 	if (pollfds.at(i).fd == this->stdin_fds[WRITE])
-			// 	{
-			// 		std::cout << "i: " << i << " size: " << pollfds.size() << "\n";
-			// 		// cm.closeSocketNoRef(
-			// 		break ;
-			// 	}
-			// }
 		}
-		// once there is nothing too write,
 	}
 	this->cgi_fd = fork();
 	if (this->cgi_fd == CHLDPROC)    // child process

@@ -107,10 +107,6 @@ str CGIinfo::getValue(str& main_str, str key, size_t key_start)
     size_t  value_start_pos = key_start;
     size_t  value_end_pos = main_str.find("\r\n", value_start_pos);
     str value = main_str.substr(main_str.find(":", value_start_pos) + 1, value_end_pos - (main_str.find(":", value_start_pos) + 1));
-    // str value = main_str.substr(value_start_pos, value_end_pos - value_start_pos);
-    // size_t colonSp_pos = value.find(":");
-    // if (colonSp_pos != str::npos)
-    //     value.erase(colonSp_pos, 1);
     std::cout << "Key: " << key << " value: " << value << "\n";
     return (value);
 }

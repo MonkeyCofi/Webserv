@@ -153,7 +153,6 @@ void ConnectionManager::newClient(int i, struct pollfd sock)
 	client.revents = 0;
 	std::cout << "Pushing back client fd " << client.fd << " at index " << sock_fds.size() << "\n";
 	sock_fds.push_back(client);
-	// reqs.push_back("");
 	handlers.push_back(NULL);
 	defaults.push_back(defaults.at(i));
 	servers_per_ippp.push_back(std::map<str, Server *>(servers_per_ippp.at(i)));
@@ -188,7 +187,6 @@ void ConnectionManager::passRequestToServer(unsigned int& i, Request **req)
 		handlers.at(i) = defaults.at(i);
 	else if((*req)->isValidRequest())
 		handlers.at(i) = servers_per_ippp.at(i).at((*req)->getHost());
-	// sock_fds.at(i).events &= ~POLLIN;
 	handlers.at(i)->handleRequest(i, sock_fds.at(i).fd, *req, *this);
 }
 
@@ -228,7 +226,6 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	{
 		std::cout << "Request for fd " << sock_fds.at(index).fd << " exists and will now be deleted\n";
 		deleteRequest(index);
-		// delete requests[(sock_fds.at(index).fd)];
 	}
 	std::cout << RED << "closing at index: " << index << NL;
 	sock_fds.erase(sock_fds.begin() + index);
@@ -271,21 +268,17 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 	// if the cient fd is a cgi pipe, then we don't want to receive a request from it
 	if (cgiProcesses.find(client_fd) != cgiProcesses.end())
 	{
-		// std::cout << "Ignoring fd " << client_fd << " because it is a CGI pipe\n";
 		state = IGNORE;
 		return (-1);
 	}
-	// std::cout << "In receive request\n";
 	if (!req)
 	{
-		// std::cerr << "REQUEST DONT EXIST\n";
 		state = IGNORE;
 		return (-1);
 	}
 	r = recv(client_fd, buffer, BUFFER_SIZE, 0);
 	if (r < 0)
 	{
-		// sock_fds.at(index).events &= ~POLLIN;
 		state = INCOMPLETE;
 		return (0);
 	}
@@ -294,18 +287,15 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 		std::cerr << "Closing fd " << sock_fds.at(index).fd << " in receive request due to recv() returning 0\n";
 		std::cout << "Ignoring fd " << this->sock_fds[index].fd << " due to recv() returning 0\n";
 		closeSocket(index);
-		// state = IGNORE;
 		return (-1);
 	}
 	// 1- Have a function like pushRequest that handles body parts (pushBody). For example discards the boundaries and body fields and saves the files.
 	// 2- In order to save the file I need to open an FD and put it in the array with the others to be POLLed
 	if (req->getHeaderReceived())
 	{
-		// std::cout << "heree\n";
 		req->addReceivedBytes(r);
 		if (req->isCGI())	// write receive bytes to the CGI_PIPE'S write end
 		{
-			// std::cout << "in here writing\n";
 			Cgi* cgi = req->getCgiObj();
 			std::cout << "something unique " << buffer << " melon\n";
 			bool finished = cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
@@ -318,7 +308,6 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 				{
 					if (it->fd == client_fd)
 					{
-						// it->events &= ~POLLIN;
 						it->events |= POLLOUT;	// add pollout to the cgi client fd
 						break ;
 					}
@@ -337,7 +326,6 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 		buffer[r] = 0;
 		_request = str(buffer);
 		std::string leftover_str(buffer);
-		// outcome = req->pushRequest(_request);
 		outcome = req->pushRequest(leftover_str);	// because pushRequest modifies the reference string passed to be the leftovers
 		switch (outcome)
 		{
@@ -360,8 +348,6 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 				}
 				else
 				{
-					// debugVectorSizes("receiveRequest");
-					// std::cout << "trying to access " << index << "th handler\n";
 					if (servers_per_ippp.at(index).find(req->getHost()) == servers_per_ippp.at(index).end())
 						handlers.at(index) = defaults.at(index);
 					else if(req->isValidRequest())
@@ -423,24 +409,18 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 			state = INVALID;
 			return (-2);
 		}
-		// std::cout << "inside here\n";
-		// outcome = req->pushBody(buffer, r);
 		outcome = req->fileUpload(handlers.at(index)->matchLocation(req->getFileURI()), buffer, r);
-		// outcome = 1;
 		switch(outcome)
 		{
 			case -1:
-				// std::cout << "Returning invalid\n";
 				req->setStatus("413");
 				req->setValid(false);
 				state = INVALID;
 				return (-2);
 			case 0:
-				// std::cout << "Returning incomplete\n";
 				state = INCOMPLETE;
 				return (0);
 			case 1:
-				// std::cout << "Returning finished\n";
 				state = FINISH;
 				return (1);
 			default:
@@ -459,10 +439,8 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 void	ConnectionManager::handlePollout(State& state, unsigned int& i, std::map<int, Request *> &requests)
 {
 	Server* handler = handlers[i];
-	// std::cout << "in pollout function\n";
 	if (handler && state == FINISH)	// the request has been parsed and ready for response building
 	{
-		// std::cout << YELLOW << "in handlePollout FINISH" << NL;
 		bool keep_open = handler->respond(sock_fds[i].fd);
 		if (keep_open && handler->getState() == Server::returnFinish())
 		{
@@ -541,28 +519,21 @@ bool	ConnectionManager::handleCGIPollout(unsigned int& i)
 
 void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int, Request *>& requests)
 {
-	// std::cout << "POLLIN fd: " << sock_fds.at(i).fd << "Index: " << i << "\n";
 	std::map<int, Request*>::iterator it = requests.find(sock_fds.at(i).fd);
 	if (it == requests.end())
 	{
-		// std::cout << CYAN <<  "Creating a new request for fd " << sock_fds.at(i).fd << "\n" << RESET;
 		requests.insert(std::pair<int, Request*>(sock_fds.at(i).fd, new Request()));
 	}
 	int ret = receiveRequest(sock_fds.at(i).fd, requests.at(sock_fds.at(i).fd), i, state);	// request has been fully received
-
 	if (ret == -1)
 	{
-		// std::cout << "Ignoring fd " << sock_fds.at(i).fd << " due to recv() returning 0\n";
 		return ;
 	}
 	if (state == INVALID)
 	{
-		// std::cerr << "STATE: " << "INVALID\n";
 		this->sock_fds[i].events &= ~POLLIN;	// removing POLLIN; unsure why
 		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
 	}
-	// if (state == FINISH)
-	// 	this->sock_fds.at(i).events &= ~POLLIN;
 	if (state == FINISH || (state == HEADER_FINISHED && requests.at(sock_fds.at(i).fd)->isCGI()))	// HEADER_FINISHED indicates partial request
 	{
 		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
@@ -605,7 +576,6 @@ void	ConnectionManager::handleCGIread(unsigned int& i)
 			if (it->fd == client_fd)
 			{
 				std::cout << "Setting cgi fd " << cgi_info.getClientFd() << "'s client fd " << it->fd << " to POLLOUT\n";
-				// it->events &= ~POLLIN;
 				it->events |= POLLOUT;	// add pollout to the cgi client fd
 				break ;
 			}
@@ -664,87 +634,10 @@ void	ConnectionManager::handleCgiPollhup(unsigned int& i)
 		{
 			std::cout << it->fd << " event getting OR'd with POLLOUT\n";
 			it->events |= POLLOUT;	// set the client fd's event to POLLOUT
-			// it->events &= ~POLLIN;	// remove POLLIN from the client fd
 			break ;
 		}
 	}
 }
-
-// void	ConnectionManager::checkAllCGItimeouts()
-// {
-//     std::vector<std::map<int, CGIinfo>::iterator> timeouts_to_erase;
-    
-//     // First pass: identify all timeouts
-//     for (std::map<int, CGIinfo>::iterator it = cgiProcesses.begin(); it != cgiProcesses.end(); it++)
-//     {
-//         if (it->second.timedOut(1) == true)
-//         {
-//             std::cout << "CGI process timed out for pipe fd: " << it->first << " client fd: " << it->second.getClientFd() << "\n";
-//             timeouts_to_erase.push_back(it);
-//         }
-//     }
-    
-//     // Second pass: handle all timeouts
-//     for (std::vector<std::map<int, CGIinfo>::iterator>::iterator timeout_it = timeouts_to_erase.begin(); 
-//          timeout_it != timeouts_to_erase.end(); timeout_it++)
-//     {
-//         std::map<int, CGIinfo>::iterator it = *timeout_it;
-        
-//         // Kill the CGI process
-//         kill(it->second.getPid(), SIGKILL);
-        
-//         // Find client fd index
-//         int client_fd = it->second.getClientFd();
-//         unsigned int client_index = 0;
-//         bool found_client = false;
-        
-//         for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
-//         {
-//             if (sock_fds.at(i).fd == client_fd)
-//             {
-//                 client_index = i;
-//                 found_client = true;
-//                 break;
-//             }
-//         }
-        
-//         if (found_client)
-//         {
-//             // Set up timeout response
-//             Request* req = requests.at(client_fd);
-//             req->setValid(false);
-//             req->setStatus("504");
-            
-//             // Clean up CGI object
-//             if (req->getCgiObj() != NULL)
-//             {
-//                 delete(req->getCgiObj());
-//                 req->setCgi(NULL);
-//             }
-            
-//             // Set client to POLLOUT
-//             sock_fds.at(client_index).events |= POLLOUT;
-            
-//             // Pass to server
-//             passRequestToServer(client_index, &req);
-// 			handlers.at(client_index)->respond(client_index);
-//         }
-        
-//         // Close CGI pipe fd
-//         int pipe_fd = it->first;
-//         for (unsigned int idx = 0; idx < sock_fds.size(); idx++)
-//         {
-//             if (sock_fds.at(idx).fd == pipe_fd)
-//             {
-//                 closeSocketNoRef(idx);
-//                 break;
-//             }
-//         }
-        
-//         // Remove from map
-//         cgiProcesses.erase(it);
-//     }
-// }
 
 void ConnectionManager::startConnections()
 {
@@ -771,18 +664,15 @@ void ConnectionManager::startConnections()
 			perror("Poll");
 			throw std::runtime_error("unexpected error in poll function");
 		}
-		// checkAllCGItimeouts();
 		for (unsigned int i = 0; i < main_listeners; i++)
 		{
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				// debugVectorSizes("startConnections - before newClient");
 				newClient(i, sock_fds.at(i));
 			}
 		}
 		for (unsigned int i = main_listeners; i < sock_fds.size(); i++)
 		{
-			// checkCGItimeouts(i);
 			if (sock_fds.at(i).revents == 0)
 				continue ;
 			if (sock_fds.at(i).revents & POLLIN)
@@ -797,16 +687,13 @@ void ConnectionManager::startConnections()
 				else
 				{
 					handlePollin(i, states.at(i), requests);
-					// continue ;
 				}
 			}
 			if (sock_fds.at(i).revents & POLLOUT)
 			{
-				// std::cerr << "FD: " << this->sock_fds[i].fd << " is ready for POLLOUT\n";
 				if (handleCGIPollout(i) == true)
 					continue ;
 				handlePollout(states.at(i), i, requests);
-				// continue ;
 			}
 			if (sock_fds.at(i).revents & POLLHUP)
 			{

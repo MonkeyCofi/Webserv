@@ -44,7 +44,6 @@ bool Location::handleDirective(std::queue<str> opts)
 		root_found = true;
 		opts.pop();
 		// check valid uri
-		// std::cout << "Setting root to: " << opts.front() << "\n";
 		this->root = opts.front();
 	}
 	else if (opts.front() == "redir" && opts.size() == 3)
@@ -101,15 +100,6 @@ bool Location::handleDirective(std::queue<str> opts)
 		return parent_ret;
 	return true;
 }
-
-// BlockOBJ *Location::handleBlock(std::queue<str> opts)
-// {
-// 	if (opts.size() < 2 || opts.front() != "location")
-// 		return NULL;
-// 	locations.push_back(new Location());
-// 	return locations.back();
-// }
-
 
 bool	Location::getRootFound() const
 {
@@ -169,8 +159,6 @@ const std::vector<str>& Location::getIndexFiles() const
 
 bool Location::matchURI(str uri) const
 {
-	// std::cout << "uri: " << uri << "\n";
-	// std::cout << "to match: " << this->match_uri << "\n";
 	if (uri.find(this->match_uri) != 0)	// the uri doesn't start with the match uri
 		return (false);
 	if (uri.length() == this->match_uri.length())
@@ -179,7 +167,11 @@ bool Location::matchURI(str uri) const
 		return (true);
 		
 	return (false);
-	// return (uri.find(this->match_uri) == 0  && uri.substr(this->match_uri.length()).find('/') == str::npos);
+}
+
+std::vector<str> &Location::getAllowedMethods()
+{
+	return this->allowed_methods;
 }
 
 const Location &Location::operator =(const Location &copy)

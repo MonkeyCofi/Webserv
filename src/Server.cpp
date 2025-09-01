@@ -316,14 +316,19 @@ str	Server::ssizeToStr(ssize_t x)
 
 void Server::handleError(str error_code, int client_fd)
 {
-	bool	keep;
-	int		fd;
-	str		s, path;
+	bool				keep;
+	int					fd;
+	str					s, path;
+	std::vector<str>	v;
 
 	keep = this->response[client_fd].keepAlive();
+	v = this->response[client_fd].getAllowedMethods();
+	for (std::vector<str>::iterator it = v.begin(); it != v.end(); it++)
+		std::cout << GREEN << *it << NL;
 	this->response[client_fd].clear();
 	this->response[client_fd].setCode(error_code);
 	this->response[client_fd].setKeepAlive(keep);
+	this->response[client_fd].setAllowedMethods(v);
 	if (error_code == "405")
 	{
 		s = "";
@@ -331,6 +336,7 @@ void Server::handleError(str error_code, int client_fd)
 			s += *it + ", ";
 		if (s.length() > 2)
 			s = s.substr(0, s.length() - 2);
+		std::cout << "s: " << s << "\n";
 		this->response[client_fd].setHeaderField("Allow", s);
 	}
 	std::cout << error_code << "\n";
@@ -353,30 +359,6 @@ str	Server::getRoot() const
 {
 	return (this->root);
 }
-
-// void Server::getInfo(str &path)
-// {
-//     struct stat s;
-//     if (stat(path.c_str(), &s) == 0) {
-//         // Check if it's a directory
-//         if (S_ISDIR(s.st_mode)) {
-//             std::cout << path << " is a directory.\n";
-//         } else if (S_ISREG(s.st_mode)) {
-//             std::cout << path << " is a file.\n";
-
-//             // Print size
-//             std::cout << "Size: " << s.st_size << " bytes\n";
-
-//             // Print last modified date
-//             std::cout << "Last modified: " << std::ctime(&s.st_mtime);
-//         } else {
-//             std::cout << path << " exists but is not a regular file or directory.\n";
-//         }
-//     } else {
-//         std::perror("stat");
-//         std::cout << "Could not access path: " << path << "\n";
-//     }
-// }
 
 bool Server::isDirectory(const std::string& path)
 {
@@ -482,15 +464,11 @@ Location *Server::matchLocation(const str &uri)
 	bool		found_match = false;
 	size_t		match_max_size = 0;
 
-	// std::cout << "number of locations: " << this->locations.size() << "\n";
 	for (std::vector<Location *>::iterator it = this->locations.begin(); it != this->locations.end(); it++)
 	{
 		if ((*it)->matchURI(uri))
 		{
-			// std::cout << "Matching location found for " << uri << "\n";
-			// std::cout << "Root for found location block: " << (*it)->getRoot() << "\n";
 			found_match = true;
-			// return *it;
 		}
 		if (found_match)
 		{
@@ -503,9 +481,6 @@ Location *Server::matchLocation(const str &uri)
 			found_match = false;
 		}
 	}
-	// if (match)
-	// 	std::cout << "Found match for uri: " << uri << " " << match->getMatchUri() << "\n";
-	// match->printLocation();
 	return (match);
 }
 
@@ -539,7 +514,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	file = req->getFileURI();
 	std::cout << RED << "File: " << file << NL;
 	std::cout << "Client fd: " << client_fd << "\n";
-	if (!req->isValidRequest())
+	if (!req->isValidRequest() && req->getStatus() != "405")
 	{
 		handleError(req->getStatus(), client_fd);
 		std::cout << "handleError called from handleRequest\n";
@@ -553,6 +528,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 	if (loco)
 	{
 		std::cout << "Location found for uri: " << file << "\n"; 
+		this->response[client_fd].setAllowedMethods(loco->getAllowedMethods());
 		if (!loco->isAllowedMethod(req->getMethod()))
 		{
 			handleError("405", client_fd);
@@ -572,6 +548,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		std::cout << "autoindex for location: " << loco->getMatchUri() << ": " << std::boolalpha << loco->getAutoIndex() << "\n";
 		this->response[client_fd].setAutoIndex(loco->getAutoIndex());
 		this->response[client_fd].setIndexFiles(loco->getIndexFiles());
+		this->response[client_fd].setHeaderField("Location", uri);
 		uri = loco->getRedirUri();
 		if (uri != "")
 		{
@@ -580,7 +557,6 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 			else
 				this->response[client_fd].setCode("307");
 			this->response[client_fd].setKeepAlive(req->shouldKeepAlive());
-			this->response[client_fd].setHeaderField("Location", uri);
 			std::cout << "this return 2\n";
 			return ;
 		}
@@ -600,7 +576,6 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 				std::cout << "CGI script returned status: " << cgi_status << "\n";
 				handleError(cgi_status, client_fd);
 				return ;
-				// fileResponse(req, file, -1, client_fd);
 			}
 			req->setCgi(cgi);
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
@@ -628,7 +603,6 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		else if (cgi && req->getCGIstarted())
 		{
 			std::cout << "In handlerequest post after cgi started\n";
-			// write the received body bytes from the request object into the write pipe of the cgi process
 		}
 		else
 		{
@@ -650,7 +624,6 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 				std::cout << "CGI script returned status: " << cgi_status << "\n";
 				handleError(cgi_status, client_fd);
 				return ;
-				// fileResponse(req, file, -1, client_fd);
 			}
 			req->setCgi(cgi);
 			pollfds.at(i).events &= ~POLLOUT;	// remove POLLOUT event from CGI client
@@ -739,7 +712,6 @@ bool Server::checkRequestValidity(Request *req)
 {
 	Location	*loco;
 
-	// std::cout << "Content length: " << req->getContentLen() << " client_max_body_size: " << this->client_max_body << "\n";
 	loco = this->matchLocation(req->getFileURI());
 	if (loco)
 	{
@@ -760,7 +732,6 @@ bool Server::checkRequestValidity(Request *req)
 // should return whether its keep-alive or not
 bool Server::cgiRespond(CGIinfo* infoPtr)
 {
-	// std::cout << "In cgi respond function\n";
 	const int&	client_fd = infoPtr->getClientFd();
 	/*
 		response object will already exist because it was created when calling
@@ -802,14 +773,8 @@ bool Server::respond(int client_fd)
 	ssize_t	bytes, tw;
 	char	buffer[SEND_BUFFER + 1] = {0};
 
-	// std::cout << GREEN << "Responding to fd: " << client_fd << NL;
 	if (this->response[client_fd].doneSending())
 	{
-		// std::cout << RED << "Done sending" << RESET << "\n";
-		// this->response[client_fd].clear();
-		// return this->response[client_fd].keepAlive();
-
-		/* new addition */
 		std::cout << "Done responding to client fd: " << client_fd << "\n";
 		bool	keep_alive = this->response[client_fd].keepAlive();
 		this->response.erase(client_fd);
@@ -823,34 +788,23 @@ bool Server::respond(int client_fd)
 		header += this->response[client_fd].getBody();
 	if (!this->response[client_fd].headerSent())
 	{
-		// std::cout << "Sending: " << header << "\n";
 		if ((tw = send(client_fd, header.c_str(), header.length(), 0)) <= 0)
 			return this->response[client_fd].keepAlive();
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
 		this->response[client_fd].setHeaderSent(true);
 		std::cout << RED << "Header sent hellbent!" << NL;
 	}
-	// std::cout << "Response is " << (this->response.at(client_fd).isChunked() ? "chunked" : "not chunked") << "\n";
-	// response[client_fd].printResponse();
 	ret = this->response[client_fd].keepAlive();
 	if (!this->response[client_fd].isChunked())
 	{
-		// std::cout << BLUE << "Done responding!\n\nSent:\n" << header << "\n\n" << RESET;
 		setState(FINISH);
 	}
 	else
 	{
-		// std::cout << BLUE << "Done sending header!\n" << RESET;
 		bytes = read(file_fd, buffer, SEND_BUFFER);
 		if (bytes == -1)
 		{
-			// std::cout << "Read returned -1 for reading response body\n";
-			// perror("Read");
 			return (false);
 		}
-		// std::cout << "Read " << bytes << " from body fd\n";
 		buffer[bytes] = 0;
 		sent_bytes += bytes;
 		if (bytes == 0)	// file has been fully read and responded with
@@ -872,42 +826,17 @@ bool Server::respond(int client_fd)
 			}
 			if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)	// send the ending byte to the client
 				return (this->response[client_fd].keepAlive());
-			// std::cout << "--------\n";
-			// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-			// std::cout << "--------\n";
 			this->response.erase(client_fd);
 			std::cout << "Removing response object for fd: " << client_fd << "\n";
 			return (ret);
 		}
-		// std::string to_send = ssizeToStr(bytes) + "\r\n";
-		// to_send.append(buffer);
-		// to_send.append("\r\n");
-		// std::cout << "Sending: ";
-		// for (size_t i = 0; i < to_send.length(); i++)
-		// {
-		// 	if (to_send.at(i) == '\r')
-		// 		std::cout << "\\r";
-		// 	else if (to_send.at(i) == '\n')
-		// 		std::cout << "\\n";
-		// 	else
-		// 		std::cout << to_send.at(i);
-		// }
 		tmp = ssizeToStr(bytes) + "\r\n";
 		if ((tw = send(client_fd, tmp.c_str(), tmp.length(), 0)) <= 0)
 			return (ret);
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
 		if ((tw = send(client_fd, buffer, bytes, 0)) <= 0)
 			return (ret);
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
 		if ((tw = send(client_fd, "\r\n", 2, 0)) <= 0)
 			return (ret);
-		// std::cout << "--------\n";
-		// std::cout << "Sent bytes: " << tw << " to fd " << client_fd << "\n";
-		// std::cout << "--------\n";
 	}
 	return ret;
 }
@@ -950,26 +879,6 @@ size_t	Server::getMaxBodySize() const
 {
 	return this->client_max_body;
 }
-
-// new functions
-
-/********************/
-/*		Setters		*/
-/********************/
-// void	Server::setHeader(str header_)
-// {
-// 	this->header = header_;
-// }
-
-// void	Server::setBody(str body_)
-// {
-// 	this->body.append(body_);
-// }
-
-// void	Server::setFileFD(int fd_)
-// {
-// 	this->file_fd = fd_;
-// }
 
 Server::ResponseState	Server::returnIncomplete()
 {

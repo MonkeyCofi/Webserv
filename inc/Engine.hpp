@@ -6,7 +6,6 @@
 #include <fstream>
 #include "ConnectionManager.hpp"
 #include "Http.hpp"
-#include "tmpdel.hpp"
 
 typedef std::string str;
 

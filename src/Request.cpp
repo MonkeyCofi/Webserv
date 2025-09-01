@@ -167,107 +167,6 @@ int	Request::pushRequest(str &req)
 	return 1;
 }
 
-
-
-// int	Request::pushBody(char *buffer, size_t size)
-// {
-// 	str		line, tmp;
-// 	bool	reading_content;
-
-// 	if (size + this->received_body_bytes > this->contentLength)
-// 		return 400;
-// 	line = str(buffer);
-// 	for (int i = 0; i < line.length(); i++)
-// 		line[i] = std::tolower(line[i]);
-// 	if (line.find("content-type: ") != str::npos)
-// 	{
-// 		// text/plain -> .txt
-// 		// image/x-icon -> .ico
-// 		// text/$$ -> .$$
-// 		// image/$$ -> .$$
-// 		// sound/$$ -> .$$
-// 		// video/$$ -> .$$
-// 		tmp = line.substr(line.find("content-type: ") + 14);
-// 		tmp = tmp.substr(0, tmp.find("\r\n"));
-// 		if (tmp.find("text/plain") != str::npos)
-// 			this->fileType = ".txt";
-// 		else if (tmp.find("image/x-icon") != str::npos)
-// 			this->fileType = ".ico";
-// 		else if (tmp.find("image/") != str::npos)
-// 			this->fileType = "." + tmp.substr(tmp.find("image/") + 6, tmp.find_first_of(" \t"));
-// 		else if (tmp.find("sound/") != str::npos)
-// 			this->fileType = "." + tmp.substr(tmp.find("sound/") + 6, tmp.find_first_of(" \t"));
-// 		else if (tmp.find("video/") != str::npos)
-// 			this->fileType = "." + tmp.substr(tmp.find("video/") + 6, tmp.find_first_of(" \t"));
-// 		else if (tmp.find("text/") != str::npos)
-// 			this->fileType = "." + tmp.substr(tmp.find("text/") + 5, tmp.find_first_of(" \t"));
-// 		reading_content = true;
-// 	}
-// 	if (line.find("content-disposition: ") != str::npos)
-// 		reading_content = true;
-// 	if (reading_content == true)
-// 	{
-// 		std::cout << "putting data to file\n";
-// 		if (this->bodyFd == -1)
-// 		{
-// 			char	tempnam[255] = "upload_XXXXXXXXXX";
-// 			for (int i = 0; i < 255 - 17 && i < this->fileType.length(); i++)
-// 				tempnam[17 + i] = this->fileType[i];
-// 			this->bodyFd = mkstemp(tempnam);
-// 			fcntl(this->bodyFd, F_SETFL, O_NONBLOCK);
-// 			fcntl(this->bodyFd, F_SETFD, FD_CLOEXEC);
-// 		}
-// 		if (size == 0)
-// 		{
-// 			if (prevBoundPos)
-// 				newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
-// 			break ;
-// 		}
-// 		total += r;
-// 		k = 0;
-// 		while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
-// 			k++;
-// 		if (k + prevBoundPos == boundary.length())
-// 		{
-// 			// handle found boundary
-// 			break ;
-// 		}
-// 		else if (prevBoundPos)
-// 		{
-// 			newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
-// 		}
-// 		prevBoundPos = 0;
-// 		i = 0;
-// 		for (; i < r; i++)
-// 		{
-// 			j = 0;
-// 			while (j < boundary.length() && i + j < r && buffer[i + j] == boundary[j])
-// 				j++;
-// 			if (j == boundary.length())	// this means some characters matched the boundary at the end of buffer
-// 			{
-// 				if (i > 0)
-// 				{
-// 					newFile.write(&buffer[0], i);
-// 				}
-// 				sheet = false;
-// 				break ;
-// 			}
-// 			if (i + j == r)	// this means some characters matched the boundary at the end of buffer
-// 			{
-// 				// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
-// 				prevBoundPos = j;
-// 				break;
-// 			}
-// 		}
-// 		if (i && sheet)
-// 			newFile.write(&buffer[0], i);
-// 		newFile.close();
-// 		tempFile.seekg(i);
-// 		reading_content = false;
-// 		(void)boundaryPosInFile;
-// 	}
-// }
-
 bool Request::parseRequestLine(str &line)
 {
 	size_t	pos;
@@ -358,18 +257,6 @@ Request	&Request::parseRequest(str& request)
 			ignore = false;
 			continue;
 		}
-		// if (line.find_first_of(":") == str::npos || line.find_first_not_of(" \t\r") >= line.find_first_of(":"))
-		// 	return (*this);
-		// if (line.find("Content-Type") != std::string::npos)
-		// {
-		// 	for (str::iterator it = line.begin(); it < line.begin() + 12)
-		// 		*it = std::tolower(*it);
-		// }
-		// else
-		// {
-		// 	for (str::iterator it = line.begin(); it < line.end())
-		// 		*it = std::tolower(*it);
-		// }
 		header_field = line.substr(line.find_first_not_of(" \t\r"), line.find_first_of(":"));
 		for (str::iterator it = header_field.begin(); it != header_field.end(); it++)
 			*it = std::tolower(*it);
@@ -440,11 +327,9 @@ size_t	partial_boundary_index(const char *haystack, const char *needle, size_t s
 	}
 	if (j == 0)
 	{
-		// std::cout << "No partial boundary\n";
 		return (0);
 	}
 	partial_size = j;
-	// std::cout << YELLOW << "PARTIAL BOUNDARY FOUND" << NL;
 	return (i);
 }
 
@@ -495,7 +380,6 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 	const char* filename_pos = sizestrstr(buffer, "filename=\"", size);
 	if (filename_pos)
 		std::cout << BLUE << filename_pos << NL;
-	// std::cout << "in file upload\n";
 	if (first_chunk && filename_pos != NULL && mustCreateFile(this, buffer, size))
 	{
 		std::cout << "Creating upload file\n";
@@ -503,13 +387,11 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 		file_format = file_format.substr(0, file_format.find_first_of("\""));
 		file_format = file_format.substr(file_format.find_last_of('.') + 1);
 		std::cout << "File format: " << file_format << "\n";
-		// std::string filename = "./fileuploadXXXXX." + file_format;
 		std::string filename = upload_location + "upload_XXXXXX." + file_format;
 		this->nameTemp = new char[filename.size() + 1];
 		this->nameTemp[filename.size()] = 0;
 		strcpy(this->nameTemp, filename.c_str());
 		std::cout << this->nameTemp << "\n";
-		// this->fd = mkstemp(this->nameTemp);
 		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
 		this->upload_file_fd = mkstemps(this->nameTemp, file_format.size() + 1);
 		if (upload_file_fd == -1)
@@ -563,41 +445,9 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 		}
 		else
 		{
-			// std::cout << "just writing everything\n";
 			write(this->upload_file_fd, buffer, size);
 		}
 	}
-
-	// else
-	// {
-	// 	// check if the boundary is partially found
-	// 	// if so, store the position, t, it was found at and start comparing with received buffer's beginning from boundary[t]
-	// 	const char* bpos = sizestrstr(buffer, boundary, size);
-	// 	partial_index = partial_boundary_index(buffer, boundary, size, partial_size);
-	// 	if (partial_index != 0)	// save the string where the partial boundary was found and write it to the file if the boundary hasn't been found
-	// 	{
-	// 		partial_buffer = copy_partial(buffer, size);
-	// 		partial_buffer_size = size;
-	// 		return (0);
-	// 	}
-	// 	// if any of the partial + the next received characters are equal to boundary, then write up until the partial position
-	// 	if (bpos)
-	// 	{
-	// 		std::cout << "Found boundary\n";
-	// 		size_t write_size = size - std::strlen(bpos) - 2;
-	// 		std::cout << "size: " << size << " write_size: " << write_size << "\n";
-	// 		write(upload_file_fd, buffer, write_size);
-	// 		close(this->fd);
-	// 		this->fd = -1;
-	// 		first = true;
-	// 	}
-	// 	else
-	// 	{
-	// 		std::cout << "just writing everything\n";
-	// 		write(this->fd, buffer, size);
-	// 	}
-	// }
-	// std::cout << "Received bytes: " << this->getReceivedBytes() << " content length: " << this->getContentLen() << "\n";
 	if (this->getReceivedBytes() == this->getContentLen())
 	{
 		std::cout << "Received content length bytes\n";

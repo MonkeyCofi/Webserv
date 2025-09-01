@@ -44,6 +44,7 @@ class Location: public BlockOBJ
 		void setRoot(const str& value);
 		void setRedirUri(const str& value);
 		void setSaveFolder(const str& value);
+		std::vector<str>	&getAllowedMethods();
 		void setAllowedMethods(const std::vector<str>& methods);
 		void setIndexFiles(const std::vector<str>& files);
 

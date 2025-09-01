@@ -137,7 +137,6 @@ bool ConfigParser::handleNext(str &word)
 					}
 					blocks.push(ptr);
 				}
-				// else if ((this->location_uri.empty() == false || word[0] == ';') && blocks.size() > 0)
 				else if (word[0] == ';' && blocks.size() > 0)
 				{
 					if (!blocks.top()->handleDirective(parsed_opts))

@@ -173,14 +173,11 @@ void Response::setHeaderSent(bool sent)
 
 bool Response::isChunked() const
 {
-	// std::cout << "Chunked: " << std::boolalpha << this->chunked << "\n";
 	return chunked;
 }
 
 bool Response::doneSending() const
 {
-	// std::cout << std::boolalpha << "header sent: " << header_sent << "\nChunked: " << chunked 
-	// 	<< "\nfd: " << fd << "\n";
 	return (header_sent && !chunked) || (chunked && fd == -1);
 }
 
@@ -273,11 +270,6 @@ bool Response::getAutoIndex() const
 {
 	return this->autoindex;
 }
-
-// const std::string&	Response::getRoot() const
-// {
-// 	return this->root;
-// }
 
 Response::~Response()
 {
