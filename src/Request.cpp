@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:25:05 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/02 20:51:57 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/09/01 12:03:57 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ Request::Request()
 	this->left_over_size = 0;
 
 	// file upload members
-	this->tempFile = NULL;
+	this->nameTemp = NULL;
 	this->partial_buffer = NULL;
 	this->first_chunk = true;
 	this->partial_buffer_size = 0;
@@ -64,10 +64,10 @@ Request::~Request()
 		delete[] this->left_overs;
 		this->left_overs = NULL;
 	}
-	if (this->tempFile)
+	if (this->nameTemp)
 	{
-		delete[] this->tempFile;
-		this->tempFile = NULL;
+		delete[] this->nameTemp;
+		this->nameTemp = NULL;
 	}
 	if (this->partial_buffer)
 	{
@@ -116,7 +116,7 @@ Request	&Request::operator=(const Request& obj)
 	this->left_over_size = 0;
 
 	// file upload members
-	this->tempFile = NULL;
+	this->nameTemp = NULL;
 	this->partial_buffer = NULL;
 	this->first_chunk = false;
 	this->partial_buffer_size = 0;
@@ -505,22 +505,22 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 		std::cout << "File format: " << file_format << "\n";
 		// std::string filename = "./fileuploadXXXXX." + file_format;
 		std::string filename = upload_location + "upload_XXXXXX." + file_format;
-		char *nameTemp = new char[filename.size() + 1];
-		nameTemp[filename.size()] = 0;
-		strcpy(nameTemp, filename.c_str());
-		std::cout << nameTemp << "\n";
-		// this->fd = mkstemp(nameTemp);
+		this->nameTemp = new char[filename.size() + 1];
+		this->nameTemp[filename.size()] = 0;
+		strcpy(this->nameTemp, filename.c_str());
+		std::cout << this->nameTemp << "\n";
+		// this->fd = mkstemp(this->nameTemp);
 		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
-		this->upload_file_fd = mkstemps(nameTemp, file_format.size() + 1);
+		this->upload_file_fd = mkstemps(this->nameTemp, file_format.size() + 1);
 		if (upload_file_fd == -1)
 		{
 			perror("mkstemp");
-			delete [] nameTemp;
+			delete [] this->nameTemp;
 			std::cout << "Failed to create upload file\n";
 			return (-1);
 		}
 		fcntl(upload_file_fd, F_SETFL, O_NONBLOCK);
-		std::cerr << "created file: " << nameTemp << "\n";
+		std::cerr << "created file: " << this->nameTemp << "\n";
 		if (binary_start != NULL)	// if this is the first time writing to the file and the there is binary data present
 		{
 			binary_start += 4;

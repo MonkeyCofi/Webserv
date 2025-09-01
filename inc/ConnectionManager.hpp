@@ -78,7 +78,6 @@ class ConnectionManager
 		std::vector<Server *>					defaults;
 		std::vector<Server *>					handlers;
 		std::vector<str>						reqs;
-		int										fd;
 		std::vector<struct pollfd>				sock_fds;
 		std::vector<str>						tempFileNames;
 		std::vector<std::map<str, Server *>	>	servers_per_ippp;

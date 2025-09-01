@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/31 17:11:35 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/02 15:03:28 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/09/01 01:35:20 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ class Request
 
 		// file upload members
 		bool				first_chunk;
-		char*				tempFile;
+		char*				nameTemp;
 		char*				partial_buffer;
 		size_t				partial_buffer_size;
 		size_t				partial_size;

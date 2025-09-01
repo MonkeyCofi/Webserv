@@ -117,12 +117,11 @@ bool	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
 	{
 		std::cout << "Body has been fully written\n";
 		if (this->stdin_fds[WRITE] != -1)
+		{
 			close(this->stdin_fds[WRITE]);
+			this->stdin_fds[WRITE] = -1;
+		}
 		return (true);
-	}
-	else if (written > (ssize_t)req->getContentLen())	// technically should never happen because it is checked when receiving the request
-	{
-		;
 	}
 	return (false);
 }
@@ -222,18 +221,25 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 		const char*	leftovers = req->getLeftOvers();
 		if (leftovers != NULL)
 		{
-			writeToFd(this->stdin_fds[WRITE], leftovers, req->getLeftOverSize(), req);	// save the pollfd in the pollfds and search for it later in the vector to remove
+			if (writeToFd(this->stdin_fds[WRITE], leftovers, req->getLeftOverSize(), req) == true)
+			{
+				if (req->shouldKeepAlive() == false)
+				{
+					std::cout << "closing fd " << pollfds.at(i).fd << " in runcgi after leftovers\n";
+					cm.closeSocketNoRef(i);
+				}
+			}	// save the pollfd in the pollfds and search for it later in the vector to remove
 			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
 			req->deleteLeftOvers(); // delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
-			for (unsigned int i = 0; i < pollfds.size(); i++)
-			{
-				if (pollfds.at(i).fd == this->stdin_fds[WRITE])
-				{
-					std::cout << "i: " << i << " size: " << pollfds.size() << "\n";
-					cm.closeSocketNoRef(i);
-					break ;
-				}
-			}
+			// for (unsigned int i = 0; i < pollfds.size(); i++)
+			// {
+			// 	if (pollfds.at(i).fd == this->stdin_fds[WRITE])
+			// 	{
+			// 		std::cout << "i: " << i << " size: " << pollfds.size() << "\n";
+			// 		// cm.closeSocketNoRef(
+			// 		break ;
+			// 	}
+			// }
 		}
 		// once there is nothing too write,
 	}

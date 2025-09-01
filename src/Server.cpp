@@ -627,6 +627,7 @@ void Server::handleRequest(unsigned int& i, int client_fd, Request *req, Connect
 		}
 		else if (cgi && req->getCGIstarted())
 		{
+			std::cout << "In handlerequest post after cgi started\n";
 			// write the received body bytes from the request object into the write pipe of the cgi process
 		}
 		else
@@ -801,7 +802,7 @@ bool Server::respond(int client_fd)
 	ssize_t	bytes, tw;
 	char	buffer[SEND_BUFFER + 1] = {0};
 
-	std::cout << GREEN << "Responding to fd: " << client_fd << NL;
+	// std::cout << GREEN << "Responding to fd: " << client_fd << NL;
 	if (this->response[client_fd].doneSending())
 	{
 		// std::cout << RED << "Done sending" << RESET << "\n";
@@ -845,8 +846,8 @@ bool Server::respond(int client_fd)
 		bytes = read(file_fd, buffer, SEND_BUFFER);
 		if (bytes == -1)
 		{
-			std::cout << "Read returned -1 for reading response body\n";
-			perror("Read");
+			// std::cout << "Read returned -1 for reading response body\n";
+			// perror("Read");
 			return (false);
 		}
 		// std::cout << "Read " << bytes << " from body fd\n";

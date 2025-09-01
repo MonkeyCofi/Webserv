@@ -6,7 +6,7 @@
 /*   By: ppolinta <ppolinta@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/16 18:40:42 by pipolint          #+#    #+#             */
-/*   Updated: 2025/08/29 03:30:50 by ppolinta         ###   ########.fr       */
+/*   Updated: 2025/09/01 12:18:29 by ppolinta         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void sigint_handle(int signal)
 
 ConnectionManager::ConnectionManager(): main_listeners(0)
 {
-	this->fd = -1;
+	
 }
 
 ConnectionManager::ConnectionManager(Http *protocol): main_listeners(0)
@@ -118,11 +118,7 @@ void ConnectionManager::addServerToMap(std::map<str, Server *>	&map, Server &ser
 
 ConnectionManager::~ConnectionManager()
 {
-	if (this->fd != -1)
-	{
-		close(this->fd);
-		this->fd = -1;
-	}
+
 }
 
 ConnectionManager::ConnectionManager(const ConnectionManager &obj): main_listeners(0)
@@ -243,155 +239,6 @@ void	ConnectionManager::closeSocket(unsigned int& index)
 	index--;
 }
 
-// void	ConnectionManager::openTempFile(Request* req, std::fstream& file)
-// {
-// 	// the filename is stored in the request object
-// 	// store the temp files in a vector
-// 	// when the server is closed, delete every file in the vector
-// 	if (file.is_open() == false)	// open temp file for reading message body
-// 	{
-
-// 		char uniqueName[255] = {0};
-// 		strcpy(uniqueName, ".tempXXXXXX");
-// 		int tmp = mkstemp(uniqueName);
-// 		str filename = str(uniqueName);
-// 		// req->setTempFileName(filename);
-// 		// req->tempFileName = filename;
-
-// 		std::cout << "Trying to open with filename " << filename << "\n";
-// 		close(tmp);
-// 		file.open(filename.c_str(), std::ios::binary | std::ios::out);
-// 		if (file.fail())
-// 		{
-// 			perror("Open");
-// 			throw (std::runtime_error("Couldn't open temp file\n"));
-// 		}
-// 		else if (file.good())
-// 		{
-// 			// this->tempFileNames.push_back(filename);
-
-// 			std::cout << "Successfully opened " << filename << "\n";
-// 			return ;
-// 		}
-// 	}
-// 	std::cout << "Temp file is already opened\n";
-// 	(void)req;
-// }
-
-// void	ConnectionManager::parseBodyFile(Request* req)
-// {
-// 	// std::ifstream	tempFile(req->tempFileName.c_str());	// read from the temp file
-// 	std::ifstream		tempFile;	// read from the temp file
-// 	std::ofstream		newFile;
-// 	str					line;
-// 	str					name = "";
-// 	bool				reading_content = false;
-// 	char				buffer[BUFFER_SIZE];
-// 	size_t				r, k;
-// 	size_t				total = 0;	// get the amount of characters read from the file so that you know how many bytes to seek ahead
-// 	size_t				i = 0, j = 0, prevBoundPos = 0;
-// 	str					tempBdr;
-// 	size_t				boundaryPosInFile = 0;
-// 	const str 			boundary = "\r\n" + req->getBoundary();
-// 	bool				sheet;
-
-// 	tempFile.open(req->getTempFileName().c_str(), std::ios::in);
-// 	while (std::getline(tempFile, line))
-// 	{
-// 		// if Content-Disposition contains a filename=" field, then create a file with the given file's extension
-// 		// match it against the Content-Type in the next line for extra security
-// 		if (line.find("Content-Type: ") != str::npos)
-// 		{
-// 			std::getline(tempFile, line);
-// 			reading_content = true;
-// 		}
-// 		if (line.find("Content-Disposition: ") != str::npos)
-// 		{
-// 			std::cout << "Found content disposition\n";
-// 			size_t	fileNamePos = line.find("filename=\"");
-// 			if (fileNamePos != str::npos)
-// 			{
-// 				size_t	endDblquotePos = line.find_last_of('\"');
-// 				std::cout << "Found filename\n";
-// 				name = line.substr(fileNamePos + 10);
-// 				if (name.find("\"\r") != str::npos)
-// 					name.erase(name.find("\"\r"));
-// 				std::cout << "Filename: " << name << "\n";
-// 				size_t	dotPos = line.find_last_of('.');
-// 				str file_extension = line.substr(dotPos, endDblquotePos - dotPos);
-// 				std::cout << "Extension: " << file_extension << "\n";
-// 				newFile.open(name.c_str(), std::ios::binary | std::ios::out);
-// 			}
-// 		}
-// 		if (reading_content == true)
-// 		{
-// 			std::cout << "putting data to file\n";
-// 			if (newFile.is_open() == false)
-// 			{
-// 				std::cerr << name << ": ";
-// 				throw (std::runtime_error("Couldn't open file to write"));
-// 			}
-// 			total = i = j = prevBoundPos = boundaryPosInFile = 0;
-// 			sheet = true;
-// 			while (sheet)
-// 			{
-// 				tempFile.read(&buffer[0], BUFFER_SIZE);	// read BUFFER_SIZE bytes into the character buffer
-// 				r = tempFile.gcount();
-// 				if (r == 0)
-// 				{
-// 					if (prevBoundPos)
-// 						newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
-// 					break ;
-// 				}
-// 				total += r;
-// 				k = 0;
-// 				while (prevBoundPos && k < r && k + prevBoundPos < boundary.length() && buffer[k] == boundary[k + prevBoundPos])
-// 					k++;
-// 				if (k + prevBoundPos == boundary.length())
-// 				{
-// 					// handle found boundary
-// 					break ;
-// 				}
-// 				else if (prevBoundPos)
-// 				{
-// 					newFile.write(boundary.substr(0, prevBoundPos).c_str(), prevBoundPos);
-// 				}
-// 				prevBoundPos = 0;
-// 				i = 0;
-// 				for (; i < r; i++)
-// 				{
-// 					j = 0;
-// 					while (j < boundary.length() && i + j < r && buffer[i + j] == boundary[j])
-// 						j++;
-// 					if (j == boundary.length())	// this means some characters matched the boundary at the end of buffer
-// 					{
-// 						if (i > 0)
-// 						{
-// 							newFile.write(&buffer[0], i);
-// 						}
-// 						sheet = false;
-// 						break ;
-// 					}
-// 					if (i + j == r)	// this means some characters matched the boundary at the end of buffer
-// 					{
-// 						// tempBdr = buffer[j - i];	// create a temp string that contains the boundary characters found so far
-// 						prevBoundPos = j;
-// 						break;
-// 					}
-// 				}
-// 				if (i && sheet)
-// 					newFile.write(&buffer[0], i);
-// 			}
-// 			newFile.close();
-// 			tempFile.seekg(i);
-// 			reading_content = false;
-// 			(void)boundaryPosInFile;
-// 		}
-// 	}
-// 	if (!access(req->getTempFileName().c_str(), F_OK))	// remove the temp file used for storing binary data0
-// 		std::remove(req->getTempFileName().c_str());
-// }
-
 /*
 	this function is called in handlePollin
 	it returns a state which is either: INVALID, INCOMPLETE, HEADER_FINISHED, and FINISHED
@@ -460,11 +307,30 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 		{
 			// std::cout << "in here writing\n";
 			Cgi* cgi = req->getCgiObj();
-			std::cout << "something unique " << buffer << " melon";
-			cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
+			std::cout << "something unique " << buffer << " melon\n";
+			bool finished = cgi->writeToFd(cgi->get_stdin()[WRITE], const_cast<const char *>(buffer), r, req);	// this function will write to the fd and will close it if its done writing
+			(void)finished;
+			if (finished)
+			{
+				std::cout << "FINISHED\n";
+				
+				for (std::vector<struct pollfd>::iterator it = this->sock_fds.begin(); it != this->sock_fds.end(); it++)
+				{
+					if (it->fd == client_fd)
+					{
+						// it->events &= ~POLLIN;
+						it->events |= POLLOUT;	// add pollout to the cgi client fd
+						break ;
+					}
+				}
+				if (req->shouldKeepAlive() != true)
+				{
+					std::cout << "Closing socket\n";
+					closeSocket(index);
+				}
+				return (FINISH);
+			}
 		}
-		// else if (req->getMethod() == "POST" && req->isValidRequest())
-		// 	write(this->fd, buffer, r);
 	}
 	else
 	{
@@ -489,6 +355,7 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 				if (!req->isValidRequest())
 				{
 					state = INVALID;
+					std::cout << "INVALID HERE\n";
 					return -2;
 				}
 				else
@@ -564,6 +431,7 @@ int	ConnectionManager::receiveRequest(int client_fd, Request* req, unsigned int&
 		{
 			case -1:
 				// std::cout << "Returning invalid\n";
+				req->setStatus("413");
 				req->setValid(false);
 				state = INVALID;
 				return (-2);
@@ -697,8 +565,8 @@ void	ConnectionManager::handlePollin(unsigned int& i, State& state, std::map<int
 	// 	this->sock_fds.at(i).events &= ~POLLIN;
 	if (state == FINISH || (state == HEADER_FINISHED && requests.at(sock_fds.at(i).fd)->isCGI()))	// HEADER_FINISHED indicates partial request
 	{
-		// std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
-		this->passRequestToServer(i, &requests[sock_fds.at(i).fd]);
+		std::cout << CYAN << "Passing request from fd " << sock_fds.at(i).fd << " to server\n" << RESET;
+		this->passRequestToServer(i, &requests.at(sock_fds.at(i).fd));
 	}
 }
 
@@ -908,7 +776,7 @@ void ConnectionManager::startConnections()
 		{
 			if (sock_fds.at(i).revents & POLLIN)
 			{
-				debugVectorSizes("startConnections - before newClient");
+				// debugVectorSizes("startConnections - before newClient");
 				newClient(i, sock_fds.at(i));
 			}
 		}

@@ -10,7 +10,6 @@ CGIinfo::CGIinfo()
     this->finished_responding = false;
     this->header.clear();
     this->response_str.clear();
-    this->start_time = time(NULL);
 }
 
 CGIinfo::~CGIinfo()
@@ -28,7 +27,6 @@ CGIinfo::CGIinfo(int _client, pid_t _child)
     this->finished_responding = false;
     this->header.clear();
     this->response_str.clear();
-    this->start_time = time(NULL);
 }
 
 CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
@@ -41,7 +39,6 @@ CGIinfo &CGIinfo::operator=(const CGIinfo& obj)
     this->header = obj.header;
     this->response_str = obj.response_str;
     this->finished_responding = obj.finished_responding;
-    this->start_time = obj.start_time;
     return (*this);
 }
 
@@ -56,7 +53,6 @@ CGIinfo::CGIinfo(const CGIinfo& obj)
     this->header = obj.header;
     this->response_str = obj.response_str;
     this->finished_responding = obj.finished_responding;
-    this->start_time = obj.start_time;
 }
 
 void    CGIinfo::concatBuffer(std::string str)
