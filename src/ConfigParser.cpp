@@ -181,7 +181,7 @@ void	ConfigParser::parse(str &fn, bool defaultConf, Engine** ptr)
 		std::ifstream 			file;
 		std::vector <Server *>	servers;
 		if (defaultConf == true)
-			file.open("config/block_test.conf");
+			file.open("config/default.conf");
 		else
 			file.open(fn.c_str());
 		if (!file)
