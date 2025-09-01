@@ -14,6 +14,7 @@
 #include "ConnectionManager.hpp"
 #include "Cgi.hpp"
 #include "Location.hpp"
+#include "Server.hpp"
 
 Request::Request()
 {
@@ -222,7 +223,6 @@ void Request::setRequestField(str &header_field, str &field_content)
 		size_t	boundary_position = field_content.find("boundary=");
 		if (boundary_position != std::string::npos)
 		{
-			std::cout << RED << "B: " << &field_content[boundary_position] << NL;
 			this->body_boundary = "--";
 			this->body_boundary += field_content.substr(boundary_position + std::strlen("boundary="));
 			this->body_boundaryEnd = body_boundary + "--";
@@ -276,7 +276,6 @@ Request	&Request::parseRequest(str& request)
 	}
 	status = "200";
 	validRequest = true;
-	std::cout << BLUE << this->header << NL;
 	return (*this);
 }
 
@@ -341,16 +340,13 @@ char	*copy_partial(char *buffer, size_t size)
 	return (partial);
 }
 
-int	Request::fileUpload(Location* location, char *buffer, size_t size)
+int	Request::fileUpload(Server* server, Location* location, char *buffer, size_t size)
 {
 	const char* binary_start = std::strstr(buffer, "\r\n\r\n");
 	std::string	ending_boundary = this->getBoundary() + "--";
 	const char* boundary = ending_boundary.c_str();
-	const std::string save_folder = location ? location->getSaveFolder() : "./";
-	std::string	upload_location = save_folder != "" \
-		? (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/') \
-		: "./";
-
+	const std::string save_folder = location ? location->getRoot() + location->getSaveFolder() : server->getRoot() + "/";
+	std::string	upload_location = (save_folder.at(save_folder.size() - 1) == '/' ? save_folder : save_folder + '/');
 	// if a partial part of the boundary was found, compare it with the beginning of the current buffer
 	if (partial_index != 0)
 	{
@@ -378,36 +374,27 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 
 	// if the buffer contains the filename, then create a file of that type
 	const char* filename_pos = sizestrstr(buffer, "filename=\"", size);
-	if (filename_pos)
-		std::cout << BLUE << filename_pos << NL;
 	if (first_chunk && filename_pos != NULL && mustCreateFile(this, buffer, size))
 	{
-		std::cout << "Creating upload file\n";
 		std::string file_format = std::string(filename_pos + 10);
 		file_format = file_format.substr(0, file_format.find_first_of("\""));
 		file_format = file_format.substr(file_format.find_last_of('.') + 1);
-		std::cout << "File format: " << file_format << "\n";
 		std::string filename = upload_location + "upload_XXXXXX." + file_format;
 		this->nameTemp = new char[filename.size() + 1];
 		this->nameTemp[filename.size()] = 0;
 		strcpy(this->nameTemp, filename.c_str());
-		std::cout << this->nameTemp << "\n";
-		std::cout << "suffix size: " << file_format.size() + 1 << "\n";
 		this->upload_file_fd = mkstemps(this->nameTemp, file_format.size() + 1);
 		if (upload_file_fd == -1)
 		{
-			perror("mkstemp");
 			delete [] this->nameTemp;
-			std::cout << "Failed to create upload file\n";
-			return (-1);
+			this->nameTemp = NULL;
+			return (-2);
 		}
 		fcntl(upload_file_fd, F_SETFL, O_NONBLOCK);
-		std::cerr << "created file: " << this->nameTemp << "\n";
 		if (binary_start != NULL)	// if this is the first time writing to the file and the there is binary data present
 		{
 			binary_start += 4;
 			size_t binary_size = size - (binary_start - buffer);
-			std::cout << "Writing " << binary_size << " bytes of binary data\n";
 			first_chunk = false;
 			const char* boundary_position = sizestrstr(binary_start, boundary, binary_size);
 			if (boundary_position != NULL)
@@ -435,9 +422,7 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 		const char* bpos = sizestrstr(buffer, boundary, size);
 		if (bpos)
 		{
-			std::cout << "Found boundary\n";
 			size_t write_size = size - std::strlen(bpos) - 2;
-			std::cout << "size: " << size << " write_size: " << write_size << "\n";
 			write(upload_file_fd, buffer, write_size);
 			close(this->upload_file_fd);
 			this->upload_file_fd = -1;
@@ -450,7 +435,6 @@ int	Request::fileUpload(Location* location, char *buffer, size_t size)
 	}
 	if (this->getReceivedBytes() == this->getContentLen())
 	{
-		std::cout << "Received content length bytes\n";
 		return (1);
 	}
 	if (this->getReceivedBytes() > this->getContentLen())
@@ -610,7 +594,6 @@ void	Request::setLeftOvers(char* buf, size_t r)
 		this->left_overs = NULL;
 		return ;
 	}
-	std::cout << BLUE << "Buf to copy: " << buf << NL;
 	this->left_overs = new char[r + 1]();
 	for (size_t i = 0; i < r; i++)
 		this->left_overs[i] = buf[i];

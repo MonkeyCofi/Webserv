@@ -9,9 +9,9 @@ Location::Location(): BlockOBJ()
 	cgi = false;
 	root_found = false;
 	autoindex_found = false;
-	root = "";
+	root = "/";
 	redir_uri = "";
-	save_folder = "";
+	save_folder = "/";
 	match_uri = "";
 }
 
@@ -103,7 +103,6 @@ bool Location::handleDirective(std::queue<str> opts)
 
 bool	Location::getRootFound() const
 {
-	std::cout << std::boolalpha << "returning " << root_found << "\n";
 	return (this->root_found);
 }
 
@@ -159,13 +158,12 @@ const std::vector<str>& Location::getIndexFiles() const
 
 bool Location::matchURI(str uri) const
 {
-	if (uri.find(this->match_uri) != 0)	// the uri doesn't start with the match uri
+	if (uri.find(this->match_uri.substr(0, this->match_uri.length() - 1)) != 0)	// the uri doesn't start with the match uri
 		return (false);
 	if (uri.length() == this->match_uri.length())
 		return (true);
 	if (this->match_uri.at(this->match_uri.length() - 1) == '/')
 		return (true);
-		
 	return (false);
 }
 
@@ -183,7 +181,6 @@ const Location &Location::operator =(const Location &copy)
 BlockOBJ	*Location::handleBlock(std::queue<str> opts)
 {
 	(void)opts;
-	std::cout << "\033[31mHANDLE BLOCK\033[0m\n";
 	return NULL;
 }
 
@@ -202,8 +199,6 @@ void Location::setAutoIndex(bool value) {
 
 void Location::setRoot(const str& value)
 {
-	std::cout << "old root: " << this->root << "\n";
-	std::cout << "setting it to: " << value << "\n";
 	root = value;
 }
 
@@ -228,22 +223,3 @@ void	Location::setMatchUri(const std::string& uri)
 	this->match_uri = uri;
 }
 
-void	Location::printLocation() const
-{
-	std::cout << "Permanent redirect: " << std::boolalpha << this->perm_redir << "\n";
-	std::cout << "autoindex: " << std::boolalpha << auto_index << "\n";
-	std::cout << "root: " << root << "\n";
-	std::cout << "redirect url: " << redir_uri << "\n";
-	std::cout << "save folder: " << save_folder << "\n";
-	std::cout << "allowed methods: ";
-	for (std::vector<std::string>::const_iterator it = allowed_methods.begin(); it != allowed_methods.end(); it++)
-	{
-		std::cout << *it << " ";
-	}
-	std::cout << "\n";
-	std::cout << "index files: ";
-	for (std::vector<std::string>::const_iterator it = indexfiles.begin(); it != indexfiles.end(); it++)
-	{
-		std::cout << *it << " ";
-	}
-}

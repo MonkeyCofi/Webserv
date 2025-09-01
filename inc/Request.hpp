@@ -37,7 +37,7 @@ typedef std::string str;
 class	ConnectionManager;
 class	Cgi;
 class	Location;
-
+class	Server;
 class Request
 {
 	private:
@@ -140,7 +140,7 @@ class Request
 		
 		void	deleteLeftOvers();
 
-		int		fileUpload(Location* location, char *buffer, size_t size);
+		int		fileUpload(Server* server, Location* location, char *buffer, size_t size);
 
 		class	NoHostException: public std::exception
 		{

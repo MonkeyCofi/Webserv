@@ -254,10 +254,7 @@ void Response::setAllowedMethods(std::vector<str> &all)
 str Response::getRoot() const
 {
 	if (root.at(root.length() - 1) == '/')
-	{
-		std::cout << "Returning " << root.substr(0, root.length() - 1) << "\n";
 		return (root.substr(0, root.length() - 1));
-	}
 	return this->root;
 }
 
@@ -273,20 +270,11 @@ bool Response::getAutoIndex() const
 
 Response::~Response()
 {
-	std::cout << "Response object is being destroyed\n";
 	if (this->fd != -1)
 	{
 		close(this->fd);
 		this->fd = -1;
 	}
-}
-
-void	Response::printResponse()
-{
-	std::cout << "Header: \n";
-	std::cout << this->header << "\n";
-	std::cout << "Body: \n";
-	std::cout << this->body << "\n";
 }
 
 size_t	Response::getSentBytes() const

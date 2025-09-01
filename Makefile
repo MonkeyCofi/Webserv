@@ -1,7 +1,6 @@
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -I./inc -g3
-CXXFLAGS += -fsanitize=address
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./inc
 
 SRCDIR = src/
 

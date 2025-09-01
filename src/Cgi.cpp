@@ -36,7 +36,6 @@ Cgi::Cgi()
 
 Cgi::~Cgi()
 {
-	std::cout << RED << "Cgi destructor was called\n";
 	if (this->stdin_fds[0] != -1)
 	{
 		close(this->stdin_fds[0]);
@@ -108,13 +107,10 @@ Cgi &Cgi::operator=(const Cgi& copy)
 
 bool	Cgi::writeToFd(int fd, const char *buf, size_t r, Request* req)
 {
-	std::cout << "writing " << buf << " to stdin fd\n";
 	ssize_t	written = write(fd, buf, r);
 	this->written_bytes += written;
-	std::cout << "Wrote " << this->written_bytes << " so far\n";
 	if (this->written_bytes == (ssize_t)req->getContentLen()) // all bytes written: close write pipe
 	{
-		std::cout << "Body has been fully written\n";
 		if (this->stdin_fds[WRITE] != -1)
 		{
 			close(this->stdin_fds[WRITE]);
@@ -132,7 +128,6 @@ str	Cgi::setupEnvAndRun(unsigned int& i, int& client_fd, Request* req, Connectio
 
 	this->path_info = "PATH_INFO=" + str(serv->getRoot() + uri);
 	this->path_info = path_info.substr(0, path_info.find_first_of('?'));
-	std::cout << "path info: " << this->path_info << "\n";
 	this->query_string = "QUERY_STRING=" + uri.substr(uri.find_first_of('?') + 1, str::npos);
 	this->method = "REQUEST_METHOD=" + req->getMethod();
 	this->content_type = "CONTENT_TYPE=" + req->getContentType();
@@ -163,16 +158,10 @@ char**   Cgi::envToChar()
 
 std::string	Cgi::validScriptAccess() const
 {
-	std::cout << "Attempting to access path: " << this->cgiPath << "\n";
 	if (access(this->cgiPath.c_str(), F_OK) == 0)    // the file is found
 	{
-		std::cout << "Script file is found\n";
 		if (access(this->cgiPath.c_str(), R_OK | X_OK) == 0)// check if the file has execution rights
-		{
-			std::cout << "Script file is readable and executable\n";
 			return ("OK");
-		}
-		std::cout << "returning 500\n";
 		return ("500");
 	}
 	return ("404");
@@ -193,7 +182,6 @@ void	Cgi::setAndAddPollFd(unsigned int i, int fd, ConnectionManager& cm, int eve
 	fcntl(pfd.fd, F_SETFL, O_NONBLOCK);
 	pfd.events = events;
 	pfd.revents = 0;
-	std::cout << "Adding fd " << pfd.fd << " to pollfds at index " << i << "\n";
 	cm.addFdtoPoll(i, pfd);
 }
 
@@ -205,30 +193,20 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 	if (access_status != "OK") // if there is no set error page for error code (unimplemented), send default page
 		return (access_status);
 	if (pipe(this->pipe_fds) == -1)	// if pipe fails, internal server error
-	{
-		std::cout << "returning 500\n";
 		return ("500");
-	}
 	if (pipe(this->stdin_fds) == -1)
 		return ("500");
 	if (req->getMethod() == "POST")
 	{
-		std::vector<struct pollfd>&	pollfds = cm.getPollFds();
-		std::cout << "Adding write end of stdin_fds: " << this->stdin_fds[WRITE] << " to pollfds\n";
 		setAndAddPollFd(i, this->stdin_fds[WRITE], cm, POLLIN);	// add the write end of the pipe to the pollfds
-		std::cerr << "opened stdin pipes for CGI POST request\n";
 		const char*	leftovers = req->getLeftOvers();
 		if (leftovers != NULL)
 		{
 			if (writeToFd(this->stdin_fds[WRITE], leftovers, req->getLeftOverSize(), req) == true)
 			{
 				if (req->shouldKeepAlive() == false)
-				{
-					std::cout << "closing fd " << pollfds.at(i).fd << " in runcgi after leftovers\n";
 					cm.closeSocketNoRef(i);
-				}
 			}	// save the pollfd in the pollfds and search for it later in the vector to remove
-			std::cout << "Wrote the leftovers and will now delete the leftovers\n";
 			req->deleteLeftOvers(); // delete req->getLeftOvers();	// delete the leftovers and set it to NULL;
 		}
 	}
@@ -254,7 +232,7 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 
 		execve(cmd, const_cast<char **>(argv), envp);
 		std::cerr << "Unable to execute cmd\n";
-		perror("Why");
+		perror("CGI");
 		delete [] (envp);
 		std::cerr << "Can't execute CGI script\n";
 		exit(EXIT_FAILURE);
@@ -271,7 +249,6 @@ std::string	Cgi::runCGI(unsigned int& i, int& client_fd, Server* server, Request
 			close(pipe_fds[WRITE]);
 			this->pipe_fds[WRITE] = -1;
 		}
-		std::cout << "Adding read end of cgi pipes " << pipe_fds[READ] << " to pollfds\n";
 		setAndAddPollFd(i, pipe_fds[READ], cm, POLLIN);
 		cgiProcesses[pipe_fds[READ]] = CGIinfo(client_fd, this->cgi_fd);	// the read end of the pipe is the key
 	}

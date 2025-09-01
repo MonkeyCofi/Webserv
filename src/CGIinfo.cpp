@@ -85,12 +85,6 @@ std::string CGIinfo::getBuffer() const
     return (this->response_str);
 }
 
-void    CGIinfo::printInfo() const
-{
-    std::cout << "Process pid: " << this->child_pid << "\n" << "Client fd: " << this->client_fd << "\n"
-        << "Response complete: " << this->response_complete << "\n" << "Response string: " << this->response_str << "\n";
-}
-
 // returns iterator of search_val in to_search case-insensitively
 size_t    CGIinfo::nameFound(str& to_search, str search_val)
 {
@@ -102,25 +96,23 @@ size_t    CGIinfo::nameFound(str& to_search, str search_val)
     return (cpys.find(search_val));
 }
 
-str CGIinfo::getValue(str& main_str, str key, size_t key_start)
+str CGIinfo::getValue(str& main_str, size_t key_start)
 {
     size_t  value_start_pos = key_start;
     size_t  value_end_pos = main_str.find("\r\n", value_start_pos);
     str value = main_str.substr(main_str.find(":", value_start_pos) + 1, value_end_pos - (main_str.find(":", value_start_pos) + 1));
-    std::cout << "Key: " << key << " value: " << value << "\n";
     return (value);
 }
 
 Response    CGIinfo::parseCgiResponse()
 {
-    std::cout << "in parse CGI response function\n";
     Response    r;
     str         header;
     size_t   content_type_iter = nameFound(this->response_str, "content-type");
     str             content_type;
 
     if (content_type_iter != str::npos)
-        content_type = getValue(this->response_str, "content-type", content_type_iter);
+        content_type = getValue(this->response_str, content_type_iter);
     size_t  endPos = -1;
     if (this->response_str.find("\r\n\r\n") != str::npos)
     {

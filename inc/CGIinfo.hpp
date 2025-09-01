@@ -34,7 +34,7 @@ class CGIinfo
 		Response    parseCgiResponse();
 
 		size_t			nameFound(str& to_search, str search_val);
-		str				getValue(str& main_str, str key, size_t key_start);
+		str				getValue(str& main_str, size_t key_start);
 		bool			getParsed() const;
 		void    		setParsed(bool parsed);
 
